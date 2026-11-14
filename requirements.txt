@@ -1,4 +1,6 @@
-yt-dlp>=2025.1.15
+# [default] pulls yt-dlp-ejs; deno is the JS runtime YouTube extraction now needs.
+yt-dlp[default]>=2026.10.26
+deno>=2.5
 google-api-python-client==2.154.0
 google-auth==2.37.0
 google-auth-oauthlib==1.2.1

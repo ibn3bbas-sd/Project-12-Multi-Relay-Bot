@@ -51,14 +51,17 @@ No Service, Ingress or LB. The bot only dials out (Telegram long-polling + YouTu
 - Runs #1 and #2 failed on main with `docker/login-action: Username and password required`, because the secrets were never set. Set secrets and variables **before** merging anything that triggers the build.
 - Huawei SWR was dropped (2026-11-14). The <infra-repo> AK/SK can push to the `<cluster>` org, but creating a `relay-bot` org failed with `403 SVCSTG.SWR.4030170 Insufficient permissions`. The user chose their own Docker Hub instead. The repo secrets `SWR_REGISTRY_USER` and `SWR_REGISTRY_PASS` are now unused.
 - Docker Hub's PAT dropdown defaults to **Repo Public Read-only**. That fails the push with `401 ... access token has insufficient scopes` even though login succeeds. The push token needs **Repo Read & Write**, and the cluster pull token needs **Repo Read-only** (not *Public*).
+- Cookie hygiene: export from an InPrivate window with a throwaway account, never the target channel's (the user nearly exported the channel account). Close the window without signing out. The browser may save to the OneDrive Desktop: delete it and empty the OneDrive recycle bin. Shred the jumpbox copy.
+- Secret-volume gotchas: don't nest a mount under another Secret's mountPath, and with `runAsUser` non-root use `defaultMode: 0440` + `fsGroup`, because 0400 is root-only.
+- kubectl only works **on the jumpbox** (`~/jumpboxes/<jumpbox-script>.sh`, user ibnabbas, key `~/.ssh/<ssh-key>`, SG allow-list auto-fixed by the script). The laptop's kubeconfig points to localhost:6443, which needs a tunnel. From this machine Claude can run `ssh -i ~/.ssh/<ssh-key> ibnabbas@<jumpbox-eip> 'bash -s' <<EOF ... EOF`.
 - `/usr/bin/hcloud` on this machine is the **Hetzner** CLI, not Huawei KooCLI. Use the Python SDK (`huaweicloudsdk*`) in a scratch venv for Huawei API calls.
 
 ## Pending next steps
 
 1. DONE 2026-11-14: private Hub repo `ibn3bbas/youtube-relay-bot` exists, `DOCKERHUB_TOKEN` (Repo Read & Write) is set, and run 43559441578 pushed `:latest` + `:3fd12ba…` (amd64). `docker build` is validated. The read-only PAT `cce-relay-bot-pull` exists for the cluster.
 2. Optional cleanup: `gh secret delete SWR_REGISTRY_USER && gh secret delete SWR_REGISTRY_PASS`.
-3. Run the yt-dlp smoke test from the cluster (runbook step 2). If YouTube shows a bot-check, add a cookies file Secret or a proxy.
-4. Confirm the CCE node subnet has a NAT Gateway SNAT rule + EIP.
+3. DONE 2026-11-14 on <cluster>: outbound internet works (egress IP <nat-eip>; Telegram, YouTube, googleapis and Docker Hub all reachable). The yt-dlp **listing** works, but every **video** hit "Sign in to confirm you're not a bot". With cookies + deno the newest source video resolved at 1080p. The Secret `ytdlp-cookies` exists in ns relay-bot (from the throwaway account "Relaybot Downloads", NOT the target channel).
+4. Bot code now supports this: `YTDLP_COOKIES_FILE` (`src/config.py`), `_cookie_opts()` in `src/downloader.py` (works on a copy in DATA_DIR, re-copies when the Secret is newer), `yt-dlp[default]` + `deno` in requirements, `DENO_DIR=/tmp/.cache/deno`, manifest mounts the Secret at `/cookies` (mode 0440, optional).
 5. Create the Secrets (`dockerhub-pull`, `relay-bot-env`, `relay-bot-files`), then `kubectl apply -f k8s/relay-bot.yaml`.
 6. Still not validated: `kubeconform -strict -summary k8s/relay-bot.yaml`.
 

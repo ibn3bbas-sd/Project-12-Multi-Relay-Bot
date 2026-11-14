@@ -42,6 +42,34 @@ def mark_processed(video_id: str) -> None:
     _save_processed(processed)
 
 
+def _cookie_opts() -> dict:
+    """yt-dlp options carrying the cookies file, if one is configured.
+
+    yt-dlp writes rotated cookies back to the file it was given, and the
+    Kubernetes Secret mount is read-only, so it works on a copy in DATA_DIR.
+    The copy is refreshed whenever the source is newer (a replaced Secret),
+    and otherwise kept so YouTube's rotations survive restarts.
+    """
+    src = config.YTDLP_COOKIES_FILE
+    if src is None:
+        return {}
+    if not src.is_file():
+        logger.warning("YTDLP_COOKIES_FILE %s not found — running without cookies", src)
+        return {}
+
+    work = config.DATA_DIR / "ytdlp-cookies.txt"
+    try:
+        if not work.exists() or src.stat().st_mtime > work.stat().st_mtime:
+            config.DATA_DIR.mkdir(parents=True, exist_ok=True)
+            work.write_bytes(src.read_bytes())
+            work.chmod(0o600)
+            logger.info("Loaded yt-dlp cookies from %s", src)
+    except OSError as exc:
+        logger.warning("Could not stage cookies (%s) — using %s directly", exc, src)
+        return {"cookiefile": str(src)}
+    return {"cookiefile": str(work)}
+
+
 def _published_at(info: dict) -> datetime | None:
     """Best-effort publish time in UTC."""
     ts = info.get("timestamp") or info.get("release_timestamp")
@@ -73,6 +101,7 @@ def _list_candidate_ids(channel_id: str) -> list[str]:
         "extract_flat": "in_playlist",
         "playlistend": config.SCAN_LIMIT,
         "ignoreerrors": True,
+        **_cookie_opts(),
     }
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         info = ydl.extract_info(url, download=False) or {}
@@ -87,7 +116,7 @@ def _list_candidate_ids(channel_id: str) -> list[str]:
 def _fetch_metadata(video_id: str) -> dict | None:
     """Full metadata for one video — this is where upload_date actually exists."""
     url = f"https://www.youtube.com/watch?v={video_id}"
-    ydl_opts = {"quiet": True, "no_warnings": True, "skip_download": True}
+    ydl_opts = {"quiet": True, "no_warnings": True, "skip_download": True, **_cookie_opts()}
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             return ydl.extract_info(url, download=False)
@@ -158,6 +187,7 @@ def download_video(video: dict) -> Path | None:
         "noprogress": True,  # service logs: no ANSI progress bar spam
         "retries": 5,
         "fragment_retries": 5,
+        **_cookie_opts(),
     }
     if config.FFMPEG_LOCATION:
         ydl_opts["ffmpeg_location"] = config.FFMPEG_LOCATION

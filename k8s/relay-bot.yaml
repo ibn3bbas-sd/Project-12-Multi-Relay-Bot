@@ -2,7 +2,7 @@
 #
 # Before applying:
 #   1. Create the dockerhub-pull Secret (private Docker Hub repo).
-#   2. Create relay-bot-env + relay-bot-files (see docs/deploy-cce.md) — NOT in this file.
+#   2. Create relay-bot-env + relay-bot-files + ytdlp-cookies (see docs/deploy-cce.md) — NOT in this file.
 #
 # No Service / Ingress: the bot only makes outbound calls (Telegram polling, YouTube).
 ---
@@ -68,6 +68,7 @@ spec:
             - { name: DOWNLOAD_DIR, value: /data/downloads }
             - { name: YOUTUBE_TOKEN_FILE, value: /data/token.json }
             - { name: YOUTUBE_CLIENT_SECRET_FILE, value: /secrets/client_secret.json }
+            - { name: YTDLP_COOKIES_FILE, value: /cookies/cookies.txt }   # cloud IP bot-check
             - { name: TZ, value: Asia/Riyadh }
           resources:
             requests: { cpu: 250m, memory: 512Mi }
@@ -79,6 +80,7 @@ spec:
           volumeMounts:
             - { name: data, mountPath: /data }
             - { name: secrets, mountPath: /secrets, readOnly: true }
+            - { name: cookies, mountPath: /cookies, readOnly: true }
             - { name: logs, mountPath: /app/logs }
             - { name: tmp, mountPath: /tmp }
       volumes:
@@ -87,6 +89,11 @@ spec:
         - name: secrets
           secret:
             secretName: relay-bot-files       # token.json + client_secret.json
+        - name: cookies
+          secret:
+            secretName: ytdlp-cookies         # cookies.txt; refresh = replace the Secret
+            defaultMode: 0440               # root:fsGroup 10001, group-readable
+            optional: true                    # pod still starts; downloads hit the bot-check
         - name: logs
           emptyDir: {}                        # stdout is the real log; file is a convenience
         - name: tmp

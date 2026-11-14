@@ -27,3 +27,6 @@ Thumbs.db
 .vscode/
 .idea/
 *.swp
+
+# yt-dlp cookies (a login to a Google account)
+*cookies*.txt

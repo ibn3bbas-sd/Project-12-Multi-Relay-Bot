@@ -53,7 +53,32 @@ kubectl -n relay-bot run ytdlp-test --rm -it --restart=Never \
   "pip -q install yt-dlp && yt-dlp --simulate --print title 'https://www.youtube.com/watch?v=jNQXAC9IVRw'"
 ```
 
-Title printed → good. Bot-check error → you need a cookies file or a proxy before going further.
+Title printed → good. `Sign in to confirm you're not a bot` → you need cookies (next section).
+On the <cluster> cluster (2026-11-14) the channel **listing** worked but every **video** hit the bot-check, and cookies fixed it.
+
+## 2b. YouTube cookies (needed on cloud IPs)
+
+Use a **throwaway Google account**, never the target channel's account or a personal one.
+
+1. Edge or Chrome: install **Get cookies.txt LOCALLY** (Chrome Web Store, id `cclelndahbckbenkjhflpdbgdldlbecc`, open source).
+   Then *Manage extensions → Details → Allow in InPrivate*.
+2. InPrivate window → youtube.com → sign in with the throwaway account → play a video for ~20 s.
+3. Extension → format **Netscape** → **Export** (not *Export All Cookies*).
+4. Close the window **without signing out** (signing out kills the cookies).
+5. Copy to the jumpbox, make it a Secret, and destroy every copy:
+   ```bash
+   scp -i ~/.ssh/<ssh-key> www.youtube.com_cookies.txt ibnabbas@<jumpbox-eip>:~/cookies.txt && rm www.youtube.com_cookies.txt
+   # on the jumpbox
+   kubectl -n relay-bot create secret generic ytdlp-cookies --from-file=cookies.txt=$HOME/cookies.txt \
+     --dry-run=client -o yaml | kubectl apply -f -
+   shred -u ~/cookies.txt
+   ```
+   If the browser saved it under OneDrive, also empty it from the OneDrive recycle bin.
+
+The pod reads `/cookies/cookies.txt` (`YTDLP_COOKIES_FILE`). It works on a copy in `/data/ytdlp-cookies.txt` so that
+YouTube's cookie rotation persists, and it re-copies automatically when the Secret is replaced, with no restart needed.
+
+**Refresh** when downloads start failing with the bot-check again (typically after weeks): repeat steps 2–5.
 
 ## 3. Secrets
 
@@ -67,6 +92,8 @@ kubectl -n relay-bot create secret docker-registry dockerhub-pull \
 
 ```bash
 kubectl -n relay-bot create secret generic relay-bot-env --from-env-file=.env
+
+# ytdlp-cookies: see section 2b
 
 kubectl -n relay-bot create secret generic relay-bot-files \
   --from-file=token.json=config/token.json \

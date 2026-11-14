@@ -29,6 +29,7 @@ CCE · namespace relay-bot
   Secret relay-bot-files       token.json · client_secret.json
   PVC relay-data (EVS 20 Gi)   /data: token.json · processed_videos.json · downloads/
   Secret dockerhub-pull        read-only Docker Hub token
+  Secret ytdlp-cookies         cookies.txt (throwaway Google account) → /cookies
   NetworkPolicy                ingress none · egress 53 + 443
         │ all egress
         ▼
@@ -45,6 +46,7 @@ Bash only. Full runbook: **[docs/deploy-cce.md](docs/deploy-cce.md)**.
    and store it as the repo secret `DOCKERHUB_TOKEN` (`gh secret set DOCKERHUB_TOKEN`).
 2. **Image.** Push to `main` (or run `build-push-dockerhub` by hand). Actions builds `linux/amd64` and pushes `:latest` + `:<sha>`.
 3. **OAuth, once, on a laptop.** The pod cannot open a browser. Produce `config/token.json` locally.
+   **Cookies:** cloud IPs get YouTube's *"confirm you're not a bot"*. Export a throwaway account's cookies into the Secret `ytdlp-cookies` ([runbook 2b](docs/deploy-cce.md#2b-youtube-cookies-needed-on-cloud-ips)).
 4. **Cluster.**
 
 ```bash

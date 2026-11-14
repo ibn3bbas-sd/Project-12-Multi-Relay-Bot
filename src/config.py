@@ -139,6 +139,11 @@ def _ffmpeg_location() -> str:
 
 FFMPEG_LOCATION = _ffmpeg_location()
 
+# Netscape cookies.txt from a throwaway Google account. Datacenter IPs (CCE) get
+# "Sign in to confirm you're not a bot" on every video without it. Blank = none.
+_cookies_raw = _get("YTDLP_COOKIES_FILE", "download.cookies_file", "")
+YTDLP_COOKIES_FILE = _resolve(_cookies_raw, "") if _cookies_raw else None
+
 # ── Upload ───────────────────────────────────────────────────────────────────
 UPLOAD_PRIVACY = str(_get("UPLOAD_PRIVACY", "upload.privacy", "public"))
 UPLOAD_CATEGORY_ID = str(_get("UPLOAD_CATEGORY_ID", "upload.category_id", "22"))
