@@ -15,19 +15,32 @@ Runbook: [docs/deploy-cce.md](docs/deploy-cce.md) · Diagram: [docs/hld/hld-rela
 - [x] Bot code supports `YTDLP_COOKIES_FILE`; the manifest mounts the cookies Secret
 - [x] `processed_videos.json` rebuilt locally (0 of the source's 40 newest videos are already on the target)
 
-## Next: first deploy (fresh setup; the old WSL host is gone)
+## Blocked (2026-11-14): hosting account frozen
+
+The cloud account behind the CCE cluster was **frozen by its partner** ("cannot purchase or use cloud services").
+New EVS disks are refused with `403 Policy doesn't allow to be performed` for every storage class, so the
+PVC stays Pending and the pod cannot start. Deployment `relay-bot` is scaled to 0. All four Secrets
+(`dockerhub-pull`, `relay-bot-env`, `relay-bot-files`, `ytdlp-cookies`) are in place.
+
+- [ ] **Decide:** wait for the account to be unfrozen, or move to another host. The image is on Docker Hub and the
+      manifest is portable; any Kubernetes cluster or small VM works.
+- [ ] When unfrozen: `kubectl -n relay-bot scale deploy/relay-bot --replicas=1`. The PVC binds by itself.
+      Then `kubectl cp` the processed list (60 "start from now" IDs; local copy in `~/relay-setup/data/`) into `/data/`.
+- [ ] Fallback if disks stay unavailable: drop the PVC and keep the processed list in a ConfigMap (code change).
+
+## First deploy checklist (status as of 2026-11-14)
 
 Build everything in `~/relay-setup` inside WSL, **not** in this OneDrive-synced folder.
 Secret values are entered by the user directly (hidden prompts), never pasted into chat.
 
-- [ ] **`.env`**: copy `.env.example`, set `TELEGRAM_BOT_TOKEN` and `TELEGRAM_ALLOWED_CHAT_ID`, with no quotes around values
-- [ ] **`client_secret.json`**: Google Cloud Console → Credentials → Desktop OAuth client → download JSON
-- [ ] **OAuth consent screen is "In production"**: in *Testing*, the refresh token expires every 7 days
-- [ ] **`token.json`**: `APP_ROOT=~/relay-setup python tools/oauth_bootstrap.py`, signed in as the **target channel** account
-- [ ] **Decide catch-up**: with an empty processed list, the first run relays the source's last 7 days (≤5 per run). To start from "now" instead, mark the current source IDs as processed.
-- [ ] Copy `.env`, `config/`, `data/processed_videos.json` to the jumpbox (tar → scp → shred local copy)
-- [ ] On the jumpbox, create Secrets `dockerhub-pull` (read-only token), `relay-bot-env`, `relay-bot-files`
-- [ ] `kubectl apply -f k8s/relay-bot.yaml`; `kubectl -n relay-bot rollout status deploy/relay-bot`
+- [x] **`.env`**: copy `.env.example`, set `TELEGRAM_BOT_TOKEN` and `TELEGRAM_ALLOWED_CHAT_ID`, with no quotes around values
+- [x] **`client_secret.json`**: Google Cloud Console → Credentials → Desktop OAuth client → download JSON
+- [x] **OAuth consent screen is "In production"** (home/privacy pages on GitHub Pages, `gh-pages` branch): in *Testing*, the refresh token expires every 7 days
+- [x] **`token.json`**: `APP_ROOT=~/relay-setup python tools/oauth_bootstrap.py`, signed in as the **target channel** account
+- [x] **Decide catch-up** (chose: start from now, 60 IDs marked): with an empty processed list, the first run relays the source's last 7 days (≤5 per run). To start from "now" instead, mark the current source IDs as processed.
+- [x] Copy `.env`, `config/`, `data/processed_videos.json` to the jumpbox (tar → scp → shred local copy)
+- [x] On the jumpbox, create Secrets `dockerhub-pull` (read-only token), `relay-bot-env`, `relay-bot-files`
+- [ ] `kubectl apply -f k8s/relay-bot.yaml` (applied; blocked on the PVC, see above); `kubectl -n relay-bot rollout status deploy/relay-bot`
 - [ ] `kubectl cp` `processed_videos.json` into `/data/` **before the next 06:00 / 18:00 run**
 - [ ] Shred every copy on the jumpbox. Send `/status` to the bot. Watch the first scheduled run's logs.
 

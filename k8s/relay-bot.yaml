@@ -18,9 +18,12 @@ metadata:
   namespace: relay-bot
   annotations:
     everest.io/disk-volume-type: SAS        # EVS type: SAS | SSD | GPSSD
+    everest.io/set-disk-tags: "true"        # account policy denies untagged EVS creation (403)
 spec:
   accessModes: [ReadWriteOnce]
-  storageClassName: csi-disk                # CCE EVS CSI driver
+  # -topology = WaitForFirstConsumer: the disk is created in the AZ of the node the
+  # pod lands on. Plain csi-disk (Immediate) was refused with 403 on this account.
+  storageClassName: csi-disk-topology
   resources:
     requests:
       storage: 20Gi                         # processed IDs + token + video scratch
