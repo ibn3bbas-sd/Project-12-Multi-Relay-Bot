@@ -141,4 +141,6 @@ Project-12-YouTube-Relay-Bot/
 
 ## License
 
-Internal use only.
+Copyright 2026 Ibn Abbas.
+
+Licensed under the [Apache License, Version 2.0](LICENSE). See [NOTICE](NOTICE).
