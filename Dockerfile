@@ -1,3 +1,4 @@
+# DEPRECATED — the supported host is Windows Server (deploy/windows/). Kept for reference.
 FROM python:3.12-slim
 
 WORKDIR /app

@@ -1,3 +1,6 @@
+# Defaults for the relay. Anything here can be overridden by .env / environment
+# variables — see .env.example for the matching variable names.
+
 source_channel:
   id: "UC8semOV-MqT3enT4M0mS1ow"
   url: "https://youtube.com/channel/UC8semOV-MqT3enT4M0mS1ow"
@@ -5,6 +8,10 @@ source_channel:
 target_channel:
   id: "UCCKQxDfs0eIVsLmnc4JVtpQ"
   url: "https://youtube.com/@3geedt-aslaf-as7ab-al7adeeth"
+
+youtube:
+  client_secret_file: "config/client_secret.json"
+  token_file: "config/token.json"
 
 scheduler:
   morning: "06:00"
@@ -16,18 +23,31 @@ download:
   quality: "best[height<=1080]"
   max_age_days: 7
   keep_after_upload: false
+  # How many of the channel's newest uploads to list each scan.
+  scan_limit: 20
+  # Cap per run. Each upload costs ~1600 quota units; the default daily quota is
+  # 10,000, so more than 6 uploads/day will fail regardless of what you set here.
+  max_uploads_per_run: 5
+  # Leave blank to use ffmpeg from PATH.
+  ffmpeg_location: ""
 
 upload:
-  privacy: "public"
-  category_id: "22"       # People & Blogs — change if needed
-  keep_original_title: true
-  keep_original_description: true
+  privacy: "public"          # public | unlisted | private
+  category_id: "22"          # 22 = People & Blogs
   add_source_credit: true
   source_credit_template: "\n\n---\nOriginal video by: {channel_name}\n{video_url}"
+  max_retries: 5
 
 gemini:
   enabled: false
-  model: "gemini-1.5-flash"   # free tier
+  model: "gemini-1.5-flash"
   translate_title: false
   translate_description: false
   target_language: "ar"
+
+runtime:
+  data_dir: "data"
+  log_dir: "logs"
+  log_level: "INFO"
+  log_max_bytes: 10485760    # 10 MB per file
+  log_backup_count: 5

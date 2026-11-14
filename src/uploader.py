@@ -1,10 +1,18 @@
-import logging
-import os
+"""YouTube Data API v3 upload with resumable transfer and quota-aware retries."""
 
+from __future__ import annotations
+
+import logging
+import random
+import time
+from pathlib import Path
+
+import httplib2
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
+from googleapiclient.errors import HttpError
 from googleapiclient.http import MediaFileUpload
 
 from . import config
@@ -13,64 +21,129 @@ logger = logging.getLogger(__name__)
 
 SCOPES = ["https://www.googleapis.com/auth/youtube.upload"]
 
+# Transient conditions worth retrying with backoff.
+RETRIABLE_STATUS = {500, 502, 503, 504}
+RETRIABLE_EXCEPTIONS = (httplib2.HttpLib2Error, IOError, ConnectionError, TimeoutError)
+
+# Title/description hard limits enforced by the API.
+MAX_TITLE = 100
+MAX_DESCRIPTION = 5000
+
+
+class QuotaExceeded(RuntimeError):
+    """Daily YouTube API quota is spent — stop the run, do not burn retries."""
+
 
 def _get_credentials() -> Credentials:
-    creds = None
+    """Load, refresh, or interactively mint OAuth credentials.
 
-    if os.path.exists(config.YOUTUBE_TOKEN_FILE):
-        creds = Credentials.from_authorized_user_file(config.YOUTUBE_TOKEN_FILE, SCOPES)
+    The interactive branch opens a browser and only works in a desktop session
+    (i.e. run it once over RDP on the jumpbox, not from the Windows service).
+    """
+    creds: Credentials | None = None
 
-    if not creds or not creds.valid:
-        if creds and creds.expired and creds.refresh_token:
-            creds.refresh(Request())
-        else:
-            flow = InstalledAppFlow.from_client_secrets_file(
-                config.YOUTUBE_CLIENT_SECRET_FILE, SCOPES
+    if config.YOUTUBE_TOKEN_FILE.exists():
+        creds = Credentials.from_authorized_user_file(str(config.YOUTUBE_TOKEN_FILE), SCOPES)
+
+    if creds and creds.valid:
+        return creds
+
+    if creds and creds.expired and creds.refresh_token:
+        logger.info("Refreshing expired YouTube OAuth token")
+        creds.refresh(Request())
+    else:
+        if not config.YOUTUBE_CLIENT_SECRET_FILE.exists():
+            raise FileNotFoundError(
+                f"OAuth client secret not found at {config.YOUTUBE_CLIENT_SECRET_FILE}. "
+                "Download it from Google Cloud Console (OAuth 2.0 Client ID, Desktop app)."
             )
-            creds = flow.run_local_server(port=0)
+        logger.info("No valid token — starting interactive OAuth consent flow")
+        flow = InstalledAppFlow.from_client_secrets_file(
+            str(config.YOUTUBE_CLIENT_SECRET_FILE), SCOPES
+        )
+        creds = flow.run_local_server(port=0)
 
-        os.makedirs(os.path.dirname(config.YOUTUBE_TOKEN_FILE), exist_ok=True)
-        with open(config.YOUTUBE_TOKEN_FILE, "w") as f:
-            f.write(creds.to_json())
-
+    config.YOUTUBE_TOKEN_FILE.parent.mkdir(parents=True, exist_ok=True)
+    config.YOUTUBE_TOKEN_FILE.write_text(creds.to_json(), encoding="utf-8")
+    logger.info("Saved OAuth token to %s", config.YOUTUBE_TOKEN_FILE)
     return creds
 
 
-def upload_video(file_path: str, video_meta: dict) -> str | None:
-    """Upload video to target channel. Returns YouTube video ID or None on failure."""
-    creds = _get_credentials()
-    youtube = build("youtube", "v3", credentials=creds)
+def _build_description(video_meta: dict) -> str:
+    description = video_meta.get("description") or ""
+    if config.ADD_SOURCE_CREDIT:
+        description += config.SOURCE_CREDIT_TEMPLATE.format(
+            channel_name=video_meta.get("channel_name", ""),
+            video_url=video_meta.get("url", ""),
+        )
+    return description[:MAX_DESCRIPTION]
 
-    source_credit = (
-        f"\n\n---\nOriginal video by: {video_meta.get('channel_name', '')}\n"
-        f"{video_meta.get('url', '')}"
-    )
+
+def _is_quota_error(error: HttpError) -> bool:
+    if error.resp.status != 403:
+        return False
+    body = (error.content or b"").decode("utf-8", errors="replace")
+    return "quotaExceeded" in body or "uploadLimitExceeded" in body
+
+
+def upload_video(file_path: Path, video_meta: dict) -> str | None:
+    """Upload one video. Returns the new YouTube video ID, or None on failure.
+
+    Raises QuotaExceeded so the caller can abort the whole run — retrying after
+    a quota rejection just wastes time; the quota resets at midnight PT.
+    """
+    creds = _get_credentials()
+    youtube = build("youtube", "v3", credentials=creds, cache_discovery=False)
 
     body = {
         "snippet": {
-            "title": video_meta["title"],
-            "description": (video_meta.get("description") or "") + source_credit,
-            "categoryId": "22",
+            "title": (video_meta.get("title") or "Untitled")[:MAX_TITLE],
+            "description": _build_description(video_meta),
+            "categoryId": config.UPLOAD_CATEGORY_ID,
         },
         "status": {
-            "privacyStatus": "public",
+            "privacyStatus": config.UPLOAD_PRIVACY,
+            "selfDeclaredMadeForKids": False,
         },
     }
 
-    media = MediaFileUpload(file_path, chunksize=-1, resumable=True, mimetype="video/mp4")
+    media = MediaFileUpload(
+        str(file_path), chunksize=8 * 1024 * 1024, resumable=True, mimetype="video/*"
+    )
+    request = youtube.videos().insert(part="snippet,status", body=body, media_body=media)
 
-    try:
-        request = youtube.videos().insert(part="snippet,status", body=body, media_body=media)
-        response = None
-        while response is None:
+    response = None
+    attempt = 0
+    last_logged_pct = -10
+
+    while response is None:
+        try:
             status, response = request.next_chunk()
-            if status:
-                logger.info("Upload progress: %d%%", int(status.progress() * 100))
+            if status and int(status.progress() * 100) - last_logged_pct >= 10:
+                last_logged_pct = int(status.progress() * 100)
+                logger.info("Upload %s: %d%%", video_meta.get("id", "?"), last_logged_pct)
 
-        video_id = response["id"]
-        logger.info("Uploaded '%s' → https://youtu.be/%s", video_meta["title"], video_id)
-        return video_id
+        except HttpError as exc:
+            if _is_quota_error(exc):
+                logger.error("YouTube API quota exceeded — aborting this run")
+                raise QuotaExceeded(str(exc)) from exc
+            if exc.resp.status not in RETRIABLE_STATUS:
+                logger.error("Upload failed for '%s': %s", video_meta.get("title"), exc)
+                return None
+            attempt += 1
 
-    except Exception as e:
-        logger.error("Upload failed for '%s': %s", video_meta["title"], e)
-        return None
+        except RETRIABLE_EXCEPTIONS as exc:
+            logger.warning("Transient upload error (%s) — retrying", exc)
+            attempt += 1
+
+        if response is None and attempt:
+            if attempt > config.UPLOAD_MAX_RETRIES:
+                logger.error("Giving up on '%s' after %d retries", video_meta.get("title"), attempt - 1)
+                return None
+            sleep_for = min(2**attempt + random.random(), 60)
+            logger.info("Retry %d/%d in %.1fs", attempt, config.UPLOAD_MAX_RETRIES, sleep_for)
+            time.sleep(sleep_for)
+
+    video_id = response.get("id")
+    logger.info("Uploaded '%s' → https://youtu.be/%s", video_meta.get("title"), video_id)
+    return video_id
