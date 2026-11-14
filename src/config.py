@@ -22,5 +22,5 @@ VIDEO_QUALITY = os.getenv("VIDEO_QUALITY", "best[height<=1080]")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 GEMINI_ENABLED = os.getenv("GEMINI_ENABLED", "false").lower() == "true"
 
-DATA_DIR = "data"
+DATA_DIR = os.getenv("DATA_DIR", "data")
 PROCESSED_FILE = f"{DATA_DIR}/processed_videos.json"

@@ -1,6 +1,8 @@
 import logging
 import os
 
+os.makedirs("logs", exist_ok=True)  # must exist before FileHandler below
+
 from .scheduler import register_jobs
 from .telegram_bot import build_app
 

@@ -1,7 +1,7 @@
 # YouTube Relay Bot — Claude Code Context
 
 ## What this project does
-Downloads new videos from a source YouTube channel and re-uploads them to the owner's channel. Runs on OCI VM (me-jeddah-1) in Docker Compose with a Telegram bot as the control interface.
+Downloads new videos from a source YouTube channel and re-uploads them to the owner's channel. Runs on Huawei Cloud CCE (namespace `relay-bot`) with a Telegram bot as the control interface.
 
 ## Key files
 - `src/pipeline.py` — orchestrates the full download → upload flow
@@ -12,7 +12,7 @@ Downloads new videos from a source YouTube channel and re-uploads them to the ow
 - `src/config.py` — all config read from `.env`
 
 ## Deploy target
-OCI VM, me-jeddah-1, `docker compose up -d`. First run requires interactive OAuth for YouTube.
+Huawei Cloud CCE: `k8s/relay-bot.yaml`, image built by `.github/workflows/build-push-swr.yml` into SWR. Runbook: `docs/deploy-cce.md`. Keep `replicas: 1` + `strategy: Recreate` (two pods = double uploads). YouTube OAuth is done once locally; token is seeded onto the EVS volume. `docker-compose.yml` is for local dev only.
 
 ## Secrets — never commit
 - `.env` (all tokens)
