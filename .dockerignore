@@ -1,0 +1,14 @@
+.git
+.github
+.env
+.venv
+venv
+__pycache__
+*.pyc
+config/token.json
+config/client_secret*.json
+downloads
+logs
+data
+k8s
+docs

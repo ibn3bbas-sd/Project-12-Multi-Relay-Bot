@@ -1,0 +1,110 @@
+# YouTube Relay Bot on Huawei Cloud CCE — one file, `kubectl apply -f k8s/relay-bot.yaml`
+#
+# Before applying:
+#   1. Replace the image path below (REGION / ORG).
+#   2. Create the Secret (see docs/deploy-cce.md) — it is NOT in this file.
+#
+# No Service / Ingress: the bot only makes outbound calls (Telegram polling, YouTube).
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: relay-bot
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: relay-data
+  namespace: relay-bot
+  annotations:
+    everest.io/disk-volume-type: SAS        # EVS type: SAS | SSD | GPSSD
+spec:
+  accessModes: [ReadWriteOnce]
+  storageClassName: csi-disk                # CCE EVS CSI driver
+  resources:
+    requests:
+      storage: 20Gi                         # processed IDs + token + video scratch
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: relay-bot
+  namespace: relay-bot
+  labels: { app: relay-bot }
+spec:
+  replicas: 1                               # never >1: two pods = double uploads
+  strategy:
+    type: Recreate                          # no overlap during rollout; EVS is RWO anyway
+  selector:
+    matchLabels: { app: relay-bot }
+  template:
+    metadata:
+      labels: { app: relay-bot }
+    spec:
+      imagePullSecrets:
+        - name: default-secret              # CCE auto-creates this for SWR in every namespace
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001                      # makes the EVS volume writable
+      initContainers:
+        # Seed the YouTube OAuth token onto the volume once. After that the app
+        # refreshes and rewrites it there; the Secret copy is only a bootstrap.
+        - name: seed-token
+          image: busybox:1.36
+          command: ["sh", "-c", "[ -f /data/token.json ] || cp /secrets/token.json /data/token.json; mkdir -p /data/downloads"]
+          volumeMounts:
+            - { name: data, mountPath: /data }
+            - { name: secrets, mountPath: /secrets, readOnly: true }
+      containers:
+        - name: bot
+          image: swr.REGION.myhuaweicloud.com/ORG/youtube-relay-bot:latest
+          imagePullPolicy: Always
+          envFrom:
+            - secretRef: { name: relay-bot-env }   # TELEGRAM_*, GEMINI_API_KEY ...
+          env:
+            - { name: DATA_DIR, value: /data }
+            - { name: DOWNLOAD_DIR, value: /data/downloads }
+            - { name: YOUTUBE_TOKEN_FILE, value: /data/token.json }
+            - { name: YOUTUBE_CLIENT_SECRET_FILE, value: /secrets/client_secret.json }
+            - { name: TZ, value: Asia/Riyadh }
+          resources:
+            requests: { cpu: 250m, memory: 512Mi }
+            limits:   { cpu: "1",  memory: 1Gi }      # ffmpeg merge spikes
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: { drop: [ALL] }
+          volumeMounts:
+            - { name: data, mountPath: /data }
+            - { name: secrets, mountPath: /secrets, readOnly: true }
+            - { name: logs, mountPath: /app/logs }
+            - { name: tmp, mountPath: /tmp }
+      volumes:
+        - name: data
+          persistentVolumeClaim: { claimName: relay-data }
+        - name: secrets
+          secret:
+            secretName: relay-bot-files       # token.json + client_secret.json
+        - name: logs
+          emptyDir: {}                        # stdout is the real log; file is a convenience
+        - name: tmp
+          emptyDir: {}
+---
+# Nothing should ever connect to the bot. Egress: DNS + HTTPS only.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: relay-bot
+  namespace: relay-bot
+spec:
+  podSelector: { matchLabels: { app: relay-bot } }
+  policyTypes: [Ingress, Egress]
+  ingress: []
+  egress:
+    - ports:
+        - { protocol: UDP, port: 53 }
+        - { protocol: TCP, port: 53 }
+    - ports:
+        - { protocol: TCP, port: 443 }
