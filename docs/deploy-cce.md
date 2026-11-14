@@ -3,8 +3,8 @@
 Region **me-east-1 (Riyadh)**. Diagram: [hld/hld-relay-bot-cce.svg](hld/hld-relay-bot-cce.svg).
 
 ```
-GitHub (main) ──Actions──▶ SWR swr.me-east-1.myhuaweicloud.com/<org>/youtube-relay-bot
-                                │ pull (default-secret)
+GitHub (main) ──Actions──▶ Docker Hub docker.io/ibn3bbas/youtube-relay-bot (private)
+                                │ pull via NAT (Secret dockerhub-pull)
                                 ▼
                      CCE ns relay-bot
                        └─ Deployment (1 pod, Recreate)
@@ -19,15 +19,15 @@ No Service, no Ingress, no LB. The bot only dials out.
 ## 0. Prereqs
 
 - CCE node subnet has a **NAT Gateway (SNAT rule) + EIP**, otherwise the pod has no internet.
-- GitHub repo **secrets** `SWR_REGISTRY_USER` (`me-east-1@<AK>`) and `SWR_REGISTRY_PASS` (long-term login key), and repo **variable** `SWR_ORG`.
-  These match `<company-org>/<infra-repo>`. GitHub never reveals secret values, so paste them yourself:
+- Docker Hub repo `ibn3bbas/youtube-relay-bot` created as **private** (a repo auto-created by a push follows the account default, usually public).
+- Two Docker Hub personal access tokens (*Account settings → Personal access tokens*):
+  **Read & Write** for GitHub Actions, **Read-only** for the cluster.
+- GitHub repo secret `DOCKERHUB_TOKEN` (the Read & Write token). Username defaults to `ibn3bbas` (override with variable `DOCKERHUB_USERNAME`):
   ```bash
-  gh secret set SWR_REGISTRY_USER          # prompts; value stays out of shell history
-  gh secret set SWR_REGISTRY_PASS
-  gh variable set SWR_ORG --body <org>
-  gh workflow run build-push-swr --ref main && gh run watch
+  gh secret set DOCKERHUB_TOKEN            # prompts; value stays out of shell history
+  gh workflow run build-push-dockerhub --ref main && gh run watch
   ```
-  Set these **before** merging to main, or the first build fails with `Username and password required`.
+  Set it **before** merging to main, or the build fails at the settings check.
 - `kubectl` pointed at the cluster (CCE console → cluster → kubectl → download kubeconfig).
 
 ## 1. Get the YouTube OAuth token once, on your laptop
@@ -58,6 +58,14 @@ Title printed → good. Bot-check error → you need a cookies file or a proxy b
 ## 3. Secrets
 
 ```bash
+# image pull — the read-only token
+kubectl -n relay-bot create secret docker-registry dockerhub-pull \
+  --docker-server=https://index.docker.io/v1/ \
+  --docker-username=ibn3bbas \
+  --docker-password="$(read -rsp 'Docker Hub read-only token: ' t; echo "$t")"
+```
+
+```bash
 kubectl -n relay-bot create secret generic relay-bot-env --from-env-file=.env
 
 kubectl -n relay-bot create secret generic relay-bot-files \
@@ -71,9 +79,6 @@ the first time, and the app keeps the refreshed copy there.
 ## 4. Deploy
 
 ```bash
-# set your image path once
-sed -i 's#myhuaweicloud.com/ORG/#myhuaweicloud.com/<org>/#' k8s/relay-bot.yaml
-
 kubectl apply -f k8s/relay-bot.yaml
 kubectl -n relay-bot logs -f deploy/relay-bot
 ```

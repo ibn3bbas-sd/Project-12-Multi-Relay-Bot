@@ -40,8 +40,8 @@
 <text x="82" y="336" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.8" font-weight="400" fill="#1f2328" text-anchor="start" letter-spacing="0">OAuth done once on a laptop;</text>
 <text x="82" y="350" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.8" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">token seeded through a Secret</text>
 <circle cx="70" cy="364" r="2.8" fill="#0969da"/>
-<text x="82" y="368" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.8" font-weight="400" fill="#1f2328" text-anchor="start" letter-spacing="0">Image: GitHub Actions → SWR,</text>
-<text x="82" y="382" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.8" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">linux/amd64, :latest + :&lt;sha&gt;</text>
+<text x="82" y="368" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.8" font-weight="400" fill="#1f2328" text-anchor="start" letter-spacing="0">Image: GitHub Actions → Docker</text>
+<text x="82" y="382" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.8" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">Hub (private), linux/amd64</text>
 <circle cx="70" cy="396" r="2.8" fill="#0969da"/>
 <text x="82" y="400" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.8" font-weight="400" fill="#1f2328" text-anchor="start" letter-spacing="0">NetworkPolicy: deny ingress,</text>
 <text x="82" y="414" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.8" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">egress DNS 53 + HTTPS 443 only</text>
@@ -50,7 +50,7 @@
 <text x="82" y="446" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.8" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">all capabilities dropped</text>
 <circle cx="70" cy="460" r="2.8" fill="#0969da"/>
 <text x="82" y="464" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.8" font-weight="400" fill="#1f2328" text-anchor="start" letter-spacing="0">Secrets never in git or image;</text>
-<text x="82" y="478" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.8" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">SWR AK only in GitHub secrets</text>
+<text x="82" y="478" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.8" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">Hub token only in GitHub secrets</text>
 <circle cx="70" cy="492" r="2.8" fill="#0969da"/>
 <text x="82" y="496" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.8" font-weight="400" fill="#1f2328" text-anchor="start" letter-spacing="0">Next: Arabic titles via Gemini</text>
 <text x="82" y="510" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.8" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">(config keys exist, not wired)</text>
@@ -93,10 +93,14 @@
 <text x="1166" y="210" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.3" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">with the YouTube API. Nothing connects</text>
 <text x="1166" y="226" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.3" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">in: Telegram is polled, every call</text>
 <text x="1166" y="242" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.3" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">leaves through the NAT Gateway EIP.</text>
-<rect x="444" y="140" width="52" height="52" rx="11.44" ry="11.44" fill="#8250df" stroke="#8250df" stroke-width="1"/>
-<g transform="translate(453.88,149.88) scale(1.343)" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="5" r="2.2"/><circle cx="6" cy="19" r="2.2"/><circle cx="18" cy="7" r="2.2"/><path d="M6 7.2v9.6M18 9.2c0 4.5-6 4-11 8"/></g>
-<text x="470" y="214" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="14.5" font-weight="700" fill="#1f2328" text-anchor="middle" letter-spacing="0">GitHub · main</text>
-<text x="470" y="232" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.8" font-weight="400" fill="#57606a" text-anchor="middle" letter-spacing="0">Actions build-push-swr</text>
+<rect x="344" y="140" width="52" height="52" rx="11.44" ry="11.44" fill="#8250df" stroke="#8250df" stroke-width="1"/>
+<g transform="translate(353.88,149.88) scale(1.343)" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="5" r="2.2"/><circle cx="6" cy="19" r="2.2"/><circle cx="18" cy="7" r="2.2"/><path d="M6 7.2v9.6M18 9.2c0 4.5-6 4-11 8"/></g>
+<text x="370" y="214" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="14.5" font-weight="700" fill="#1f2328" text-anchor="middle" letter-spacing="0">GitHub Actions</text>
+<text x="370" y="232" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.8" font-weight="400" fill="#57606a" text-anchor="middle" letter-spacing="0">push to main</text>
+<rect x="474" y="140" width="52" height="52" rx="11.44" ry="11.44" fill="#8250df" stroke="#8250df" stroke-width="1"/>
+<g transform="translate(483.88,149.88) scale(1.343)" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7.5 12 3l9 4.5v9L12 21l-9-4.5z"/><path d="M3 7.5 12 12l9-4.5M12 12v9"/></g>
+<text x="500" y="214" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="14.5" font-weight="700" fill="#1f2328" text-anchor="middle" letter-spacing="0">Docker Hub</text>
+<text x="500" y="232" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.8" font-weight="400" fill="#57606a" text-anchor="middle" letter-spacing="0">private repo</text>
 <rect x="604" y="140" width="52" height="52" rx="11.44" ry="11.44" fill="#229ed9" stroke="#229ed9" stroke-width="1"/>
 <g transform="translate(613.88,149.88) scale(1.343)" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/></g>
 <text x="630" y="214" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="14.5" font-weight="700" fill="#1f2328" text-anchor="middle" letter-spacing="0">Owner</text>
@@ -116,18 +120,9 @@
 <path d="M658 166 L742 166" fill="none" stroke="#229ed9" stroke-width="1.8" marker-end="url(#ah-tg-light)" marker-start="url(#ah-tg-light)"/>
 <text x="700" y="158" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="10.5" font-weight="600" fill="#229ed9" text-anchor="middle" letter-spacing="0">/run /status</text>
 <rect x="320" y="300" width="1112" height="722" rx="14" ry="14" fill="none" stroke="#cf222e" stroke-width="1.8" stroke-dasharray="9 7"/>
-<rect x="360" y="340" width="220" height="62" rx="10" ry="10" fill="#8250df" fill-opacity="0.07" stroke="#8250df" stroke-width="1.6"/>
-<rect x="360" y="340" width="220" height="62" rx="10" ry="10" fill="none" stroke="#8250df" stroke-width="1.6"/>
-<rect x="374" y="354" width="34" height="34" rx="7.48" ry="7.48" fill="#8250df" stroke="#8250df" stroke-width="1"/>
-<g transform="translate(380.46,360.46) scale(0.878)" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7.5 12 3l9 4.5v9L12 21l-9-4.5z"/><path d="M3 7.5 12 12l9-4.5M12 12v9"/></g>
-<text x="420" y="370" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="14.5" font-weight="700" fill="#1f2328" text-anchor="start" letter-spacing="0">SWR</text>
-<text x="420" y="387" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.5" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">org/youtube-relay-bot</text>
-<rect x="1150" y="340" width="250" height="62" rx="10" ry="10" fill="#d4600a" fill-opacity="0.07" stroke="#d4600a" stroke-width="1.6"/>
-<rect x="1150" y="340" width="250" height="62" rx="10" ry="10" fill="none" stroke="#d4600a" stroke-width="1.6"/>
-<rect x="1164" y="354" width="34" height="34" rx="7.48" ry="7.48" fill="#d4600a" stroke="#d4600a" stroke-width="1"/>
-<g transform="translate(1170.46,360.46) scale(0.878)" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="7.5" cy="15.5" r="4"/><path d="M10.5 12.5 20 3M16.5 6.5l3 3"/></g>
-<text x="1210" y="370" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="14.5" font-weight="700" fill="#1f2328" text-anchor="start" letter-spacing="0">IAM · AK + login key</text>
-<text x="1210" y="387" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.5" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">SWR push creds (GitHub only)</text>
+<text x="360" y="352" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.3" font-weight="400" fill="#8c959f" text-anchor="start" letter-spacing="0">No Huawei registry: the image lives in</text>
+<text x="360" y="367" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.3" font-weight="400" fill="#8c959f" text-anchor="start" letter-spacing="0">Docker Hub ibn3bbas/youtube-relay-bot</text>
+<text x="360" y="382" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.3" font-weight="400" fill="#8c959f" text-anchor="start" letter-spacing="0">and is pulled through the NAT like any call.</text>
 <rect x="344" y="424" width="1064" height="584" rx="12" ry="12" fill="none" stroke="#d4600a" stroke-width="1.6" stroke-dasharray="7 6"/>
 <rect x="368" y="466" width="1016" height="404" rx="12" ry="12" fill="none" stroke="#0969da" stroke-width="1.5" stroke-dasharray="4 5"/>
 <rect x="392" y="506" width="968" height="352" rx="12" ry="12" fill="#0969da" fill-opacity="0.03" stroke="#8250df" stroke-width="1.4" stroke-dasharray="2 4"/>
@@ -198,6 +193,12 @@
 <text x="1210" y="687" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.5" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">no Ingress · no ELB</text>
 <text x="1166" y="726" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="10.8" font-weight="400" fill="#8c959f" text-anchor="start" letter-spacing="0">nothing listens; Telegram</text>
 <text x="1166" y="741" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="10.8" font-weight="400" fill="#8c959f" text-anchor="start" letter-spacing="0">is polled, not webhooked</text>
+<rect x="1150" y="770" width="194" height="62" rx="10" ry="10" fill="#8250df" fill-opacity="0.07" stroke="#8250df" stroke-width="1.6"/>
+<rect x="1150" y="770" width="194" height="62" rx="10" ry="10" fill="none" stroke="#8250df" stroke-width="1.6"/>
+<rect x="1164" y="784" width="34" height="34" rx="7.48" ry="7.48" fill="#8250df" stroke="#8250df" stroke-width="1"/>
+<g transform="translate(1170.46,790.46) scale(0.878)" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7.5a4 4 0 0 1 8 0V11"/></g>
+<text x="1210" y="800" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="14.5" font-weight="700" fill="#1f2328" text-anchor="start" letter-spacing="0">dockerhub-pull</text>
+<text x="1210" y="817" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.5" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">Secret · read-only token</text>
 <text x="392" y="918" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12" font-weight="700" fill="#8c959f" text-anchor="start" letter-spacing="1.2">GATEWAYS</text>
 <text x="392" y="936" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11" font-weight="400" fill="#8c959f" text-anchor="start" letter-spacing="0">egress path</text>
 <rect x="520" y="896" width="260" height="62" rx="10" ry="10" fill="#6e7781" fill-opacity="0.07" stroke="#6e7781" stroke-width="1.6"/>
@@ -218,11 +219,10 @@
 <g transform="translate(1170.46,916.46) scale(0.878)" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="4" ry="9"/><path d="M3 12h18"/></g>
 <text x="1210" y="926" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="14.5" font-weight="700" fill="#1f2328" text-anchor="start" letter-spacing="0">EIP</text>
 <text x="1210" y="943" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.5" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">bound to the NAT rule</text>
-<path d="M470 244 L470 340" fill="none" stroke="#8250df" stroke-width="1.8" marker-end="url(#ah-purple-light)"/>
-<text x="478" y="282" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11" font-weight="700" fill="#8250df" text-anchor="start" letter-spacing="0">docker push</text>
-<path d="M580 371 L684 371 L684 612 L700 612" fill="none" stroke="#8250df" stroke-width="1.8" stroke-dasharray="6 5" marker-end="url(#ah-purple-light)"/>
-<text x="690" y="514" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11" font-weight="700" fill="#8250df" text-anchor="start" letter-spacing="0">image pull</text>
-<text x="690" y="528" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="10.5" font-weight="400" fill="#8250df" text-anchor="start" letter-spacing="0">default-secret</text>
+<path d="M398 166 L472 166" fill="none" stroke="#8250df" stroke-width="1.8" marker-end="url(#ah-purple-light)"/>
+<text x="435" y="158" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="10.5" font-weight="600" fill="#8250df" text-anchor="middle" letter-spacing="0">push</text>
+<path d="M720 540 L720 262 L500 262 L500 244" fill="none" stroke="#8250df" stroke-width="1.8" stroke-dasharray="6 5" marker-end="url(#ah-purple-light)"/>
+<text x="560" y="256" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11" font-weight="700" fill="#8250df" text-anchor="start" letter-spacing="0">image pull 443</text>
 <path d="M770 540 L770 244" fill="none" stroke="#229ed9" stroke-width="1.8" marker-end="url(#ah-tg-light)"/>
 <text x="776" y="282" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11" font-weight="700" fill="#229ed9" text-anchor="start" letter-spacing="0">long-poll 443</text>
 <path d="M910 540 L910 244" fill="none" stroke="#e5252a" stroke-width="1.8" marker-end="url(#ah-yt-light)"/>
@@ -257,69 +257,66 @@
 <text x="1504" y="228" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="13.5" font-weight="700" fill="#1f2328" text-anchor="start" letter-spacing="0">CCE</text>
 <text x="1580" y="228" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">Cloud Container Engine (Kubernetes)</text>
 <rect x="1490" y="239" width="3" height="15" fill="#0969da"/>
-<text x="1504" y="251" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="13.5" font-weight="700" fill="#1f2328" text-anchor="start" letter-spacing="0">SWR</text>
-<text x="1580" y="251" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">SoftWare Repository for Container</text>
+<text x="1504" y="251" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="13.5" font-weight="700" fill="#1f2328" text-anchor="start" letter-spacing="0">EVS</text>
+<text x="1580" y="251" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">Elastic Volume Service (block disk)</text>
 <rect x="1490" y="262" width="3" height="15" fill="#0969da"/>
-<text x="1504" y="274" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="13.5" font-weight="700" fill="#1f2328" text-anchor="start" letter-spacing="0">EVS</text>
-<text x="1580" y="274" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">Elastic Volume Service (block disk)</text>
+<text x="1504" y="274" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="13.5" font-weight="700" fill="#1f2328" text-anchor="start" letter-spacing="0">VPC</text>
+<text x="1580" y="274" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">Virtual Private Cloud</text>
 <rect x="1490" y="285" width="3" height="15" fill="#0969da"/>
-<text x="1504" y="297" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="13.5" font-weight="700" fill="#1f2328" text-anchor="start" letter-spacing="0">VPC</text>
-<text x="1580" y="297" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">Virtual Private Cloud</text>
+<text x="1504" y="297" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="13.5" font-weight="700" fill="#1f2328" text-anchor="start" letter-spacing="0">NAT</text>
+<text x="1580" y="297" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">Network Address Translation</text>
 <rect x="1490" y="308" width="3" height="15" fill="#0969da"/>
-<text x="1504" y="320" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="13.5" font-weight="700" fill="#1f2328" text-anchor="start" letter-spacing="0">NAT</text>
-<text x="1580" y="320" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">Network Address Translation</text>
+<text x="1504" y="320" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="13.5" font-weight="700" fill="#1f2328" text-anchor="start" letter-spacing="0">SNAT</text>
+<text x="1580" y="320" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">Source NAT (outbound only)</text>
 <rect x="1490" y="331" width="3" height="15" fill="#0969da"/>
-<text x="1504" y="343" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="13.5" font-weight="700" fill="#1f2328" text-anchor="start" letter-spacing="0">SNAT</text>
-<text x="1580" y="343" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">Source NAT (outbound only)</text>
+<text x="1504" y="343" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="13.5" font-weight="700" fill="#1f2328" text-anchor="start" letter-spacing="0">EIP</text>
+<text x="1580" y="343" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">Elastic IP</text>
 <rect x="1490" y="354" width="3" height="15" fill="#0969da"/>
-<text x="1504" y="366" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="13.5" font-weight="700" fill="#1f2328" text-anchor="start" letter-spacing="0">EIP</text>
-<text x="1580" y="366" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">Elastic IP</text>
-<rect x="1490" y="377" width="3" height="15" fill="#0969da"/>
-<text x="1504" y="389" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="13.5" font-weight="700" fill="#1f2328" text-anchor="start" letter-spacing="0">IAM</text>
-<text x="1580" y="389" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">Identity &amp; Access Management</text>
-<rect x="1490" y="400" width="3" height="15" fill="#0969da"/>
-<text x="1504" y="412" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="13.5" font-weight="700" fill="#1f2328" text-anchor="start" letter-spacing="0">AK</text>
-<text x="1580" y="412" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">Access Key (paired with a login key)</text>
-<text x="1490" y="449" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12" font-weight="700" fill="#8c959f" text-anchor="start" letter-spacing="1.2">KUBERNETES</text>
+<text x="1504" y="366" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="13.5" font-weight="700" fill="#1f2328" text-anchor="start" letter-spacing="0">ECS</text>
+<text x="1580" y="366" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">Elastic Cloud Server (CCE node)</text>
+<text x="1490" y="403" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12" font-weight="700" fill="#8c959f" text-anchor="start" letter-spacing="1.2">KUBERNETES</text>
+<rect x="1490" y="415" width="3" height="15" fill="#8250df"/>
+<text x="1504" y="427" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="13.5" font-weight="700" fill="#1f2328" text-anchor="start" letter-spacing="0">ns</text>
+<text x="1580" y="427" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">Namespace</text>
+<rect x="1490" y="438" width="3" height="15" fill="#8250df"/>
+<text x="1504" y="450" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="13.5" font-weight="700" fill="#1f2328" text-anchor="start" letter-spacing="0">PVC</text>
+<text x="1580" y="450" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">PersistentVolumeClaim</text>
 <rect x="1490" y="461" width="3" height="15" fill="#8250df"/>
-<text x="1504" y="473" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="13.5" font-weight="700" fill="#1f2328" text-anchor="start" letter-spacing="0">ns</text>
-<text x="1580" y="473" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">Namespace</text>
+<text x="1504" y="473" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="13.5" font-weight="700" fill="#1f2328" text-anchor="start" letter-spacing="0">RWO</text>
+<text x="1580" y="473" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">ReadWriteOnce — one node mounts it</text>
 <rect x="1490" y="484" width="3" height="15" fill="#8250df"/>
-<text x="1504" y="496" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="13.5" font-weight="700" fill="#1f2328" text-anchor="start" letter-spacing="0">PVC</text>
-<text x="1580" y="496" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">PersistentVolumeClaim</text>
-<rect x="1490" y="507" width="3" height="15" fill="#8250df"/>
-<text x="1504" y="519" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="13.5" font-weight="700" fill="#1f2328" text-anchor="start" letter-spacing="0">RWO</text>
-<text x="1580" y="519" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">ReadWriteOnce — one node mounts it</text>
-<rect x="1490" y="530" width="3" height="15" fill="#8250df"/>
-<text x="1504" y="542" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="13.5" font-weight="700" fill="#1f2328" text-anchor="start" letter-spacing="0">DNS</text>
-<text x="1580" y="542" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">CoreDNS service discovery</text>
-<text x="1490" y="579" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12" font-weight="700" fill="#8c959f" text-anchor="start" letter-spacing="1.2">APPLICATION</text>
+<text x="1504" y="496" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="13.5" font-weight="700" fill="#1f2328" text-anchor="start" letter-spacing="0">DNS</text>
+<text x="1580" y="496" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">CoreDNS service discovery</text>
+<text x="1490" y="533" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12" font-weight="700" fill="#8c959f" text-anchor="start" letter-spacing="1.2">APPLICATION</text>
+<rect x="1490" y="545" width="3" height="15" fill="#cf222e"/>
+<text x="1504" y="557" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="13.5" font-weight="700" fill="#1f2328" text-anchor="start" letter-spacing="0">API v3</text>
+<text x="1580" y="557" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">YouTube Data API, version 3</text>
+<rect x="1490" y="568" width="3" height="15" fill="#cf222e"/>
+<text x="1504" y="580" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="13.5" font-weight="700" fill="#1f2328" text-anchor="start" letter-spacing="0">OAuth</text>
+<text x="1580" y="580" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">Google consent → refresh token</text>
 <rect x="1490" y="591" width="3" height="15" fill="#cf222e"/>
-<text x="1504" y="603" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="13.5" font-weight="700" fill="#1f2328" text-anchor="start" letter-spacing="0">API v3</text>
-<text x="1580" y="603" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">YouTube Data API, version 3</text>
+<text x="1504" y="603" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="13.5" font-weight="700" fill="#1f2328" text-anchor="start" letter-spacing="0">yt-dlp</text>
+<text x="1580" y="603" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">YouTube downloader (Python)</text>
 <rect x="1490" y="614" width="3" height="15" fill="#cf222e"/>
-<text x="1504" y="626" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="13.5" font-weight="700" fill="#1f2328" text-anchor="start" letter-spacing="0">OAuth</text>
-<text x="1580" y="626" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">Google consent → refresh token</text>
+<text x="1504" y="626" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="13.5" font-weight="700" fill="#1f2328" text-anchor="start" letter-spacing="0">PAT</text>
+<text x="1580" y="626" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">Docker Hub personal access token</text>
 <rect x="1490" y="637" width="3" height="15" fill="#cf222e"/>
-<text x="1504" y="649" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="13.5" font-weight="700" fill="#1f2328" text-anchor="start" letter-spacing="0">yt-dlp</text>
-<text x="1580" y="649" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">YouTube downloader (Python)</text>
-<rect x="1490" y="660" width="3" height="15" fill="#cf222e"/>
-<text x="1504" y="672" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="13.5" font-weight="700" fill="#1f2328" text-anchor="start" letter-spacing="0">HLD</text>
-<text x="1580" y="672" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">High-Level Design</text>
-<text x="1490" y="709" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12" font-weight="700" fill="#8c959f" text-anchor="start" letter-spacing="1.2">FLOW KEY</text>
-<path d="M1500 729 L1552 729" fill="none" stroke="#8250df" stroke-width="1.8" marker-end="url(#ah-purple-light)"/>
-<text x="1580" y="733" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">Build — GitHub Actions → SWR → pull</text>
-<path d="M1500 753 L1552 753" fill="none" stroke="#229ed9" stroke-width="1.8" marker-end="url(#ah-tg-light)"/>
-<text x="1580" y="757" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">Control — Telegram long-poll</text>
-<path d="M1500 777 L1552 777" fill="none" stroke="#e5252a" stroke-width="1.8" marker-end="url(#ah-yt-light)"/>
-<text x="1580" y="781" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">Data — yt-dlp in · API v3 out</text>
-<path d="M1500 801 L1552 801" fill="none" stroke="#1a7f37" stroke-width="1.8" marker-end="url(#ah-green-light)"/>
-<text x="1580" y="805" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">State — EVS volume / token seed</text>
-<path d="M1500 825 L1552 825" fill="none" stroke="#d4600a" stroke-width="1.8" stroke-dasharray="5 4" marker-end="url(#ah-orange-light)"/>
-<text x="1580" y="829" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">Config — Secrets → env + files</text>
-<path d="M1500 849 L1552 849" fill="none" stroke="#6e7781" stroke-width="1.8" stroke-dasharray="3 4" marker-end="url(#ah-grey-light)"/>
-<text x="1580" y="853" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">Egress — every call via NAT + EIP</text>
-<text x="48" y="1048" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="13" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">push to main → Actions → SWR :latest/:sha → rollout restart   ·   /run or 06:00/18:00 → yt-dlp → /data/downloads → videos.insert → target channel → Telegram report   ·   state: /data on EVS</text>
+<text x="1504" y="649" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="13.5" font-weight="700" fill="#1f2328" text-anchor="start" letter-spacing="0">HLD</text>
+<text x="1580" y="649" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">High-Level Design</text>
+<text x="1490" y="686" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12" font-weight="700" fill="#8c959f" text-anchor="start" letter-spacing="1.2">FLOW KEY</text>
+<path d="M1500 706 L1552 706" fill="none" stroke="#8250df" stroke-width="1.8" marker-end="url(#ah-purple-light)"/>
+<text x="1580" y="710" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">Build — Actions → Docker Hub → pull</text>
+<path d="M1500 730 L1552 730" fill="none" stroke="#229ed9" stroke-width="1.8" marker-end="url(#ah-tg-light)"/>
+<text x="1580" y="734" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">Control — Telegram long-poll</text>
+<path d="M1500 754 L1552 754" fill="none" stroke="#e5252a" stroke-width="1.8" marker-end="url(#ah-yt-light)"/>
+<text x="1580" y="758" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">Data — yt-dlp in · API v3 out</text>
+<path d="M1500 778 L1552 778" fill="none" stroke="#1a7f37" stroke-width="1.8" marker-end="url(#ah-green-light)"/>
+<text x="1580" y="782" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">State — EVS volume / token seed</text>
+<path d="M1500 802 L1552 802" fill="none" stroke="#d4600a" stroke-width="1.8" stroke-dasharray="5 4" marker-end="url(#ah-orange-light)"/>
+<text x="1580" y="806" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">Config — Secrets → env + files</text>
+<path d="M1500 826 L1552 826" fill="none" stroke="#6e7781" stroke-width="1.8" stroke-dasharray="3 4" marker-end="url(#ah-grey-light)"/>
+<text x="1580" y="830" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">Egress — every call via NAT + EIP</text>
+<text x="48" y="1048" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="13" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">push to main → Actions → Docker Hub :latest/:sha → rollout restart   ·   /run or 06:00/18:00 → yt-dlp → /data/downloads → videos.insert → target channel → Telegram report   ·   state: /data on EVS</text>
 <text x="48" y="1068" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="13" font-weight="700" fill="#57606a" text-anchor="start" letter-spacing="0">Never scale past 1 replica   ·   cloud IPs can hit YouTube's bot-check: smoke-test yt-dlp from the cluster first   ·   OAuth only on a laptop   ·   secrets never in git or the image</text>
 </g>
 <defs><pattern id="dots-dark" width="32" height="32" patternUnits="userSpaceOnUse"><circle cx="1.2" cy="1.2" r="1.2" fill="#161b22"/></pattern></defs>
@@ -362,8 +359,8 @@
 <text x="82" y="336" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.8" font-weight="400" fill="#e6edf3" text-anchor="start" letter-spacing="0">OAuth done once on a laptop;</text>
 <text x="82" y="350" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.8" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">token seeded through a Secret</text>
 <circle cx="70" cy="364" r="2.8" fill="#4493f8"/>
-<text x="82" y="368" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.8" font-weight="400" fill="#e6edf3" text-anchor="start" letter-spacing="0">Image: GitHub Actions → SWR,</text>
-<text x="82" y="382" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.8" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">linux/amd64, :latest + :&lt;sha&gt;</text>
+<text x="82" y="368" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.8" font-weight="400" fill="#e6edf3" text-anchor="start" letter-spacing="0">Image: GitHub Actions → Docker</text>
+<text x="82" y="382" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.8" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">Hub (private), linux/amd64</text>
 <circle cx="70" cy="396" r="2.8" fill="#4493f8"/>
 <text x="82" y="400" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.8" font-weight="400" fill="#e6edf3" text-anchor="start" letter-spacing="0">NetworkPolicy: deny ingress,</text>
 <text x="82" y="414" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.8" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">egress DNS 53 + HTTPS 443 only</text>
@@ -372,7 +369,7 @@
 <text x="82" y="446" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.8" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">all capabilities dropped</text>
 <circle cx="70" cy="460" r="2.8" fill="#4493f8"/>
 <text x="82" y="464" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.8" font-weight="400" fill="#e6edf3" text-anchor="start" letter-spacing="0">Secrets never in git or image;</text>
-<text x="82" y="478" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.8" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">SWR AK only in GitHub secrets</text>
+<text x="82" y="478" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.8" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">Hub token only in GitHub secrets</text>
 <circle cx="70" cy="492" r="2.8" fill="#4493f8"/>
 <text x="82" y="496" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.8" font-weight="400" fill="#e6edf3" text-anchor="start" letter-spacing="0">Next: Arabic titles via Gemini</text>
 <text x="82" y="510" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.8" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">(config keys exist, not wired)</text>
@@ -415,10 +412,14 @@
 <text x="1166" y="210" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.3" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">with the YouTube API. Nothing connects</text>
 <text x="1166" y="226" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.3" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">in: Telegram is polled, every call</text>
 <text x="1166" y="242" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.3" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">leaves through the NAT Gateway EIP.</text>
-<rect x="444" y="140" width="52" height="52" rx="11.44" ry="11.44" fill="#a371f7" stroke="#a371f7" stroke-width="1"/>
-<g transform="translate(453.88,149.88) scale(1.343)" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="5" r="2.2"/><circle cx="6" cy="19" r="2.2"/><circle cx="18" cy="7" r="2.2"/><path d="M6 7.2v9.6M18 9.2c0 4.5-6 4-11 8"/></g>
-<text x="470" y="214" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="14.5" font-weight="700" fill="#e6edf3" text-anchor="middle" letter-spacing="0">GitHub · main</text>
-<text x="470" y="232" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.8" font-weight="400" fill="#9198a1" text-anchor="middle" letter-spacing="0">Actions build-push-swr</text>
+<rect x="344" y="140" width="52" height="52" rx="11.44" ry="11.44" fill="#a371f7" stroke="#a371f7" stroke-width="1"/>
+<g transform="translate(353.88,149.88) scale(1.343)" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="5" r="2.2"/><circle cx="6" cy="19" r="2.2"/><circle cx="18" cy="7" r="2.2"/><path d="M6 7.2v9.6M18 9.2c0 4.5-6 4-11 8"/></g>
+<text x="370" y="214" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="14.5" font-weight="700" fill="#e6edf3" text-anchor="middle" letter-spacing="0">GitHub Actions</text>
+<text x="370" y="232" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.8" font-weight="400" fill="#9198a1" text-anchor="middle" letter-spacing="0">push to main</text>
+<rect x="474" y="140" width="52" height="52" rx="11.44" ry="11.44" fill="#a371f7" stroke="#a371f7" stroke-width="1"/>
+<g transform="translate(483.88,149.88) scale(1.343)" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7.5 12 3l9 4.5v9L12 21l-9-4.5z"/><path d="M3 7.5 12 12l9-4.5M12 12v9"/></g>
+<text x="500" y="214" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="14.5" font-weight="700" fill="#e6edf3" text-anchor="middle" letter-spacing="0">Docker Hub</text>
+<text x="500" y="232" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.8" font-weight="400" fill="#9198a1" text-anchor="middle" letter-spacing="0">private repo</text>
 <rect x="604" y="140" width="52" height="52" rx="11.44" ry="11.44" fill="#3bb4ec" stroke="#3bb4ec" stroke-width="1"/>
 <g transform="translate(613.88,149.88) scale(1.343)" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/></g>
 <text x="630" y="214" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="14.5" font-weight="700" fill="#e6edf3" text-anchor="middle" letter-spacing="0">Owner</text>
@@ -438,18 +439,9 @@
 <path d="M658 166 L742 166" fill="none" stroke="#3bb4ec" stroke-width="1.8" marker-end="url(#ah-tg-dark)" marker-start="url(#ah-tg-dark)"/>
 <text x="700" y="158" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="10.5" font-weight="600" fill="#3bb4ec" text-anchor="middle" letter-spacing="0">/run /status</text>
 <rect x="320" y="300" width="1112" height="722" rx="14" ry="14" fill="none" stroke="#f85149" stroke-width="1.8" stroke-dasharray="9 7"/>
-<rect x="360" y="340" width="220" height="62" rx="10" ry="10" fill="#a371f7" fill-opacity="0.12" stroke="#a371f7" stroke-width="1.6"/>
-<rect x="360" y="340" width="220" height="62" rx="10" ry="10" fill="none" stroke="#a371f7" stroke-width="1.6"/>
-<rect x="374" y="354" width="34" height="34" rx="7.48" ry="7.48" fill="#a371f7" stroke="#a371f7" stroke-width="1"/>
-<g transform="translate(380.46,360.46) scale(0.878)" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7.5 12 3l9 4.5v9L12 21l-9-4.5z"/><path d="M3 7.5 12 12l9-4.5M12 12v9"/></g>
-<text x="420" y="370" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="14.5" font-weight="700" fill="#e6edf3" text-anchor="start" letter-spacing="0">SWR</text>
-<text x="420" y="387" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.5" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">org/youtube-relay-bot</text>
-<rect x="1150" y="340" width="250" height="62" rx="10" ry="10" fill="#f0883e" fill-opacity="0.12" stroke="#f0883e" stroke-width="1.6"/>
-<rect x="1150" y="340" width="250" height="62" rx="10" ry="10" fill="none" stroke="#f0883e" stroke-width="1.6"/>
-<rect x="1164" y="354" width="34" height="34" rx="7.48" ry="7.48" fill="#f0883e" stroke="#f0883e" stroke-width="1"/>
-<g transform="translate(1170.46,360.46) scale(0.878)" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="7.5" cy="15.5" r="4"/><path d="M10.5 12.5 20 3M16.5 6.5l3 3"/></g>
-<text x="1210" y="370" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="14.5" font-weight="700" fill="#e6edf3" text-anchor="start" letter-spacing="0">IAM · AK + login key</text>
-<text x="1210" y="387" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.5" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">SWR push creds (GitHub only)</text>
+<text x="360" y="352" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.3" font-weight="400" fill="#6e7681" text-anchor="start" letter-spacing="0">No Huawei registry: the image lives in</text>
+<text x="360" y="367" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.3" font-weight="400" fill="#6e7681" text-anchor="start" letter-spacing="0">Docker Hub ibn3bbas/youtube-relay-bot</text>
+<text x="360" y="382" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.3" font-weight="400" fill="#6e7681" text-anchor="start" letter-spacing="0">and is pulled through the NAT like any call.</text>
 <rect x="344" y="424" width="1064" height="584" rx="12" ry="12" fill="none" stroke="#f0883e" stroke-width="1.6" stroke-dasharray="7 6"/>
 <rect x="368" y="466" width="1016" height="404" rx="12" ry="12" fill="none" stroke="#4493f8" stroke-width="1.5" stroke-dasharray="4 5"/>
 <rect x="392" y="506" width="968" height="352" rx="12" ry="12" fill="#4493f8" fill-opacity="0.03" stroke="#a371f7" stroke-width="1.4" stroke-dasharray="2 4"/>
@@ -520,6 +512,12 @@
 <text x="1210" y="687" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.5" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">no Ingress · no ELB</text>
 <text x="1166" y="726" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="10.8" font-weight="400" fill="#6e7681" text-anchor="start" letter-spacing="0">nothing listens; Telegram</text>
 <text x="1166" y="741" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="10.8" font-weight="400" fill="#6e7681" text-anchor="start" letter-spacing="0">is polled, not webhooked</text>
+<rect x="1150" y="770" width="194" height="62" rx="10" ry="10" fill="#a371f7" fill-opacity="0.12" stroke="#a371f7" stroke-width="1.6"/>
+<rect x="1150" y="770" width="194" height="62" rx="10" ry="10" fill="none" stroke="#a371f7" stroke-width="1.6"/>
+<rect x="1164" y="784" width="34" height="34" rx="7.48" ry="7.48" fill="#a371f7" stroke="#a371f7" stroke-width="1"/>
+<g transform="translate(1170.46,790.46) scale(0.878)" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7.5a4 4 0 0 1 8 0V11"/></g>
+<text x="1210" y="800" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="14.5" font-weight="700" fill="#e6edf3" text-anchor="start" letter-spacing="0">dockerhub-pull</text>
+<text x="1210" y="817" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.5" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">Secret · read-only token</text>
 <text x="392" y="918" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12" font-weight="700" fill="#6e7681" text-anchor="start" letter-spacing="1.2">GATEWAYS</text>
 <text x="392" y="936" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11" font-weight="400" fill="#6e7681" text-anchor="start" letter-spacing="0">egress path</text>
 <rect x="520" y="896" width="260" height="62" rx="10" ry="10" fill="#8b949e" fill-opacity="0.12" stroke="#8b949e" stroke-width="1.6"/>
@@ -540,11 +538,10 @@
 <g transform="translate(1170.46,916.46) scale(0.878)" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="4" ry="9"/><path d="M3 12h18"/></g>
 <text x="1210" y="926" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="14.5" font-weight="700" fill="#e6edf3" text-anchor="start" letter-spacing="0">EIP</text>
 <text x="1210" y="943" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.5" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">bound to the NAT rule</text>
-<path d="M470 244 L470 340" fill="none" stroke="#a371f7" stroke-width="1.8" marker-end="url(#ah-purple-dark)"/>
-<text x="478" y="282" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11" font-weight="700" fill="#a371f7" text-anchor="start" letter-spacing="0">docker push</text>
-<path d="M580 371 L684 371 L684 612 L700 612" fill="none" stroke="#a371f7" stroke-width="1.8" stroke-dasharray="6 5" marker-end="url(#ah-purple-dark)"/>
-<text x="690" y="514" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11" font-weight="700" fill="#a371f7" text-anchor="start" letter-spacing="0">image pull</text>
-<text x="690" y="528" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="10.5" font-weight="400" fill="#a371f7" text-anchor="start" letter-spacing="0">default-secret</text>
+<path d="M398 166 L472 166" fill="none" stroke="#a371f7" stroke-width="1.8" marker-end="url(#ah-purple-dark)"/>
+<text x="435" y="158" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="10.5" font-weight="600" fill="#a371f7" text-anchor="middle" letter-spacing="0">push</text>
+<path d="M720 540 L720 262 L500 262 L500 244" fill="none" stroke="#a371f7" stroke-width="1.8" stroke-dasharray="6 5" marker-end="url(#ah-purple-dark)"/>
+<text x="560" y="256" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11" font-weight="700" fill="#a371f7" text-anchor="start" letter-spacing="0">image pull 443</text>
 <path d="M770 540 L770 244" fill="none" stroke="#3bb4ec" stroke-width="1.8" marker-end="url(#ah-tg-dark)"/>
 <text x="776" y="282" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11" font-weight="700" fill="#3bb4ec" text-anchor="start" letter-spacing="0">long-poll 443</text>
 <path d="M910 540 L910 244" fill="none" stroke="#ff4d4f" stroke-width="1.8" marker-end="url(#ah-yt-dark)"/>
@@ -579,69 +576,66 @@
 <text x="1504" y="228" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="13.5" font-weight="700" fill="#e6edf3" text-anchor="start" letter-spacing="0">CCE</text>
 <text x="1580" y="228" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">Cloud Container Engine (Kubernetes)</text>
 <rect x="1490" y="239" width="3" height="15" fill="#4493f8"/>
-<text x="1504" y="251" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="13.5" font-weight="700" fill="#e6edf3" text-anchor="start" letter-spacing="0">SWR</text>
-<text x="1580" y="251" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">SoftWare Repository for Container</text>
+<text x="1504" y="251" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="13.5" font-weight="700" fill="#e6edf3" text-anchor="start" letter-spacing="0">EVS</text>
+<text x="1580" y="251" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">Elastic Volume Service (block disk)</text>
 <rect x="1490" y="262" width="3" height="15" fill="#4493f8"/>
-<text x="1504" y="274" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="13.5" font-weight="700" fill="#e6edf3" text-anchor="start" letter-spacing="0">EVS</text>
-<text x="1580" y="274" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">Elastic Volume Service (block disk)</text>
+<text x="1504" y="274" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="13.5" font-weight="700" fill="#e6edf3" text-anchor="start" letter-spacing="0">VPC</text>
+<text x="1580" y="274" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">Virtual Private Cloud</text>
 <rect x="1490" y="285" width="3" height="15" fill="#4493f8"/>
-<text x="1504" y="297" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="13.5" font-weight="700" fill="#e6edf3" text-anchor="start" letter-spacing="0">VPC</text>
-<text x="1580" y="297" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">Virtual Private Cloud</text>
+<text x="1504" y="297" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="13.5" font-weight="700" fill="#e6edf3" text-anchor="start" letter-spacing="0">NAT</text>
+<text x="1580" y="297" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">Network Address Translation</text>
 <rect x="1490" y="308" width="3" height="15" fill="#4493f8"/>
-<text x="1504" y="320" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="13.5" font-weight="700" fill="#e6edf3" text-anchor="start" letter-spacing="0">NAT</text>
-<text x="1580" y="320" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">Network Address Translation</text>
+<text x="1504" y="320" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="13.5" font-weight="700" fill="#e6edf3" text-anchor="start" letter-spacing="0">SNAT</text>
+<text x="1580" y="320" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">Source NAT (outbound only)</text>
 <rect x="1490" y="331" width="3" height="15" fill="#4493f8"/>
-<text x="1504" y="343" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="13.5" font-weight="700" fill="#e6edf3" text-anchor="start" letter-spacing="0">SNAT</text>
-<text x="1580" y="343" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">Source NAT (outbound only)</text>
+<text x="1504" y="343" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="13.5" font-weight="700" fill="#e6edf3" text-anchor="start" letter-spacing="0">EIP</text>
+<text x="1580" y="343" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">Elastic IP</text>
 <rect x="1490" y="354" width="3" height="15" fill="#4493f8"/>
-<text x="1504" y="366" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="13.5" font-weight="700" fill="#e6edf3" text-anchor="start" letter-spacing="0">EIP</text>
-<text x="1580" y="366" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">Elastic IP</text>
-<rect x="1490" y="377" width="3" height="15" fill="#4493f8"/>
-<text x="1504" y="389" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="13.5" font-weight="700" fill="#e6edf3" text-anchor="start" letter-spacing="0">IAM</text>
-<text x="1580" y="389" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">Identity &amp; Access Management</text>
-<rect x="1490" y="400" width="3" height="15" fill="#4493f8"/>
-<text x="1504" y="412" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="13.5" font-weight="700" fill="#e6edf3" text-anchor="start" letter-spacing="0">AK</text>
-<text x="1580" y="412" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">Access Key (paired with a login key)</text>
-<text x="1490" y="449" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12" font-weight="700" fill="#6e7681" text-anchor="start" letter-spacing="1.2">KUBERNETES</text>
+<text x="1504" y="366" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="13.5" font-weight="700" fill="#e6edf3" text-anchor="start" letter-spacing="0">ECS</text>
+<text x="1580" y="366" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">Elastic Cloud Server (CCE node)</text>
+<text x="1490" y="403" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12" font-weight="700" fill="#6e7681" text-anchor="start" letter-spacing="1.2">KUBERNETES</text>
+<rect x="1490" y="415" width="3" height="15" fill="#a371f7"/>
+<text x="1504" y="427" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="13.5" font-weight="700" fill="#e6edf3" text-anchor="start" letter-spacing="0">ns</text>
+<text x="1580" y="427" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">Namespace</text>
+<rect x="1490" y="438" width="3" height="15" fill="#a371f7"/>
+<text x="1504" y="450" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="13.5" font-weight="700" fill="#e6edf3" text-anchor="start" letter-spacing="0">PVC</text>
+<text x="1580" y="450" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">PersistentVolumeClaim</text>
 <rect x="1490" y="461" width="3" height="15" fill="#a371f7"/>
-<text x="1504" y="473" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="13.5" font-weight="700" fill="#e6edf3" text-anchor="start" letter-spacing="0">ns</text>
-<text x="1580" y="473" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">Namespace</text>
+<text x="1504" y="473" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="13.5" font-weight="700" fill="#e6edf3" text-anchor="start" letter-spacing="0">RWO</text>
+<text x="1580" y="473" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">ReadWriteOnce — one node mounts it</text>
 <rect x="1490" y="484" width="3" height="15" fill="#a371f7"/>
-<text x="1504" y="496" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="13.5" font-weight="700" fill="#e6edf3" text-anchor="start" letter-spacing="0">PVC</text>
-<text x="1580" y="496" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">PersistentVolumeClaim</text>
-<rect x="1490" y="507" width="3" height="15" fill="#a371f7"/>
-<text x="1504" y="519" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="13.5" font-weight="700" fill="#e6edf3" text-anchor="start" letter-spacing="0">RWO</text>
-<text x="1580" y="519" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">ReadWriteOnce — one node mounts it</text>
-<rect x="1490" y="530" width="3" height="15" fill="#a371f7"/>
-<text x="1504" y="542" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="13.5" font-weight="700" fill="#e6edf3" text-anchor="start" letter-spacing="0">DNS</text>
-<text x="1580" y="542" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">CoreDNS service discovery</text>
-<text x="1490" y="579" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12" font-weight="700" fill="#6e7681" text-anchor="start" letter-spacing="1.2">APPLICATION</text>
+<text x="1504" y="496" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="13.5" font-weight="700" fill="#e6edf3" text-anchor="start" letter-spacing="0">DNS</text>
+<text x="1580" y="496" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">CoreDNS service discovery</text>
+<text x="1490" y="533" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12" font-weight="700" fill="#6e7681" text-anchor="start" letter-spacing="1.2">APPLICATION</text>
+<rect x="1490" y="545" width="3" height="15" fill="#f85149"/>
+<text x="1504" y="557" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="13.5" font-weight="700" fill="#e6edf3" text-anchor="start" letter-spacing="0">API v3</text>
+<text x="1580" y="557" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">YouTube Data API, version 3</text>
+<rect x="1490" y="568" width="3" height="15" fill="#f85149"/>
+<text x="1504" y="580" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="13.5" font-weight="700" fill="#e6edf3" text-anchor="start" letter-spacing="0">OAuth</text>
+<text x="1580" y="580" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">Google consent → refresh token</text>
 <rect x="1490" y="591" width="3" height="15" fill="#f85149"/>
-<text x="1504" y="603" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="13.5" font-weight="700" fill="#e6edf3" text-anchor="start" letter-spacing="0">API v3</text>
-<text x="1580" y="603" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">YouTube Data API, version 3</text>
+<text x="1504" y="603" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="13.5" font-weight="700" fill="#e6edf3" text-anchor="start" letter-spacing="0">yt-dlp</text>
+<text x="1580" y="603" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">YouTube downloader (Python)</text>
 <rect x="1490" y="614" width="3" height="15" fill="#f85149"/>
-<text x="1504" y="626" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="13.5" font-weight="700" fill="#e6edf3" text-anchor="start" letter-spacing="0">OAuth</text>
-<text x="1580" y="626" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">Google consent → refresh token</text>
+<text x="1504" y="626" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="13.5" font-weight="700" fill="#e6edf3" text-anchor="start" letter-spacing="0">PAT</text>
+<text x="1580" y="626" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">Docker Hub personal access token</text>
 <rect x="1490" y="637" width="3" height="15" fill="#f85149"/>
-<text x="1504" y="649" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="13.5" font-weight="700" fill="#e6edf3" text-anchor="start" letter-spacing="0">yt-dlp</text>
-<text x="1580" y="649" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">YouTube downloader (Python)</text>
-<rect x="1490" y="660" width="3" height="15" fill="#f85149"/>
-<text x="1504" y="672" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="13.5" font-weight="700" fill="#e6edf3" text-anchor="start" letter-spacing="0">HLD</text>
-<text x="1580" y="672" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">High-Level Design</text>
-<text x="1490" y="709" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12" font-weight="700" fill="#6e7681" text-anchor="start" letter-spacing="1.2">FLOW KEY</text>
-<path d="M1500 729 L1552 729" fill="none" stroke="#a371f7" stroke-width="1.8" marker-end="url(#ah-purple-dark)"/>
-<text x="1580" y="733" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">Build — GitHub Actions → SWR → pull</text>
-<path d="M1500 753 L1552 753" fill="none" stroke="#3bb4ec" stroke-width="1.8" marker-end="url(#ah-tg-dark)"/>
-<text x="1580" y="757" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">Control — Telegram long-poll</text>
-<path d="M1500 777 L1552 777" fill="none" stroke="#ff4d4f" stroke-width="1.8" marker-end="url(#ah-yt-dark)"/>
-<text x="1580" y="781" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">Data — yt-dlp in · API v3 out</text>
-<path d="M1500 801 L1552 801" fill="none" stroke="#3fb950" stroke-width="1.8" marker-end="url(#ah-green-dark)"/>
-<text x="1580" y="805" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">State — EVS volume / token seed</text>
-<path d="M1500 825 L1552 825" fill="none" stroke="#f0883e" stroke-width="1.8" stroke-dasharray="5 4" marker-end="url(#ah-orange-dark)"/>
-<text x="1580" y="829" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">Config — Secrets → env + files</text>
-<path d="M1500 849 L1552 849" fill="none" stroke="#8b949e" stroke-width="1.8" stroke-dasharray="3 4" marker-end="url(#ah-grey-dark)"/>
-<text x="1580" y="853" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">Egress — every call via NAT + EIP</text>
-<text x="48" y="1048" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="13" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">push to main → Actions → SWR :latest/:sha → rollout restart   ·   /run or 06:00/18:00 → yt-dlp → /data/downloads → videos.insert → target channel → Telegram report   ·   state: /data on EVS</text>
+<text x="1504" y="649" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="13.5" font-weight="700" fill="#e6edf3" text-anchor="start" letter-spacing="0">HLD</text>
+<text x="1580" y="649" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">High-Level Design</text>
+<text x="1490" y="686" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12" font-weight="700" fill="#6e7681" text-anchor="start" letter-spacing="1.2">FLOW KEY</text>
+<path d="M1500 706 L1552 706" fill="none" stroke="#a371f7" stroke-width="1.8" marker-end="url(#ah-purple-dark)"/>
+<text x="1580" y="710" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">Build — Actions → Docker Hub → pull</text>
+<path d="M1500 730 L1552 730" fill="none" stroke="#3bb4ec" stroke-width="1.8" marker-end="url(#ah-tg-dark)"/>
+<text x="1580" y="734" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">Control — Telegram long-poll</text>
+<path d="M1500 754 L1552 754" fill="none" stroke="#ff4d4f" stroke-width="1.8" marker-end="url(#ah-yt-dark)"/>
+<text x="1580" y="758" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">Data — yt-dlp in · API v3 out</text>
+<path d="M1500 778 L1552 778" fill="none" stroke="#3fb950" stroke-width="1.8" marker-end="url(#ah-green-dark)"/>
+<text x="1580" y="782" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">State — EVS volume / token seed</text>
+<path d="M1500 802 L1552 802" fill="none" stroke="#f0883e" stroke-width="1.8" stroke-dasharray="5 4" marker-end="url(#ah-orange-dark)"/>
+<text x="1580" y="806" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">Config — Secrets → env + files</text>
+<path d="M1500 826 L1552 826" fill="none" stroke="#8b949e" stroke-width="1.8" stroke-dasharray="3 4" marker-end="url(#ah-grey-dark)"/>
+<text x="1580" y="830" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">Egress — every call via NAT + EIP</text>
+<text x="48" y="1048" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="13" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">push to main → Actions → Docker Hub :latest/:sha → rollout restart   ·   /run or 06:00/18:00 → yt-dlp → /data/downloads → videos.insert → target channel → Telegram report   ·   state: /data on EVS</text>
 <text x="48" y="1068" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="13" font-weight="700" fill="#9198a1" text-anchor="start" letter-spacing="0">Never scale past 1 replica   ·   cloud IPs can hit YouTube's bot-check: smoke-test yt-dlp from the cluster first   ·   OAuth only on a laptop   ·   secrets never in git or the image</text>
 </g>
 </svg>

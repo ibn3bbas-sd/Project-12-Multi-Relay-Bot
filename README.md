@@ -18,8 +18,8 @@ Automated pipeline that downloads new videos from a source YouTube channel and r
 The diagram follows the viewer's light/dark theme. Edit `docs/hld/gen_hld.py` and run `python3 docs/hld/gen_hld.py` to regenerate it, never the SVG by hand.
 
 ```
-GitHub main ──Actions──▶ SWR  swr.me-east-1.myhuaweicloud.com/<org>/youtube-relay-bot:{latest,<sha>}
-                           │ image pull (default-secret)
+GitHub main ──Actions──▶ Docker Hub  docker.io/ibn3bbas/youtube-relay-bot:{latest,<sha>}  (private)
+                           │ image pull via NAT (Secret dockerhub-pull)
                            ▼
 CCE · namespace relay-bot
   Deployment relay-bot   1 replica · strategy Recreate · uid 10001 · read-only root FS
@@ -28,10 +28,11 @@ CCE · namespace relay-bot
   Secret relay-bot-env         .env → environment
   Secret relay-bot-files       token.json · client_secret.json
   PVC relay-data (EVS 20 Gi)   /data: token.json · processed_videos.json · downloads/
+  Secret dockerhub-pull        read-only Docker Hub token
   NetworkPolicy                ingress none · egress 53 + 443
         │ all egress
         ▼
-NAT Gateway (SNAT) + EIP ──▶ api.telegram.org · youtube.com (yt-dlp) · YouTube Data API v3
+NAT Gateway (SNAT) + EIP ──▶ api.telegram.org · youtube.com (yt-dlp) · YouTube Data API v3 · Docker Hub
 ```
 
 No Service, Ingress or load balancer: Telegram is long-polled, so nothing connects in.
@@ -40,20 +41,21 @@ No Service, Ingress or load balancer: Telegram is long-polled, so nothing connec
 
 Bash only. Full runbook: **[docs/deploy-cce.md](docs/deploy-cce.md)**.
 
-1. **Registry credentials.** In *Settings → Secrets and variables → Actions*, set the secrets
-   `SWR_REGISTRY_USER` (`me-east-1@<AK>`) and `SWR_REGISTRY_PASS` (long-term login key), and the variable `SWR_ORG`.
-   These are the same names `<infra-repo>` uses. GitHub never shows a secret's value, so paste them in yourself.
-2. **Image.** Push to `main` (or run the workflow by hand). Actions builds `linux/amd64` and pushes `:latest` + `:<sha>` to SWR.
+1. **Registry.** Create the Docker Hub repo `ibn3bbas/youtube-relay-bot` as **private**. Make a Read & Write access token
+   and store it as the repo secret `DOCKERHUB_TOKEN` (`gh secret set DOCKERHUB_TOKEN`).
+2. **Image.** Push to `main` (or run `build-push-dockerhub` by hand). Actions builds `linux/amd64` and pushes `:latest` + `:<sha>`.
 3. **OAuth, once, on a laptop.** The pod cannot open a browser. Produce `config/token.json` locally.
 4. **Cluster.**
 
 ```bash
 kubectl create ns relay-bot
+kubectl -n relay-bot create secret docker-registry dockerhub-pull \
+  --docker-server=https://index.docker.io/v1/ --docker-username=ibn3bbas \
+  --docker-password=<read-only token>
 kubectl -n relay-bot create secret generic relay-bot-env --from-env-file=.env
 kubectl -n relay-bot create secret generic relay-bot-files \
   --from-file=token.json=config/token.json \
   --from-file=client_secret.json=config/client_secret.json
-sed -i 's#myhuaweicloud.com/ORG/#myhuaweicloud.com/<org>/#' k8s/relay-bot.yaml
 kubectl apply -f k8s/relay-bot.yaml
 kubectl -n relay-bot logs -f deploy/relay-bot
 ```
@@ -122,7 +124,7 @@ Project-12-YouTube-Relay-Bot/
 │   └── oauth_bootstrap.py # headless OAuth consent
 ├── k8s/relay-bot.yaml     # CCE: namespace, PVC, Deployment, NetworkPolicy
 ├── .github/workflows/
-│   └── build-push-swr.yml # image → Huawei SWR
+│   └── build-push-dockerhub.yml # image → Docker Hub
 ├── deploy/wsl/            # fallback: WSL2 + systemd scripts
 ├── config/config.yaml     # application defaults
 ├── docs/

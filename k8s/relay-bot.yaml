@@ -1,8 +1,8 @@
 # YouTube Relay Bot on Huawei Cloud CCE — one file, `kubectl apply -f k8s/relay-bot.yaml`
 #
 # Before applying:
-#   1. Replace ORG in the image path below with your SWR organization (vars.SWR_ORG).
-#   2. Create the Secret (see docs/deploy-cce.md) — it is NOT in this file.
+#   1. Create the dockerhub-pull Secret (private Docker Hub repo).
+#   2. Create relay-bot-env + relay-bot-files (see docs/deploy-cce.md) — NOT in this file.
 #
 # No Service / Ingress: the bot only makes outbound calls (Telegram polling, YouTube).
 ---
@@ -42,7 +42,7 @@ spec:
       labels: { app: relay-bot }
     spec:
       imagePullSecrets:
-        - name: default-secret              # CCE auto-creates this for SWR in every namespace
+        - name: dockerhub-pull              # docker-registry Secret, read-only Docker Hub token
       securityContext:
         runAsNonRoot: true
         runAsUser: 10001
@@ -59,7 +59,7 @@ spec:
             - { name: secrets, mountPath: /secrets, readOnly: true }
       containers:
         - name: bot
-          image: swr.me-east-1.myhuaweicloud.com/ORG/youtube-relay-bot:latest
+          image: docker.io/ibn3bbas/youtube-relay-bot:latest
           imagePullPolicy: Always
           envFrom:
             - secretRef: { name: relay-bot-env }   # TELEGRAM_*, GEMINI_API_KEY ...

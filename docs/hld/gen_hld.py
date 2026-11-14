@@ -130,10 +130,10 @@ def build(t):
         ("Telegram via long-polling, so", "no inbound webhook is needed"),
         ("State on one EVS volume: token,", "processed IDs, download scratch"),
         ("OAuth done once on a laptop;", "token seeded through a Secret"),
-        ("Image: GitHub Actions → SWR,", "linux/amd64, :latest + :<sha>"),
+        ("Image: GitHub Actions → Docker", "Hub (private), linux/amd64"),
         ("NetworkPolicy: deny ingress,", "egress DNS 53 + HTTPS 443 only"),
         ("uid 10001 · read-only root FS ·", "all capabilities dropped"),
-        ("Secrets never in git or image;", "SWR AK only in GitHub secrets"),
+        ("Secrets never in git or image;", "Hub token only in GitHub secrets"),
         ("Next: Arabic titles via Gemini", "(config keys exist, not wired)"),
     ], gap=32)
 
@@ -182,7 +182,8 @@ def build(t):
         text(1166, 162 + i * 16, s, 11.3, 400, "muted")
 
     actors = [
-        (470, "git", "purple", "GitHub · main", "Actions build-push-swr"),
+        (370, "git", "purple", "GitHub Actions", "push to main"),
+        (500, "box", "purple", "Docker Hub", "private repo"),
         (630, "user", "tg", "Owner", "Telegram app · 1 chat ID"),
         (770, "send", "tg", "Telegram Bot API", "api.telegram.org"),
         (910, "play", "yt", "Source channel", "youtube.com · yt-dlp"),
@@ -199,8 +200,9 @@ def build(t):
     rect(320, 300, 1112, 722, stroke="red", sw=1.8, rx=14, dash="9 7")
     pill(336, 284, 330, "Huawei Cloud · me-east-1 (Riyadh)", "red")
 
-    card(360, 340, 220, 62, "box", "purple", "SWR", "org/youtube-relay-bot")
-    card(1150, 340, 250, 62, "key", "orange", "IAM · AK + login key", "SWR push creds (GitHub only)")
+    text(360, 352, "No Huawei registry: the image lives in", 11.3, 400, "faint")
+    text(360, 367, "Docker Hub ibn3bbas/youtube-relay-bot", 11.3, 400, "faint")
+    text(360, 382, "and is pulled through the NAT like any call.", 11.3, 400, "faint")
 
     # VPC
     rect(344, 424, 1064, 584, stroke="orange", sw=1.6, rx=12, dash="7 6")
@@ -256,6 +258,7 @@ def build(t):
     card(1150, 640, 194, 62, "ban", "grey", "No Service", "no Ingress · no ELB")
     text(1166, 726, "nothing listens; Telegram", 10.8, 400, "faint")
     text(1166, 741, "is polled, not webhooked", 10.8, 400, "faint")
+    card(1150, 770, 194, 62, "lock", "purple", "dockerhub-pull", "Secret · read-only token")
 
     # gateways
     text(392, 918, "GATEWAYS", 12, 700, "faint", ls=1.2)
@@ -265,12 +268,11 @@ def build(t):
     card(1150, 896, 230, 62, "globe", "grey", "EIP", "bound to the NAT rule")
 
     # ── flows ──────────────────────────────────────────────────────────────
-    # build: GitHub → SWR → pod
-    line([(470, 244), (470, 340)], "purple")
-    text(478, 282, "docker push", 11, 700, "purple")
-    line([(580, 371), (684, 371), (684, 612), (700, 612)], "purple", dash="6 5")
-    text(690, 514, "image pull", 11, 700, "purple")
-    text(690, 528, "default-secret", 10.5, 400, "purple")
+    # build: GitHub Actions → Docker Hub; pod pulls from Docker Hub (egress)
+    line([(398, 166), (472, 166)], "purple")
+    text(435, 158, "push", 10.5, 600, "purple", "middle")
+    line([(720, py), (720, 262), (500, 262), (500, 244)], "purple", dash="6 5")
+    text(560, 256, "image pull 443", 11, 700, "purple")
     # egress from pod up to the internet services
     for x, col, lab in [(770, "tg", "long-poll 443"), (910, "yt", "download 443"), (1050, "yt", "insert 443")]:
         line([(x, py), (x, 244)], col)
@@ -295,14 +297,12 @@ def build(t):
     text(1484, 172, "every acronym used in this diagram", 12, 400, "muted")
     groups = [
         ("HUAWEI CLOUD", "blue", [("CCE", "Cloud Container Engine (Kubernetes)"),
-                                  ("SWR", "SoftWare Repository for Container"),
                                   ("EVS", "Elastic Volume Service (block disk)"),
                                   ("VPC", "Virtual Private Cloud"),
                                   ("NAT", "Network Address Translation"),
                                   ("SNAT", "Source NAT (outbound only)"),
                                   ("EIP", "Elastic IP"),
-                                  ("IAM", "Identity & Access Management"),
-                                  ("AK", "Access Key (paired with a login key)")]),
+                                  ("ECS", "Elastic Cloud Server (CCE node)")]),
         ("KUBERNETES", "purple", [("ns", "Namespace"),
                                   ("PVC", "PersistentVolumeClaim"),
                                   ("RWO", "ReadWriteOnce — one node mounts it"),
@@ -310,6 +310,7 @@ def build(t):
         ("APPLICATION", "red", [("API v3", "YouTube Data API, version 3"),
                                 ("OAuth", "Google consent → refresh token"),
                                 ("yt-dlp", "YouTube downloader (Python)"),
+                                ("PAT", "Docker Hub personal access token"),
                                 ("HLD", "High-Level Design")]),
     ]
     y = 204
@@ -324,7 +325,7 @@ def build(t):
         y += 14
     text(1490, y, "FLOW KEY", 12, 700, "faint", ls=1.2)
     y += 24
-    for c, dash, lab in [("purple", None, "Build — GitHub Actions → SWR → pull"),
+    for c, dash, lab in [("purple", None, "Build — Actions → Docker Hub → pull"),
                          ("tg", None, "Control — Telegram long-poll"),
                          ("yt", None, "Data — yt-dlp in · API v3 out"),
                          ("green", None, "State — EVS volume / token seed"),
@@ -335,7 +336,7 @@ def build(t):
         y += 24
 
     # footer
-    text(48, 1048, "push to main → Actions → SWR :latest/:sha → rollout restart   ·   /run or 06:00/18:00 → yt-dlp"
+    text(48, 1048, "push to main → Actions → Docker Hub :latest/:sha → rollout restart   ·   /run or 06:00/18:00 → yt-dlp"
                    " → /data/downloads → videos.insert → target channel → Telegram report   ·   state: /data on EVS",
          13, 400, "muted")
     text(48, 1068, "Never scale past 1 replica   ·   cloud IPs can hit YouTube's bot-check: smoke-test yt-dlp from the"
