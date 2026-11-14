@@ -62,10 +62,35 @@ No Service, Ingress or LB. The bot only dials out (Telegram long-polling + YouTu
 
 ## Status and next steps
 
-See **`open-items.md`** in the repo root: it is the single checklist. Done so far:
-- Image builds and pushes to private Docker Hub (`build-push-dockerhub`), with deno included.
-- Outbound internet from the cluster is verified, and Secret `ytdlp-cookies` exists in ns `relay-bot`.
-- The old WSL host is gone, so the setup is fresh. `processed_videos.json` was rebuilt by title-matching source vs target (0 overlap).
+**BLOCKED since 2026-11-14: the cloud account behind the CCE cluster is frozen by its partner.**
+Every EVS create returns `403 Policy doesn't allow to be performed` (SAS and SSD alike), so PVC `relay-data`
+stays Pending. Deployment `relay-bot` is scaled to 0. Don't keep debugging the manifest; it's not the cause.
+
+On resume, **first ask the user whether the account is unfrozen**:
+- **Unfrozen:** `kubectl -n relay-bot scale deploy/relay-bot --replicas=1`. The PVC binds by itself. Then `kubectl cp` the processed
+  list (60 "start from now" IDs, in the user's private local setup folder) into `/data/processed_videos.json`
+  **before the next 06:00/18:00 run**, check the logs, and have the user send `/status`.
+- **Still frozen:** offer (a) another host, since the image (Docker Hub) and manifest are portable, or (b) a no-disk variant:
+  the processed list in a ConfigMap the bot patches (narrow RBAC), downloads on emptyDir.
+
+Single checklist: **`open-items.md`**. Done so far:
+- Image builds and pushes to private Docker Hub with deno. Cluster egress verified. YouTube bot-check solved with cookies.
+- All 4 Secrets exist in ns `relay-bot`: `dockerhub-pull` (pull verified), `relay-bot-env`, `relay-bot-files`, `ytdlp-cookies`.
+- Telegram bot created. Google Cloud project with the OAuth app **In production** (needed home + privacy URLs, served from
+  the `gh-pages` branch via GitHub Pages: only those 2 pages are public). Desktop client created. Upload token for the
+  target channel works (scope `youtube.upload` only, so `channels.list` returns 403 by design).
+- PVC manifest uses `csi-disk-topology` + `everest.io/set-disk-tags: "true"`, matching the PVC that works on that cluster.
+
+Private details (hosts, IPs, local paths, account names) are in Claude's project memory, never in this public repo.
+
+## More lessons from the setup
+
+- Multi-line pastes into `read -s` can swallow the next line. Have the user paste the `read` line alone, then the command.
+- Screenshots leak secrets (a bot token was exposed once and revoked). Tell the user not to screenshot token or secret dialogs.
+- Get the Telegram chat ID from the bot's own `getUpdates` after the user sends `/start`, rather than a third-party bot.
+  Updates sent before a token revoke are gone.
+- Google's OAuth "Publish app" stays greyed until Branding has a home page + privacy policy + authorized domain.
+- A Docker Hub read-only PAT gets 401 if you ask the auth endpoint for `pull,push`. Test with `pull` only.
 
 ## Deploy commands
 

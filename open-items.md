@@ -13,7 +13,7 @@ Runbook: [docs/deploy-cce.md](docs/deploy-cce.md) · Diagram: [docs/hld/hld-rela
 - [x] Cluster egress verified: Telegram, YouTube, googleapis and Docker Hub are all reachable through the NAT
 - [x] YouTube bot-check on the cloud IP solved with a throwaway account's cookies + deno; Secret `ytdlp-cookies` is in ns `relay-bot`
 - [x] Bot code supports `YTDLP_COOKIES_FILE`; the manifest mounts the cookies Secret
-- [x] `processed_videos.json` rebuilt locally (0 of the source's 40 newest videos are already on the target)
+- [x] `processed_videos.json` prepared: "start from now", 60 current source IDs marked (none had been relayed before)
 
 ## Blocked (2026-11-14): hosting account frozen
 
