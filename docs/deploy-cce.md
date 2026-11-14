@@ -54,7 +54,7 @@ kubectl -n relay-bot run ytdlp-test --rm -it --restart=Never \
 ```
 
 Title printed → good. `Sign in to confirm you're not a bot` → you need cookies (next section).
-On the <cluster> cluster (2026-11-14) the channel **listing** worked but every **video** hit the bot-check, and cookies fixed it.
+On the staging cluster (2026-11-14) the channel **listing** worked but every **video** hit the bot-check, and cookies fixed it.
 
 ## 2b. YouTube cookies (needed on cloud IPs)
 
@@ -67,7 +67,7 @@ Use a **throwaway Google account**, never the target channel's account or a pers
 4. Close the window **without signing out** (signing out kills the cookies).
 5. Copy to the jumpbox, make it a Secret, and destroy every copy:
    ```bash
-   scp -i ~/.ssh/<ssh-key> www.youtube.com_cookies.txt ibnabbas@<jumpbox-eip>:~/cookies.txt && rm www.youtube.com_cookies.txt
+   scp -i <jumpbox-key> www.youtube.com_cookies.txt <user>@<jumpbox-eip>:~/cookies.txt && rm www.youtube.com_cookies.txt
    # on the jumpbox
    kubectl -n relay-bot create secret generic ytdlp-cookies --from-file=cookies.txt=$HOME/cookies.txt \
      --dry-run=client -o yaml | kubectl apply -f -

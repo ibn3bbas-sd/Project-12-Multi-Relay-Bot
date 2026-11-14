@@ -1,7 +1,9 @@
 # Deployment — YouTube Relay Bot on WSL2
 
-Host: `<old-host>` (landing-zone / hub-vcn, me-jeddah-1, private subnet `<private-ip>`).
-Access: OCI Bastion port-forward → RDP on `127.0.0.1:3392`.
+> **Retired.** The original Windows host is gone; the bot now runs on Huawei Cloud CCE ([deploy-cce.md](deploy-cce.md)). Kept as a fallback recipe.
+
+Host: a private Windows jumpbox (OCI, private subnet).
+Access: OCI Bastion port-forward → RDP on `127.0.0.1:<local-port>`.
 Runtime: Ubuntu under WSL2 on that host. The bot runs as a systemd service inside the distro, as the `relaybot` system user, out of `/opt/youtube-relay-bot`.
 
 Everything below is bash. There are exactly two commands in this document that are not, and both are unavoidable: bootstrapping WSL itself, and the boot shim.
@@ -14,7 +16,7 @@ Everything below is bash. There are exactly two commands in this document that a
 
 **Boot.** WSL distros are started on demand by a user session. Nothing starts them at boot. systemd inside Ubuntu is perfectly capable of supervising the bot, but if the distro never starts, systemd never runs. Step 0055 registers a Windows scheduled task that starts the distro at boot and holds it open. Skip that step and the bot is silently dead after every patch reboot until someone logs in over RDP.
 
-While you are in that script: `<old-host-script>.sh` carries the RDP password as a plaintext literal. Rotate it and strip the line before that file goes near `<scripts-repo>`.
+Keep RDP passwords out of connection scripts; use a password manager or prompt at runtime.
 
 ---
 
@@ -22,10 +24,10 @@ While you are in that script: `<old-host-script>.sh` carries the RDP password as
 
 ```bash
 # WSL Ubuntu on your laptop — opens the bastion tunnel, keep it open
-./<old-host-script>.sh
+./<your-jumpbox-tunnel-script>.sh
 ```
 
-RDP to `127.0.0.1:3392` once the tunnel is up.
+RDP to `127.0.0.1:<local-port>` once the tunnel is up.
 
 ---
 
