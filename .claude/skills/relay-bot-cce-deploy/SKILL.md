@@ -50,11 +50,12 @@ No Service, Ingress or LB. The bot only dials out (Telegram long-polling + YouTu
 
 - Runs #1 and #2 failed on main with `docker/login-action: Username and password required`, because the secrets were never set. Set secrets and variables **before** merging anything that triggers the build.
 - Huawei SWR was dropped (2026-11-14). The <infra-repo> AK/SK can push to the `<cluster>` org, but creating a `relay-bot` org failed with `403 SVCSTG.SWR.4030170 Insufficient permissions`. The user chose their own Docker Hub instead. The repo secrets `SWR_REGISTRY_USER` and `SWR_REGISTRY_PASS` are now unused.
+- Docker Hub's PAT dropdown defaults to **Repo Public Read-only**. That fails the push with `401 ... access token has insufficient scopes` even though login succeeds. The push token needs **Repo Read & Write**, and the cluster pull token needs **Repo Read-only** (not *Public*).
 - `/usr/bin/hcloud` on this machine is the **Hetzner** CLI, not Huawei KooCLI. Use the Python SDK (`huaweicloudsdk*`) in a scratch venv for Huawei API calls.
 
 ## Pending next steps
 
-1. User creates the private Hub repo and two PATs (RW for GitHub, RO for the cluster), runs `gh secret set DOCKERHUB_TOKEN`, then `gh workflow run build-push-dockerhub --ref main && gh run watch`. That run is also the first real `docker build`.
+1. DONE 2026-11-14: private Hub repo `ibn3bbas/youtube-relay-bot` exists, `DOCKERHUB_TOKEN` (Repo Read & Write) is set, and run 43559441578 pushed `:latest` + `:3fd12ba…` (amd64). `docker build` is validated. The read-only PAT `cce-relay-bot-pull` exists for the cluster.
 2. Optional cleanup: `gh secret delete SWR_REGISTRY_USER && gh secret delete SWR_REGISTRY_PASS`.
 3. Run the yt-dlp smoke test from the cluster (runbook step 2). If YouTube shows a bot-check, add a cookies file Secret or a proxy.
 4. Confirm the CCE node subnet has a NAT Gateway SNAT rule + EIP.
