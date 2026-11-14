@@ -1,12 +1,17 @@
 # Deploy on Huawei Cloud CCE
 
+Region **me-east-1 (Riyadh)**. Diagram: [hld/hld-relay-bot-cce.svg](hld/hld-relay-bot-cce.svg).
+
 ```
-GitHub (main) ──Actions──▶ SWR image ──▶ CCE ns relay-bot
-                                          └─ Deployment (1 pod, Recreate)
-                                             ├─ Secret  relay-bot-env   (env vars)
-                                             ├─ Secret  relay-bot-files (token.json, client_secret.json)
-                                             └─ PVC     relay-data (EVS) → /data
-                                        egress: NAT Gateway + EIP → Telegram / YouTube
+GitHub (main) ──Actions──▶ SWR swr.me-east-1.myhuaweicloud.com/<org>/youtube-relay-bot
+                                │ pull (default-secret)
+                                ▼
+                     CCE ns relay-bot
+                       └─ Deployment (1 pod, Recreate)
+                          ├─ Secret  relay-bot-env   (env vars)
+                          ├─ Secret  relay-bot-files (token.json, client_secret.json)
+                          └─ PVC     relay-data (EVS) → /data
+                     egress: NAT Gateway (SNAT) + EIP → Telegram / YouTube
 ```
 
 No Service, no Ingress, no LB. The bot only dials out.
@@ -14,7 +19,15 @@ No Service, no Ingress, no LB. The bot only dials out.
 ## 0. Prereqs
 
 - CCE node subnet has a **NAT Gateway (SNAT rule) + EIP**, otherwise the pod has no internet.
-- GitHub repo secrets set: `SWR_REGISTRY`, `SWR_ORG`, `SWR_USERNAME`, `SWR_PASSWORD` (see the workflow header).
+- GitHub repo **secrets** `SWR_REGISTRY_USER` (`me-east-1@<AK>`) and `SWR_REGISTRY_PASS` (long-term login key), and repo **variable** `SWR_ORG`.
+  These match `<company-org>/<infra-repo>`. GitHub never reveals secret values, so paste them yourself:
+  ```bash
+  gh secret set SWR_REGISTRY_USER          # prompts; value stays out of shell history
+  gh secret set SWR_REGISTRY_PASS
+  gh variable set SWR_ORG --body <org>
+  gh workflow run build-push-swr --ref main && gh run watch
+  ```
+  Set these **before** merging to main, or the first build fails with `Username and password required`.
 - `kubectl` pointed at the cluster (CCE console → cluster → kubectl → download kubeconfig).
 
 ## 1. Get the YouTube OAuth token once, on your laptop
@@ -59,7 +72,7 @@ the first time, and the app keeps the refreshed copy there.
 
 ```bash
 # set your image path once
-sed -i 's#swr.REGION.myhuaweicloud.com/ORG#swr.<region>.myhuaweicloud.com/<org>#' k8s/relay-bot.yaml
+sed -i 's#myhuaweicloud.com/ORG/#myhuaweicloud.com/<org>/#' k8s/relay-bot.yaml
 
 kubectl apply -f k8s/relay-bot.yaml
 kubectl -n relay-bot logs -f deploy/relay-bot

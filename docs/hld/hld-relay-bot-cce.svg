@@ -1,0 +1,647 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080" role="img" aria-label="YouTube Relay Bot high-level design on Huawei Cloud CCE">
+<style>.theme-dark{display:none}@media (prefers-color-scheme: dark){.theme-light{display:none}.theme-dark{display:inline}}</style>
+<defs><pattern id="dots-light" width="32" height="32" patternUnits="userSpaceOnUse"><circle cx="1.2" cy="1.2" r="1.2" fill="#eef1f4"/></pattern></defs>
+<g class="theme-light">
+<defs>
+<marker id="ah-blue-light" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#0969da"/></marker>
+<marker id="ah-orange-light" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#d4600a"/></marker>
+<marker id="ah-green-light" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#1a7f37"/></marker>
+<marker id="ah-purple-light" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#8250df"/></marker>
+<marker id="ah-red-light" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#cf222e"/></marker>
+<marker id="ah-grey-light" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#6e7781"/></marker>
+<marker id="ah-tg-light" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#229ed9"/></marker>
+<marker id="ah-yt-light" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#e5252a"/></marker>
+</defs>
+<rect x="0" y="0" width="1920" height="1080" rx="0" ry="0" fill="#ffffff" stroke="#ffffff" stroke-width="0"/>
+<rect width="1920" height="1080" fill="url(#dots-light)"/>
+<text x="48" y="52" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="30" font-weight="700" fill="#1f2328" text-anchor="start" letter-spacing="0">YouTube Relay Bot — High-Level Design (HLD)</text>
+<text x="48" y="78" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="15.5" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">Source channel → yt-dlp → YouTube Data API v3 → target channel · Huawei Cloud CCE me-east-1 (Riyadh) · ns relay-bot · 1 pod, Recreate · EVS volume · egress-only via NAT + EIP · Telegram control</text>
+<text x="1880" y="52" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="14" font-weight="600" fill="#8c959f" text-anchor="end" letter-spacing="0">FHD 1920 × 1080</text>
+<text x="1880" y="74" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="13.5" font-weight="400" fill="#8c959f" text-anchor="end" letter-spacing="0">v1 · theme-aware</text>
+<line x1="48" y1="96" x2="1880" y2="96" stroke="#d0d7de" stroke-width="1.5"/>
+<rect x="48" y="120" width="250" height="412" rx="12" ry="12" fill="#f6f8fa" stroke="#d0d7de" stroke-width="1.4"/>
+<text x="66" y="152" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="16.5" font-weight="700" fill="#1f2328" text-anchor="start" letter-spacing="0">At a glance</text>
+<circle cx="70" cy="172" r="2.8" fill="#0969da"/>
+<text x="82" y="176" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.8" font-weight="400" fill="#1f2328" text-anchor="start" letter-spacing="0">Region me-east-1 (Riyadh), one</text>
+<text x="82" y="190" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.8" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">CCE cluster, namespace relay-bot</text>
+<circle cx="70" cy="204" r="2.8" fill="#0969da"/>
+<text x="82" y="208" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.8" font-weight="400" fill="#1f2328" text-anchor="start" letter-spacing="0">Exactly 1 pod, Recreate rollout —</text>
+<text x="82" y="222" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.8" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">two pods = every video twice</text>
+<circle cx="70" cy="236" r="2.8" fill="#0969da"/>
+<text x="82" y="240" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.8" font-weight="400" fill="#1f2328" text-anchor="start" letter-spacing="0">Egress only: no Service, Ingress,</text>
+<text x="82" y="254" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.8" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">ELB or public IP on the node</text>
+<circle cx="70" cy="268" r="2.8" fill="#0969da"/>
+<text x="82" y="272" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.8" font-weight="400" fill="#1f2328" text-anchor="start" letter-spacing="0">Telegram via long-polling, so</text>
+<text x="82" y="286" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.8" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">no inbound webhook is needed</text>
+<circle cx="70" cy="300" r="2.8" fill="#0969da"/>
+<text x="82" y="304" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.8" font-weight="400" fill="#1f2328" text-anchor="start" letter-spacing="0">State on one EVS volume: token,</text>
+<text x="82" y="318" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.8" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">processed IDs, download scratch</text>
+<circle cx="70" cy="332" r="2.8" fill="#0969da"/>
+<text x="82" y="336" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.8" font-weight="400" fill="#1f2328" text-anchor="start" letter-spacing="0">OAuth done once on a laptop;</text>
+<text x="82" y="350" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.8" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">token seeded through a Secret</text>
+<circle cx="70" cy="364" r="2.8" fill="#0969da"/>
+<text x="82" y="368" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.8" font-weight="400" fill="#1f2328" text-anchor="start" letter-spacing="0">Image: GitHub Actions → SWR,</text>
+<text x="82" y="382" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.8" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">linux/amd64, :latest + :&lt;sha&gt;</text>
+<circle cx="70" cy="396" r="2.8" fill="#0969da"/>
+<text x="82" y="400" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.8" font-weight="400" fill="#1f2328" text-anchor="start" letter-spacing="0">NetworkPolicy: deny ingress,</text>
+<text x="82" y="414" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.8" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">egress DNS 53 + HTTPS 443 only</text>
+<circle cx="70" cy="428" r="2.8" fill="#0969da"/>
+<text x="82" y="432" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.8" font-weight="400" fill="#1f2328" text-anchor="start" letter-spacing="0">uid 10001 · read-only root FS ·</text>
+<text x="82" y="446" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.8" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">all capabilities dropped</text>
+<circle cx="70" cy="460" r="2.8" fill="#0969da"/>
+<text x="82" y="464" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.8" font-weight="400" fill="#1f2328" text-anchor="start" letter-spacing="0">Secrets never in git or image;</text>
+<text x="82" y="478" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.8" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">SWR AK only in GitHub secrets</text>
+<circle cx="70" cy="492" r="2.8" fill="#0969da"/>
+<text x="82" y="496" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.8" font-weight="400" fill="#1f2328" text-anchor="start" letter-spacing="0">Next: Arabic titles via Gemini</text>
+<text x="82" y="510" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.8" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">(config keys exist, not wired)</text>
+<rect x="48" y="552" width="250" height="216" rx="12" ry="12" fill="#f6f8fa" stroke="#d0d7de" stroke-width="1.4"/>
+<text x="66" y="582" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="16.5" font-weight="700" fill="#1f2328" text-anchor="start" letter-spacing="0">Schedule &amp; quota</text>
+<text x="66" y="602" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">the real ceiling is YouTube, not CPU</text>
+<rect x="66" y="616" width="30" height="30" rx="6.6" ry="6.6" fill="#0969da" stroke="#0969da" stroke-width="1"/>
+<g transform="translate(71.7,621.7) scale(0.775)" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></g>
+<text x="106" y="629" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="700" fill="#1f2328" text-anchor="start" letter-spacing="0">06:00 · 18:00 Asia/Riyadh</text>
+<text x="106" y="644" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.5" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">APScheduler via job_queue</text>
+<rect x="66" y="662" width="214" height="14" rx="3" ry="3" fill="#d0d7de" stroke="#d0d7de" stroke-width="0"/>
+<rect x="67.0" y="663" width="32.24" height="12" rx="2" ry="2" fill="#cf222e" stroke="#ffffff" stroke-width="0"/>
+<rect x="101.24000000000001" y="663" width="32.24" height="12" rx="2" ry="2" fill="#d4600a" stroke="#ffffff" stroke-width="0"/>
+<rect x="135.48000000000002" y="663" width="32.24" height="12" rx="2" ry="2" fill="#cf222e" stroke="#ffffff" stroke-width="0"/>
+<rect x="169.72" y="663" width="32.24" height="12" rx="2" ry="2" fill="#d4600a" stroke="#ffffff" stroke-width="0"/>
+<rect x="203.96" y="663" width="32.24" height="12" rx="2" ry="2" fill="#cf222e" stroke="#ffffff" stroke-width="0"/>
+<rect x="238.20000000000002" y="663" width="32.24" height="12" rx="2" ry="2" fill="#d4600a" stroke="#ffffff" stroke-width="0"/>
+<text x="66" y="694" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.5" font-weight="400" fill="#1f2328" text-anchor="start" letter-spacing="0">10,000 units/day ÷ ~1,600 per insert</text>
+<text x="66" y="709" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.5" font-weight="700" fill="#cf222e" text-anchor="start" letter-spacing="0">≈ 6 uploads per day, hard limit</text>
+<text x="66" y="728" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.5" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">max_uploads_per_run 5 · scan_limit 20</text>
+<text x="66" y="743" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.5" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">max_age_days 7 · 1080p · 8 MB chunks</text>
+<text x="66" y="760" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11" font-weight="400" fill="#8c959f" text-anchor="start" letter-spacing="0">Quota spent → run aborts, reports, no retry</text>
+<rect x="48" y="788" width="250" height="234" rx="12" ry="12" fill="#f6f8fa" stroke="#d0d7de" stroke-width="1.4"/>
+<text x="66" y="818" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="16.5" font-weight="700" fill="#1f2328" text-anchor="start" letter-spacing="0">Durability</text>
+<text x="66" y="838" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">what survives what</text>
+<text x="66" y="862" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="700" fill="#1a7f37" text-anchor="start" letter-spacing="0">Pod crash → restart</text>
+<text x="66" y="878" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.3" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">same PVC, same token, same IDs</text>
+<text x="66" y="898" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="700" fill="#1a7f37" text-anchor="start" letter-spacing="0">Node loss → reschedule</text>
+<text x="66" y="914" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.3" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">EVS is zonal: pod follows its AZ</text>
+<text x="66" y="934" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="700" fill="#d4600a" text-anchor="start" letter-spacing="0">Failed download → retried</text>
+<text x="66" y="950" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.3" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">not marked processed until done</text>
+<text x="66" y="970" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="700" fill="#cf222e" text-anchor="start" letter-spacing="0">Token revoked → re-auth</text>
+<text x="66" y="986" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.3" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">laptop OAuth, kubectl cp to /data</text>
+<text x="66" y="1010" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11" font-weight="400" fill="#8c959f" text-anchor="start" letter-spacing="0">No HA by design · volume = single copy</text>
+<rect x="1150" y="116" width="266" height="150" rx="12" ry="12" fill="#ffffff" stroke="#d0d7de" stroke-width="1.4"/>
+<text x="1166" y="140" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="13.5" font-weight="700" fill="#1f2328" text-anchor="start" letter-spacing="0">One pod that only dials out</text>
+<text x="1166" y="162" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.3" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">Twice a day (or on /run) the pod lists</text>
+<text x="1166" y="178" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.3" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">the source channel, downloads new</text>
+<text x="1166" y="194" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.3" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">videos with yt-dlp and re-uploads them</text>
+<text x="1166" y="210" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.3" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">with the YouTube API. Nothing connects</text>
+<text x="1166" y="226" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.3" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">in: Telegram is polled, every call</text>
+<text x="1166" y="242" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.3" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">leaves through the NAT Gateway EIP.</text>
+<rect x="444" y="140" width="52" height="52" rx="11.44" ry="11.44" fill="#8250df" stroke="#8250df" stroke-width="1"/>
+<g transform="translate(453.88,149.88) scale(1.343)" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="5" r="2.2"/><circle cx="6" cy="19" r="2.2"/><circle cx="18" cy="7" r="2.2"/><path d="M6 7.2v9.6M18 9.2c0 4.5-6 4-11 8"/></g>
+<text x="470" y="214" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="14.5" font-weight="700" fill="#1f2328" text-anchor="middle" letter-spacing="0">GitHub · main</text>
+<text x="470" y="232" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.8" font-weight="400" fill="#57606a" text-anchor="middle" letter-spacing="0">Actions build-push-swr</text>
+<rect x="604" y="140" width="52" height="52" rx="11.44" ry="11.44" fill="#229ed9" stroke="#229ed9" stroke-width="1"/>
+<g transform="translate(613.88,149.88) scale(1.343)" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/></g>
+<text x="630" y="214" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="14.5" font-weight="700" fill="#1f2328" text-anchor="middle" letter-spacing="0">Owner</text>
+<text x="630" y="232" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.8" font-weight="400" fill="#57606a" text-anchor="middle" letter-spacing="0">Telegram app · 1 chat ID</text>
+<rect x="744" y="140" width="52" height="52" rx="11.44" ry="11.44" fill="#229ed9" stroke="#229ed9" stroke-width="1"/>
+<g transform="translate(753.88,149.88) scale(1.343)" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 3 10.5 13.5M21 3l-6.5 18-4-7.5L3 9.5z"/></g>
+<text x="770" y="214" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="14.5" font-weight="700" fill="#1f2328" text-anchor="middle" letter-spacing="0">Telegram Bot API</text>
+<text x="770" y="232" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.8" font-weight="400" fill="#57606a" text-anchor="middle" letter-spacing="0">api.telegram.org</text>
+<rect x="884" y="140" width="52" height="52" rx="11.44" ry="11.44" fill="#e5252a" stroke="#e5252a" stroke-width="1"/>
+<g transform="translate(893.88,149.88) scale(1.343)" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="5" width="19" height="14" rx="4"/><path d="M10 9v6l5-3z" fill="#fff"/></g>
+<text x="910" y="214" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="14.5" font-weight="700" fill="#1f2328" text-anchor="middle" letter-spacing="0">Source channel</text>
+<text x="910" y="232" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.8" font-weight="400" fill="#57606a" text-anchor="middle" letter-spacing="0">youtube.com · yt-dlp</text>
+<rect x="1024" y="140" width="52" height="52" rx="11.44" ry="11.44" fill="#e5252a" stroke="#e5252a" stroke-width="1"/>
+<g transform="translate(1033.88,149.88) scale(1.343)" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M7 9l5-5 5 5M4 20h16"/></g>
+<text x="1050" y="214" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="14.5" font-weight="700" fill="#1f2328" text-anchor="middle" letter-spacing="0">YouTube Data API</text>
+<text x="1050" y="232" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.8" font-weight="400" fill="#57606a" text-anchor="middle" letter-spacing="0">v3 → target channel</text>
+<path d="M658 166 L742 166" fill="none" stroke="#229ed9" stroke-width="1.8" marker-end="url(#ah-tg-light)" marker-start="url(#ah-tg-light)"/>
+<text x="700" y="158" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="10.5" font-weight="600" fill="#229ed9" text-anchor="middle" letter-spacing="0">/run /status</text>
+<rect x="320" y="300" width="1112" height="722" rx="14" ry="14" fill="none" stroke="#cf222e" stroke-width="1.8" stroke-dasharray="9 7"/>
+<rect x="360" y="340" width="220" height="62" rx="10" ry="10" fill="#8250df" fill-opacity="0.07" stroke="#8250df" stroke-width="1.6"/>
+<rect x="360" y="340" width="220" height="62" rx="10" ry="10" fill="none" stroke="#8250df" stroke-width="1.6"/>
+<rect x="374" y="354" width="34" height="34" rx="7.48" ry="7.48" fill="#8250df" stroke="#8250df" stroke-width="1"/>
+<g transform="translate(380.46,360.46) scale(0.878)" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7.5 12 3l9 4.5v9L12 21l-9-4.5z"/><path d="M3 7.5 12 12l9-4.5M12 12v9"/></g>
+<text x="420" y="370" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="14.5" font-weight="700" fill="#1f2328" text-anchor="start" letter-spacing="0">SWR</text>
+<text x="420" y="387" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.5" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">org/youtube-relay-bot</text>
+<rect x="1150" y="340" width="250" height="62" rx="10" ry="10" fill="#d4600a" fill-opacity="0.07" stroke="#d4600a" stroke-width="1.6"/>
+<rect x="1150" y="340" width="250" height="62" rx="10" ry="10" fill="none" stroke="#d4600a" stroke-width="1.6"/>
+<rect x="1164" y="354" width="34" height="34" rx="7.48" ry="7.48" fill="#d4600a" stroke="#d4600a" stroke-width="1"/>
+<g transform="translate(1170.46,360.46) scale(0.878)" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="7.5" cy="15.5" r="4"/><path d="M10.5 12.5 20 3M16.5 6.5l3 3"/></g>
+<text x="1210" y="370" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="14.5" font-weight="700" fill="#1f2328" text-anchor="start" letter-spacing="0">IAM · AK + login key</text>
+<text x="1210" y="387" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.5" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">SWR push creds (GitHub only)</text>
+<rect x="344" y="424" width="1064" height="584" rx="12" ry="12" fill="none" stroke="#d4600a" stroke-width="1.6" stroke-dasharray="7 6"/>
+<rect x="368" y="466" width="1016" height="404" rx="12" ry="12" fill="none" stroke="#0969da" stroke-width="1.5" stroke-dasharray="4 5"/>
+<rect x="392" y="506" width="968" height="352" rx="12" ry="12" fill="#0969da" fill-opacity="0.03" stroke="#8250df" stroke-width="1.4" stroke-dasharray="2 4"/>
+<rect x="416" y="540" width="236" height="70" rx="10" ry="10" fill="#1a7f37" fill-opacity="0.07" stroke="#1a7f37" stroke-width="1.6"/>
+<rect x="416" y="540" width="236" height="70" rx="10" ry="10" fill="none" stroke="#1a7f37" stroke-width="1.6"/>
+<rect x="430" y="554" width="34" height="34" rx="7.48" ry="7.48" fill="#1a7f37" stroke="#1a7f37" stroke-width="1"/>
+<g transform="translate(436.46,560.46) scale(0.878)" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21v-9M12 12C12 7 8 4 4 4c0 5 3 8 8 8zM12 14c0-4 3-7 8-7 0 4-3 7-8 7z"/></g>
+<text x="476" y="570" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="14.5" font-weight="700" fill="#1f2328" text-anchor="start" letter-spacing="0">init: seed-token</text>
+<text x="476" y="587" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.5" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">busybox · runs before the bot</text>
+<text x="432" y="626" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="10.8" font-weight="400" fill="#8c959f" text-anchor="start" letter-spacing="0">cp token.json → /data only if missing</text>
+<rect x="416" y="640" width="236" height="62" rx="10" ry="10" fill="#d4600a" fill-opacity="0.07" stroke="#d4600a" stroke-width="1.6"/>
+<rect x="416" y="640" width="236" height="62" rx="10" ry="10" fill="none" stroke="#d4600a" stroke-width="1.6"/>
+<rect x="430" y="654" width="34" height="34" rx="7.48" ry="7.48" fill="#d4600a" stroke="#d4600a" stroke-width="1"/>
+<g transform="translate(436.46,660.46) scale(0.878)" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7.5a4 4 0 0 1 8 0V11"/></g>
+<text x="476" y="670" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="14.5" font-weight="700" fill="#1f2328" text-anchor="start" letter-spacing="0">Secret relay-bot-env</text>
+<text x="476" y="687" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.5" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">TELEGRAM_* · channels · Gemini</text>
+<rect x="416" y="716" width="236" height="62" rx="10" ry="10" fill="#d4600a" fill-opacity="0.07" stroke="#d4600a" stroke-width="1.6"/>
+<rect x="416" y="716" width="236" height="62" rx="10" ry="10" fill="none" stroke="#d4600a" stroke-width="1.6"/>
+<rect x="430" y="730" width="34" height="34" rx="7.48" ry="7.48" fill="#d4600a" stroke="#d4600a" stroke-width="1"/>
+<g transform="translate(436.46,736.46) scale(0.878)" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7.5a4 4 0 0 1 8 0V11"/></g>
+<text x="476" y="746" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="14.5" font-weight="700" fill="#1f2328" text-anchor="start" letter-spacing="0">Secret relay-bot-files</text>
+<text x="476" y="763" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.5" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">token.json · client_secret.json</text>
+<text x="432" y="800" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="10.8" font-weight="400" fill="#8c959f" text-anchor="start" letter-spacing="0">kubectl create secret … from .env</text>
+<text x="432" y="815" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="10.8" font-weight="400" fill="#8c959f" text-anchor="start" letter-spacing="0">and config/ — never committed</text>
+<rect x="700" y="540" width="424" height="220" rx="12" ry="12" fill="#0969da" fill-opacity="0.07" stroke="#0969da" stroke-width="1.8"/>
+<rect x="700" y="540" width="424" height="220" rx="12" ry="12" fill="none" stroke="#0969da" stroke-width="1.8"/>
+<rect x="716" y="556" width="40" height="40" rx="8.8" ry="8.8" fill="#0969da" stroke="#0969da" stroke-width="1"/>
+<g transform="translate(723.6,563.6) scale(1.033)" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="6" width="12" height="12" rx="2"/><rect x="9.5" y="9.5" width="5" height="5"/><path d="M9 2v3M15 2v3M9 19v3M15 19v3M2 9h3M2 15h3M19 9h3M19 15h3"/></g>
+<text x="768" y="576" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="15.5" font-weight="700" fill="#1f2328" text-anchor="start" letter-spacing="0">Deployment relay-bot · 1 pod</text>
+<text x="768" y="593" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.5" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">python 3.12-slim + ffmpeg · python -m src.main</text>
+<rect x="718" y="618" width="4" height="13" rx="1" fill="#229ed9"/>
+<text x="730" y="628" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12" font-weight="700" fill="#1f2328" text-anchor="start" letter-spacing="0">telegram_bot</text>
+<text x="828" y="628" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.5" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">/run /status /next /help + notifications</text>
+<rect x="718" y="639" width="4" height="13" rx="1" fill="#0969da"/>
+<text x="730" y="649" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12" font-weight="700" fill="#1f2328" text-anchor="start" letter-spacing="0">scheduler</text>
+<text x="828" y="649" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.5" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">job_queue → scheduled_relay 06:00 / 18:00</text>
+<rect x="718" y="660" width="4" height="13" rx="1" fill="#e5252a"/>
+<text x="730" y="670" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12" font-weight="700" fill="#1f2328" text-anchor="start" letter-spacing="0">pipeline</text>
+<text x="828" y="670" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.5" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">_relay_lock · asyncio.to_thread</text>
+<rect x="718" y="681" width="4" height="13" rx="1" fill="#e5252a"/>
+<text x="730" y="691" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12" font-weight="700" fill="#1f2328" text-anchor="start" letter-spacing="0">  downloader</text>
+<text x="828" y="691" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.5" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">yt-dlp: flat listing → per-video metadata</text>
+<rect x="718" y="702" width="4" height="13" rx="1" fill="#e5252a"/>
+<text x="730" y="712" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12" font-weight="700" fill="#1f2328" text-anchor="start" letter-spacing="0">  uploader</text>
+<text x="828" y="712" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.5" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">resumable insert · QuotaExceeded → abort</text>
+<text x="718" y="748" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11" font-weight="400" fill="#8c959f" text-anchor="start" letter-spacing="0">replicas 1 · Recreate · req 250m/512Mi · lim 1 CPU/1Gi</text>
+<rect x="700" y="780" width="276" height="62" rx="10" ry="10" fill="#1a7f37" fill-opacity="0.07" stroke="#1a7f37" stroke-width="1.6"/>
+<rect x="700" y="780" width="276" height="62" rx="10" ry="10" fill="none" stroke="#1a7f37" stroke-width="1.6"/>
+<rect x="714" y="794" width="34" height="34" rx="7.48" ry="7.48" fill="#1a7f37" stroke="#1a7f37" stroke-width="1"/>
+<g transform="translate(720.46,800.46) scale(0.878)" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="6" rx="8" ry="2.6"/><path d="M4 6v12c0 1.5 3.6 2.6 8 2.6s8-1.1 8-2.6V6M4 12c0 1.5 3.6 2.6 8 2.6s8-1.1 8-2.6"/></g>
+<text x="760" y="810" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="14.5" font-weight="700" fill="#1f2328" text-anchor="start" letter-spacing="0">PVC relay-data → /data</text>
+<text x="760" y="827" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.5" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">EVS 20 Gi SAS · csi-disk · RWO</text>
+<text x="988" y="800" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11" font-weight="600" fill="#1a7f37" text-anchor="start" letter-spacing="0">token.json</text>
+<text x="988" y="815" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11" font-weight="600" fill="#1a7f37" text-anchor="start" letter-spacing="0">processed_videos.json</text>
+<text x="988" y="830" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">downloads/ scratch</text>
+<rect x="1150" y="540" width="194" height="70" rx="10" ry="10" fill="#cf222e" fill-opacity="0.07" stroke="#cf222e" stroke-width="1.6"/>
+<rect x="1150" y="540" width="194" height="70" rx="10" ry="10" fill="none" stroke="#cf222e" stroke-width="1.6"/>
+<rect x="1164" y="554" width="34" height="34" rx="7.48" ry="7.48" fill="#cf222e" stroke="#cf222e" stroke-width="1"/>
+<g transform="translate(1170.46,560.46) scale(0.878)" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M9 12l2 2 4-4"/></g>
+<text x="1210" y="570" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="14.5" font-weight="700" fill="#1f2328" text-anchor="start" letter-spacing="0">NetworkPolicy</text>
+<text x="1210" y="587" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.5" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">ingress: none</text>
+<text x="1166" y="626" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="10.8" font-weight="400" fill="#8c959f" text-anchor="start" letter-spacing="0">egress: UDP/TCP 53, TCP 443</text>
+<rect x="1150" y="640" width="194" height="62" rx="10" ry="10" fill="#6e7781" fill-opacity="0.07" stroke="#6e7781" stroke-width="1.6"/>
+<rect x="1150" y="640" width="194" height="62" rx="10" ry="10" fill="none" stroke="#6e7781" stroke-width="1.6"/>
+<rect x="1164" y="654" width="34" height="34" rx="7.48" ry="7.48" fill="#6e7781" stroke="#6e7781" stroke-width="1"/>
+<g transform="translate(1170.46,660.46) scale(0.878)" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M5.6 5.6l12.8 12.8"/></g>
+<text x="1210" y="670" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="14.5" font-weight="700" fill="#1f2328" text-anchor="start" letter-spacing="0">No Service</text>
+<text x="1210" y="687" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.5" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">no Ingress · no ELB</text>
+<text x="1166" y="726" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="10.8" font-weight="400" fill="#8c959f" text-anchor="start" letter-spacing="0">nothing listens; Telegram</text>
+<text x="1166" y="741" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="10.8" font-weight="400" fill="#8c959f" text-anchor="start" letter-spacing="0">is polled, not webhooked</text>
+<text x="392" y="918" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12" font-weight="700" fill="#8c959f" text-anchor="start" letter-spacing="1.2">GATEWAYS</text>
+<text x="392" y="936" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11" font-weight="400" fill="#8c959f" text-anchor="start" letter-spacing="0">egress path</text>
+<rect x="520" y="896" width="260" height="62" rx="10" ry="10" fill="#6e7781" fill-opacity="0.07" stroke="#6e7781" stroke-width="1.6"/>
+<rect x="520" y="896" width="260" height="62" rx="10" ry="10" fill="none" stroke="#6e7781" stroke-width="1.6"/>
+<rect x="534" y="910" width="34" height="34" rx="7.48" ry="7.48" fill="#6e7781" stroke="#6e7781" stroke-width="1"/>
+<g transform="translate(540.46,916.46) scale(0.878)" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="6" rx="1.5"/><rect x="3" y="14" width="18" height="6" rx="1.5"/><path d="M7 7h.01M7 17h.01"/></g>
+<text x="580" y="926" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="14.5" font-weight="700" fill="#1f2328" text-anchor="start" letter-spacing="0">CoreDNS</text>
+<text x="580" y="943" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.5" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">in-cluster · port 53</text>
+<rect x="820" y="896" width="300" height="62" rx="10" ry="10" fill="#6e7781" fill-opacity="0.07" stroke="#6e7781" stroke-width="1.6"/>
+<rect x="820" y="896" width="300" height="62" rx="10" ry="10" fill="none" stroke="#6e7781" stroke-width="1.6"/>
+<rect x="834" y="910" width="34" height="34" rx="7.48" ry="7.48" fill="#6e7781" stroke="#6e7781" stroke-width="1"/>
+<g transform="translate(840.46,916.46) scale(0.878)" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h15M15 4l4 4-4 4M20 16H5M9 12l-4 4 4 4"/></g>
+<text x="880" y="926" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="14.5" font-weight="700" fill="#1f2328" text-anchor="start" letter-spacing="0">NAT Gateway · SNAT</text>
+<text x="880" y="943" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.5" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">node subnet → EIP · fixed egress IP</text>
+<rect x="1150" y="896" width="230" height="62" rx="10" ry="10" fill="#6e7781" fill-opacity="0.07" stroke="#6e7781" stroke-width="1.6"/>
+<rect x="1150" y="896" width="230" height="62" rx="10" ry="10" fill="none" stroke="#6e7781" stroke-width="1.6"/>
+<rect x="1164" y="910" width="34" height="34" rx="7.48" ry="7.48" fill="#6e7781" stroke="#6e7781" stroke-width="1"/>
+<g transform="translate(1170.46,916.46) scale(0.878)" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="4" ry="9"/><path d="M3 12h18"/></g>
+<text x="1210" y="926" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="14.5" font-weight="700" fill="#1f2328" text-anchor="start" letter-spacing="0">EIP</text>
+<text x="1210" y="943" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.5" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">bound to the NAT rule</text>
+<path d="M470 244 L470 340" fill="none" stroke="#8250df" stroke-width="1.8" marker-end="url(#ah-purple-light)"/>
+<text x="478" y="282" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11" font-weight="700" fill="#8250df" text-anchor="start" letter-spacing="0">docker push</text>
+<path d="M580 371 L684 371 L684 612 L700 612" fill="none" stroke="#8250df" stroke-width="1.8" stroke-dasharray="6 5" marker-end="url(#ah-purple-light)"/>
+<text x="690" y="514" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11" font-weight="700" fill="#8250df" text-anchor="start" letter-spacing="0">image pull</text>
+<text x="690" y="528" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="10.5" font-weight="400" fill="#8250df" text-anchor="start" letter-spacing="0">default-secret</text>
+<path d="M770 540 L770 244" fill="none" stroke="#229ed9" stroke-width="1.8" marker-end="url(#ah-tg-light)"/>
+<text x="776" y="282" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11" font-weight="700" fill="#229ed9" text-anchor="start" letter-spacing="0">long-poll 443</text>
+<path d="M910 540 L910 244" fill="none" stroke="#e5252a" stroke-width="1.8" marker-end="url(#ah-yt-light)"/>
+<text x="916" y="282" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11" font-weight="700" fill="#e5252a" text-anchor="start" letter-spacing="0">download 443</text>
+<path d="M1050 540 L1050 244" fill="none" stroke="#e5252a" stroke-width="1.8" marker-end="url(#ah-yt-light)"/>
+<text x="1056" y="282" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11" font-weight="700" fill="#e5252a" text-anchor="start" letter-spacing="0">insert 443</text>
+<path d="M652 575 L700 575" fill="none" stroke="#1a7f37" stroke-width="1.8" stroke-dasharray="5 4" marker-end="url(#ah-green-light)"/>
+<path d="M534 702 L534 716" fill="none" stroke="#d4600a" stroke-width="1.8"/>
+<path d="M652 668 L700 668" fill="none" stroke="#d4600a" stroke-width="1.8" stroke-dasharray="5 4" marker-end="url(#ah-orange-light)"/>
+<text x="656" y="662" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="10" font-weight="700" fill="#d4600a" text-anchor="start" letter-spacing="0">env</text>
+<path d="M860 760 L860 780" fill="none" stroke="#1a7f37" stroke-width="1.8" marker-end="url(#ah-green-light)" marker-start="url(#ah-green-light)"/>
+<text x="866" y="774" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="10.5" font-weight="700" fill="#1a7f37" text-anchor="start" letter-spacing="0">mount</text>
+<path d="M1116 760 L1116 896" fill="none" stroke="#6e7781" stroke-width="1.8" stroke-dasharray="3 4" marker-end="url(#ah-grey-light)"/>
+<text x="1010" y="880" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="10.5" font-weight="700" fill="#6e7781" text-anchor="start" letter-spacing="0">all egress</text>
+<rect x="336" y="284" width="330" height="32" rx="8" ry="8" fill="#ffffff" stroke="#cf222e" stroke-width="1.8"/>
+<circle cx="354" cy="300" r="5.5" fill="#cf222e"/>
+<text x="368" y="305.5" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="14.5" font-weight="700" fill="#cf222e" text-anchor="start" letter-spacing="0">Huawei Cloud · me-east-1 (Riyadh)</text>
+<rect x="360" y="408" width="300" height="32" rx="8" ry="8" fill="#ffffff" stroke="#d4600a" stroke-width="1.8"/>
+<circle cx="378" cy="424" r="5.5" fill="#d4600a"/>
+<text x="392" y="429.5" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="14.5" font-weight="700" fill="#d4600a" text-anchor="start" letter-spacing="0">VPC · CCE cluster network</text>
+<rect x="384" y="450" width="280" height="32" rx="8" ry="8" fill="#ffffff" stroke="#0969da" stroke-width="1.8"/>
+<circle cx="402" cy="466" r="5.5" fill="#0969da"/>
+<text x="416" y="471.5" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="14.5" font-weight="700" fill="#0969da" text-anchor="start" letter-spacing="0">node subnet · private · CCE</text>
+<rect x="408" y="490" width="260" height="32" rx="8" ry="8" fill="#ffffff" stroke="#8250df" stroke-width="1.8"/>
+<circle cx="426" cy="506" r="5.5" fill="#8250df"/>
+<text x="440" y="511.5" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="14.5" font-weight="700" fill="#8250df" text-anchor="start" letter-spacing="0">namespace · relay-bot</text>
+<rect x="1466" y="120" width="414" height="902" rx="12" ry="12" fill="#f6f8fa" stroke="#d0d7de" stroke-width="1.4"/>
+<text x="1484" y="152" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="16.5" font-weight="700" fill="#1f2328" text-anchor="start" letter-spacing="0">Abbreviations</text>
+<text x="1484" y="172" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">every acronym used in this diagram</text>
+<text x="1490" y="204" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12" font-weight="700" fill="#8c959f" text-anchor="start" letter-spacing="1.2">HUAWEI CLOUD</text>
+<rect x="1490" y="216" width="3" height="15" fill="#0969da"/>
+<text x="1504" y="228" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="13.5" font-weight="700" fill="#1f2328" text-anchor="start" letter-spacing="0">CCE</text>
+<text x="1580" y="228" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">Cloud Container Engine (Kubernetes)</text>
+<rect x="1490" y="239" width="3" height="15" fill="#0969da"/>
+<text x="1504" y="251" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="13.5" font-weight="700" fill="#1f2328" text-anchor="start" letter-spacing="0">SWR</text>
+<text x="1580" y="251" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">SoftWare Repository for Container</text>
+<rect x="1490" y="262" width="3" height="15" fill="#0969da"/>
+<text x="1504" y="274" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="13.5" font-weight="700" fill="#1f2328" text-anchor="start" letter-spacing="0">EVS</text>
+<text x="1580" y="274" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">Elastic Volume Service (block disk)</text>
+<rect x="1490" y="285" width="3" height="15" fill="#0969da"/>
+<text x="1504" y="297" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="13.5" font-weight="700" fill="#1f2328" text-anchor="start" letter-spacing="0">VPC</text>
+<text x="1580" y="297" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">Virtual Private Cloud</text>
+<rect x="1490" y="308" width="3" height="15" fill="#0969da"/>
+<text x="1504" y="320" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="13.5" font-weight="700" fill="#1f2328" text-anchor="start" letter-spacing="0">NAT</text>
+<text x="1580" y="320" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">Network Address Translation</text>
+<rect x="1490" y="331" width="3" height="15" fill="#0969da"/>
+<text x="1504" y="343" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="13.5" font-weight="700" fill="#1f2328" text-anchor="start" letter-spacing="0">SNAT</text>
+<text x="1580" y="343" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">Source NAT (outbound only)</text>
+<rect x="1490" y="354" width="3" height="15" fill="#0969da"/>
+<text x="1504" y="366" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="13.5" font-weight="700" fill="#1f2328" text-anchor="start" letter-spacing="0">EIP</text>
+<text x="1580" y="366" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">Elastic IP</text>
+<rect x="1490" y="377" width="3" height="15" fill="#0969da"/>
+<text x="1504" y="389" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="13.5" font-weight="700" fill="#1f2328" text-anchor="start" letter-spacing="0">IAM</text>
+<text x="1580" y="389" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">Identity &amp; Access Management</text>
+<rect x="1490" y="400" width="3" height="15" fill="#0969da"/>
+<text x="1504" y="412" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="13.5" font-weight="700" fill="#1f2328" text-anchor="start" letter-spacing="0">AK</text>
+<text x="1580" y="412" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">Access Key (paired with a login key)</text>
+<text x="1490" y="449" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12" font-weight="700" fill="#8c959f" text-anchor="start" letter-spacing="1.2">KUBERNETES</text>
+<rect x="1490" y="461" width="3" height="15" fill="#8250df"/>
+<text x="1504" y="473" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="13.5" font-weight="700" fill="#1f2328" text-anchor="start" letter-spacing="0">ns</text>
+<text x="1580" y="473" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">Namespace</text>
+<rect x="1490" y="484" width="3" height="15" fill="#8250df"/>
+<text x="1504" y="496" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="13.5" font-weight="700" fill="#1f2328" text-anchor="start" letter-spacing="0">PVC</text>
+<text x="1580" y="496" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">PersistentVolumeClaim</text>
+<rect x="1490" y="507" width="3" height="15" fill="#8250df"/>
+<text x="1504" y="519" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="13.5" font-weight="700" fill="#1f2328" text-anchor="start" letter-spacing="0">RWO</text>
+<text x="1580" y="519" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">ReadWriteOnce — one node mounts it</text>
+<rect x="1490" y="530" width="3" height="15" fill="#8250df"/>
+<text x="1504" y="542" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="13.5" font-weight="700" fill="#1f2328" text-anchor="start" letter-spacing="0">DNS</text>
+<text x="1580" y="542" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">CoreDNS service discovery</text>
+<text x="1490" y="579" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12" font-weight="700" fill="#8c959f" text-anchor="start" letter-spacing="1.2">APPLICATION</text>
+<rect x="1490" y="591" width="3" height="15" fill="#cf222e"/>
+<text x="1504" y="603" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="13.5" font-weight="700" fill="#1f2328" text-anchor="start" letter-spacing="0">API v3</text>
+<text x="1580" y="603" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">YouTube Data API, version 3</text>
+<rect x="1490" y="614" width="3" height="15" fill="#cf222e"/>
+<text x="1504" y="626" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="13.5" font-weight="700" fill="#1f2328" text-anchor="start" letter-spacing="0">OAuth</text>
+<text x="1580" y="626" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">Google consent → refresh token</text>
+<rect x="1490" y="637" width="3" height="15" fill="#cf222e"/>
+<text x="1504" y="649" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="13.5" font-weight="700" fill="#1f2328" text-anchor="start" letter-spacing="0">yt-dlp</text>
+<text x="1580" y="649" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">YouTube downloader (Python)</text>
+<rect x="1490" y="660" width="3" height="15" fill="#cf222e"/>
+<text x="1504" y="672" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="13.5" font-weight="700" fill="#1f2328" text-anchor="start" letter-spacing="0">HLD</text>
+<text x="1580" y="672" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">High-Level Design</text>
+<text x="1490" y="709" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12" font-weight="700" fill="#8c959f" text-anchor="start" letter-spacing="1.2">FLOW KEY</text>
+<path d="M1500 729 L1552 729" fill="none" stroke="#8250df" stroke-width="1.8" marker-end="url(#ah-purple-light)"/>
+<text x="1580" y="733" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">Build — GitHub Actions → SWR → pull</text>
+<path d="M1500 753 L1552 753" fill="none" stroke="#229ed9" stroke-width="1.8" marker-end="url(#ah-tg-light)"/>
+<text x="1580" y="757" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">Control — Telegram long-poll</text>
+<path d="M1500 777 L1552 777" fill="none" stroke="#e5252a" stroke-width="1.8" marker-end="url(#ah-yt-light)"/>
+<text x="1580" y="781" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">Data — yt-dlp in · API v3 out</text>
+<path d="M1500 801 L1552 801" fill="none" stroke="#1a7f37" stroke-width="1.8" marker-end="url(#ah-green-light)"/>
+<text x="1580" y="805" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">State — EVS volume / token seed</text>
+<path d="M1500 825 L1552 825" fill="none" stroke="#d4600a" stroke-width="1.8" stroke-dasharray="5 4" marker-end="url(#ah-orange-light)"/>
+<text x="1580" y="829" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">Config — Secrets → env + files</text>
+<path d="M1500 849 L1552 849" fill="none" stroke="#6e7781" stroke-width="1.8" stroke-dasharray="3 4" marker-end="url(#ah-grey-light)"/>
+<text x="1580" y="853" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">Egress — every call via NAT + EIP</text>
+<text x="48" y="1048" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="13" font-weight="400" fill="#57606a" text-anchor="start" letter-spacing="0">push to main → Actions → SWR :latest/:sha → rollout restart   ·   /run or 06:00/18:00 → yt-dlp → /data/downloads → videos.insert → target channel → Telegram report   ·   state: /data on EVS</text>
+<text x="48" y="1068" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="13" font-weight="700" fill="#57606a" text-anchor="start" letter-spacing="0">Never scale past 1 replica   ·   cloud IPs can hit YouTube's bot-check: smoke-test yt-dlp from the cluster first   ·   OAuth only on a laptop   ·   secrets never in git or the image</text>
+</g>
+<defs><pattern id="dots-dark" width="32" height="32" patternUnits="userSpaceOnUse"><circle cx="1.2" cy="1.2" r="1.2" fill="#161b22"/></pattern></defs>
+<g class="theme-dark">
+<defs>
+<marker id="ah-blue-dark" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#4493f8"/></marker>
+<marker id="ah-orange-dark" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#f0883e"/></marker>
+<marker id="ah-green-dark" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#3fb950"/></marker>
+<marker id="ah-purple-dark" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#a371f7"/></marker>
+<marker id="ah-red-dark" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#f85149"/></marker>
+<marker id="ah-grey-dark" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#8b949e"/></marker>
+<marker id="ah-tg-dark" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#3bb4ec"/></marker>
+<marker id="ah-yt-dark" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#ff4d4f"/></marker>
+</defs>
+<rect x="0" y="0" width="1920" height="1080" rx="0" ry="0" fill="#0d1117" stroke="#0d1117" stroke-width="0"/>
+<rect width="1920" height="1080" fill="url(#dots-dark)"/>
+<text x="48" y="52" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="30" font-weight="700" fill="#e6edf3" text-anchor="start" letter-spacing="0">YouTube Relay Bot — High-Level Design (HLD)</text>
+<text x="48" y="78" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="15.5" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">Source channel → yt-dlp → YouTube Data API v3 → target channel · Huawei Cloud CCE me-east-1 (Riyadh) · ns relay-bot · 1 pod, Recreate · EVS volume · egress-only via NAT + EIP · Telegram control</text>
+<text x="1880" y="52" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="14" font-weight="600" fill="#6e7681" text-anchor="end" letter-spacing="0">FHD 1920 × 1080</text>
+<text x="1880" y="74" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="13.5" font-weight="400" fill="#6e7681" text-anchor="end" letter-spacing="0">v1 · theme-aware</text>
+<line x1="48" y1="96" x2="1880" y2="96" stroke="#30363d" stroke-width="1.5"/>
+<rect x="48" y="120" width="250" height="412" rx="12" ry="12" fill="#161b22" stroke="#30363d" stroke-width="1.4"/>
+<text x="66" y="152" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="16.5" font-weight="700" fill="#e6edf3" text-anchor="start" letter-spacing="0">At a glance</text>
+<circle cx="70" cy="172" r="2.8" fill="#4493f8"/>
+<text x="82" y="176" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.8" font-weight="400" fill="#e6edf3" text-anchor="start" letter-spacing="0">Region me-east-1 (Riyadh), one</text>
+<text x="82" y="190" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.8" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">CCE cluster, namespace relay-bot</text>
+<circle cx="70" cy="204" r="2.8" fill="#4493f8"/>
+<text x="82" y="208" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.8" font-weight="400" fill="#e6edf3" text-anchor="start" letter-spacing="0">Exactly 1 pod, Recreate rollout —</text>
+<text x="82" y="222" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.8" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">two pods = every video twice</text>
+<circle cx="70" cy="236" r="2.8" fill="#4493f8"/>
+<text x="82" y="240" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.8" font-weight="400" fill="#e6edf3" text-anchor="start" letter-spacing="0">Egress only: no Service, Ingress,</text>
+<text x="82" y="254" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.8" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">ELB or public IP on the node</text>
+<circle cx="70" cy="268" r="2.8" fill="#4493f8"/>
+<text x="82" y="272" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.8" font-weight="400" fill="#e6edf3" text-anchor="start" letter-spacing="0">Telegram via long-polling, so</text>
+<text x="82" y="286" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.8" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">no inbound webhook is needed</text>
+<circle cx="70" cy="300" r="2.8" fill="#4493f8"/>
+<text x="82" y="304" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.8" font-weight="400" fill="#e6edf3" text-anchor="start" letter-spacing="0">State on one EVS volume: token,</text>
+<text x="82" y="318" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.8" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">processed IDs, download scratch</text>
+<circle cx="70" cy="332" r="2.8" fill="#4493f8"/>
+<text x="82" y="336" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.8" font-weight="400" fill="#e6edf3" text-anchor="start" letter-spacing="0">OAuth done once on a laptop;</text>
+<text x="82" y="350" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.8" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">token seeded through a Secret</text>
+<circle cx="70" cy="364" r="2.8" fill="#4493f8"/>
+<text x="82" y="368" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.8" font-weight="400" fill="#e6edf3" text-anchor="start" letter-spacing="0">Image: GitHub Actions → SWR,</text>
+<text x="82" y="382" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.8" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">linux/amd64, :latest + :&lt;sha&gt;</text>
+<circle cx="70" cy="396" r="2.8" fill="#4493f8"/>
+<text x="82" y="400" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.8" font-weight="400" fill="#e6edf3" text-anchor="start" letter-spacing="0">NetworkPolicy: deny ingress,</text>
+<text x="82" y="414" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.8" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">egress DNS 53 + HTTPS 443 only</text>
+<circle cx="70" cy="428" r="2.8" fill="#4493f8"/>
+<text x="82" y="432" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.8" font-weight="400" fill="#e6edf3" text-anchor="start" letter-spacing="0">uid 10001 · read-only root FS ·</text>
+<text x="82" y="446" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.8" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">all capabilities dropped</text>
+<circle cx="70" cy="460" r="2.8" fill="#4493f8"/>
+<text x="82" y="464" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.8" font-weight="400" fill="#e6edf3" text-anchor="start" letter-spacing="0">Secrets never in git or image;</text>
+<text x="82" y="478" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.8" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">SWR AK only in GitHub secrets</text>
+<circle cx="70" cy="492" r="2.8" fill="#4493f8"/>
+<text x="82" y="496" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.8" font-weight="400" fill="#e6edf3" text-anchor="start" letter-spacing="0">Next: Arabic titles via Gemini</text>
+<text x="82" y="510" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.8" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">(config keys exist, not wired)</text>
+<rect x="48" y="552" width="250" height="216" rx="12" ry="12" fill="#161b22" stroke="#30363d" stroke-width="1.4"/>
+<text x="66" y="582" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="16.5" font-weight="700" fill="#e6edf3" text-anchor="start" letter-spacing="0">Schedule &amp; quota</text>
+<text x="66" y="602" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">the real ceiling is YouTube, not CPU</text>
+<rect x="66" y="616" width="30" height="30" rx="6.6" ry="6.6" fill="#4493f8" stroke="#4493f8" stroke-width="1"/>
+<g transform="translate(71.7,621.7) scale(0.775)" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></g>
+<text x="106" y="629" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="700" fill="#e6edf3" text-anchor="start" letter-spacing="0">06:00 · 18:00 Asia/Riyadh</text>
+<text x="106" y="644" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.5" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">APScheduler via job_queue</text>
+<rect x="66" y="662" width="214" height="14" rx="3" ry="3" fill="#30363d" stroke="#30363d" stroke-width="0"/>
+<rect x="67.0" y="663" width="32.24" height="12" rx="2" ry="2" fill="#f85149" stroke="#0d1117" stroke-width="0"/>
+<rect x="101.24000000000001" y="663" width="32.24" height="12" rx="2" ry="2" fill="#f0883e" stroke="#0d1117" stroke-width="0"/>
+<rect x="135.48000000000002" y="663" width="32.24" height="12" rx="2" ry="2" fill="#f85149" stroke="#0d1117" stroke-width="0"/>
+<rect x="169.72" y="663" width="32.24" height="12" rx="2" ry="2" fill="#f0883e" stroke="#0d1117" stroke-width="0"/>
+<rect x="203.96" y="663" width="32.24" height="12" rx="2" ry="2" fill="#f85149" stroke="#0d1117" stroke-width="0"/>
+<rect x="238.20000000000002" y="663" width="32.24" height="12" rx="2" ry="2" fill="#f0883e" stroke="#0d1117" stroke-width="0"/>
+<text x="66" y="694" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.5" font-weight="400" fill="#e6edf3" text-anchor="start" letter-spacing="0">10,000 units/day ÷ ~1,600 per insert</text>
+<text x="66" y="709" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.5" font-weight="700" fill="#f85149" text-anchor="start" letter-spacing="0">≈ 6 uploads per day, hard limit</text>
+<text x="66" y="728" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.5" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">max_uploads_per_run 5 · scan_limit 20</text>
+<text x="66" y="743" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.5" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">max_age_days 7 · 1080p · 8 MB chunks</text>
+<text x="66" y="760" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11" font-weight="400" fill="#6e7681" text-anchor="start" letter-spacing="0">Quota spent → run aborts, reports, no retry</text>
+<rect x="48" y="788" width="250" height="234" rx="12" ry="12" fill="#161b22" stroke="#30363d" stroke-width="1.4"/>
+<text x="66" y="818" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="16.5" font-weight="700" fill="#e6edf3" text-anchor="start" letter-spacing="0">Durability</text>
+<text x="66" y="838" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">what survives what</text>
+<text x="66" y="862" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="700" fill="#3fb950" text-anchor="start" letter-spacing="0">Pod crash → restart</text>
+<text x="66" y="878" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.3" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">same PVC, same token, same IDs</text>
+<text x="66" y="898" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="700" fill="#3fb950" text-anchor="start" letter-spacing="0">Node loss → reschedule</text>
+<text x="66" y="914" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.3" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">EVS is zonal: pod follows its AZ</text>
+<text x="66" y="934" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="700" fill="#f0883e" text-anchor="start" letter-spacing="0">Failed download → retried</text>
+<text x="66" y="950" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.3" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">not marked processed until done</text>
+<text x="66" y="970" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="700" fill="#f85149" text-anchor="start" letter-spacing="0">Token revoked → re-auth</text>
+<text x="66" y="986" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.3" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">laptop OAuth, kubectl cp to /data</text>
+<text x="66" y="1010" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11" font-weight="400" fill="#6e7681" text-anchor="start" letter-spacing="0">No HA by design · volume = single copy</text>
+<rect x="1150" y="116" width="266" height="150" rx="12" ry="12" fill="#0d1117" stroke="#30363d" stroke-width="1.4"/>
+<text x="1166" y="140" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="13.5" font-weight="700" fill="#e6edf3" text-anchor="start" letter-spacing="0">One pod that only dials out</text>
+<text x="1166" y="162" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.3" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">Twice a day (or on /run) the pod lists</text>
+<text x="1166" y="178" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.3" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">the source channel, downloads new</text>
+<text x="1166" y="194" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.3" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">videos with yt-dlp and re-uploads them</text>
+<text x="1166" y="210" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.3" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">with the YouTube API. Nothing connects</text>
+<text x="1166" y="226" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.3" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">in: Telegram is polled, every call</text>
+<text x="1166" y="242" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.3" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">leaves through the NAT Gateway EIP.</text>
+<rect x="444" y="140" width="52" height="52" rx="11.44" ry="11.44" fill="#a371f7" stroke="#a371f7" stroke-width="1"/>
+<g transform="translate(453.88,149.88) scale(1.343)" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="5" r="2.2"/><circle cx="6" cy="19" r="2.2"/><circle cx="18" cy="7" r="2.2"/><path d="M6 7.2v9.6M18 9.2c0 4.5-6 4-11 8"/></g>
+<text x="470" y="214" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="14.5" font-weight="700" fill="#e6edf3" text-anchor="middle" letter-spacing="0">GitHub · main</text>
+<text x="470" y="232" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.8" font-weight="400" fill="#9198a1" text-anchor="middle" letter-spacing="0">Actions build-push-swr</text>
+<rect x="604" y="140" width="52" height="52" rx="11.44" ry="11.44" fill="#3bb4ec" stroke="#3bb4ec" stroke-width="1"/>
+<g transform="translate(613.88,149.88) scale(1.343)" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/></g>
+<text x="630" y="214" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="14.5" font-weight="700" fill="#e6edf3" text-anchor="middle" letter-spacing="0">Owner</text>
+<text x="630" y="232" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.8" font-weight="400" fill="#9198a1" text-anchor="middle" letter-spacing="0">Telegram app · 1 chat ID</text>
+<rect x="744" y="140" width="52" height="52" rx="11.44" ry="11.44" fill="#3bb4ec" stroke="#3bb4ec" stroke-width="1"/>
+<g transform="translate(753.88,149.88) scale(1.343)" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 3 10.5 13.5M21 3l-6.5 18-4-7.5L3 9.5z"/></g>
+<text x="770" y="214" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="14.5" font-weight="700" fill="#e6edf3" text-anchor="middle" letter-spacing="0">Telegram Bot API</text>
+<text x="770" y="232" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.8" font-weight="400" fill="#9198a1" text-anchor="middle" letter-spacing="0">api.telegram.org</text>
+<rect x="884" y="140" width="52" height="52" rx="11.44" ry="11.44" fill="#ff4d4f" stroke="#ff4d4f" stroke-width="1"/>
+<g transform="translate(893.88,149.88) scale(1.343)" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="5" width="19" height="14" rx="4"/><path d="M10 9v6l5-3z" fill="#fff"/></g>
+<text x="910" y="214" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="14.5" font-weight="700" fill="#e6edf3" text-anchor="middle" letter-spacing="0">Source channel</text>
+<text x="910" y="232" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.8" font-weight="400" fill="#9198a1" text-anchor="middle" letter-spacing="0">youtube.com · yt-dlp</text>
+<rect x="1024" y="140" width="52" height="52" rx="11.44" ry="11.44" fill="#ff4d4f" stroke="#ff4d4f" stroke-width="1"/>
+<g transform="translate(1033.88,149.88) scale(1.343)" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M7 9l5-5 5 5M4 20h16"/></g>
+<text x="1050" y="214" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="14.5" font-weight="700" fill="#e6edf3" text-anchor="middle" letter-spacing="0">YouTube Data API</text>
+<text x="1050" y="232" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.8" font-weight="400" fill="#9198a1" text-anchor="middle" letter-spacing="0">v3 → target channel</text>
+<path d="M658 166 L742 166" fill="none" stroke="#3bb4ec" stroke-width="1.8" marker-end="url(#ah-tg-dark)" marker-start="url(#ah-tg-dark)"/>
+<text x="700" y="158" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="10.5" font-weight="600" fill="#3bb4ec" text-anchor="middle" letter-spacing="0">/run /status</text>
+<rect x="320" y="300" width="1112" height="722" rx="14" ry="14" fill="none" stroke="#f85149" stroke-width="1.8" stroke-dasharray="9 7"/>
+<rect x="360" y="340" width="220" height="62" rx="10" ry="10" fill="#a371f7" fill-opacity="0.12" stroke="#a371f7" stroke-width="1.6"/>
+<rect x="360" y="340" width="220" height="62" rx="10" ry="10" fill="none" stroke="#a371f7" stroke-width="1.6"/>
+<rect x="374" y="354" width="34" height="34" rx="7.48" ry="7.48" fill="#a371f7" stroke="#a371f7" stroke-width="1"/>
+<g transform="translate(380.46,360.46) scale(0.878)" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7.5 12 3l9 4.5v9L12 21l-9-4.5z"/><path d="M3 7.5 12 12l9-4.5M12 12v9"/></g>
+<text x="420" y="370" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="14.5" font-weight="700" fill="#e6edf3" text-anchor="start" letter-spacing="0">SWR</text>
+<text x="420" y="387" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.5" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">org/youtube-relay-bot</text>
+<rect x="1150" y="340" width="250" height="62" rx="10" ry="10" fill="#f0883e" fill-opacity="0.12" stroke="#f0883e" stroke-width="1.6"/>
+<rect x="1150" y="340" width="250" height="62" rx="10" ry="10" fill="none" stroke="#f0883e" stroke-width="1.6"/>
+<rect x="1164" y="354" width="34" height="34" rx="7.48" ry="7.48" fill="#f0883e" stroke="#f0883e" stroke-width="1"/>
+<g transform="translate(1170.46,360.46) scale(0.878)" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="7.5" cy="15.5" r="4"/><path d="M10.5 12.5 20 3M16.5 6.5l3 3"/></g>
+<text x="1210" y="370" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="14.5" font-weight="700" fill="#e6edf3" text-anchor="start" letter-spacing="0">IAM · AK + login key</text>
+<text x="1210" y="387" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.5" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">SWR push creds (GitHub only)</text>
+<rect x="344" y="424" width="1064" height="584" rx="12" ry="12" fill="none" stroke="#f0883e" stroke-width="1.6" stroke-dasharray="7 6"/>
+<rect x="368" y="466" width="1016" height="404" rx="12" ry="12" fill="none" stroke="#4493f8" stroke-width="1.5" stroke-dasharray="4 5"/>
+<rect x="392" y="506" width="968" height="352" rx="12" ry="12" fill="#4493f8" fill-opacity="0.03" stroke="#a371f7" stroke-width="1.4" stroke-dasharray="2 4"/>
+<rect x="416" y="540" width="236" height="70" rx="10" ry="10" fill="#3fb950" fill-opacity="0.12" stroke="#3fb950" stroke-width="1.6"/>
+<rect x="416" y="540" width="236" height="70" rx="10" ry="10" fill="none" stroke="#3fb950" stroke-width="1.6"/>
+<rect x="430" y="554" width="34" height="34" rx="7.48" ry="7.48" fill="#3fb950" stroke="#3fb950" stroke-width="1"/>
+<g transform="translate(436.46,560.46) scale(0.878)" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21v-9M12 12C12 7 8 4 4 4c0 5 3 8 8 8zM12 14c0-4 3-7 8-7 0 4-3 7-8 7z"/></g>
+<text x="476" y="570" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="14.5" font-weight="700" fill="#e6edf3" text-anchor="start" letter-spacing="0">init: seed-token</text>
+<text x="476" y="587" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.5" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">busybox · runs before the bot</text>
+<text x="432" y="626" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="10.8" font-weight="400" fill="#6e7681" text-anchor="start" letter-spacing="0">cp token.json → /data only if missing</text>
+<rect x="416" y="640" width="236" height="62" rx="10" ry="10" fill="#f0883e" fill-opacity="0.12" stroke="#f0883e" stroke-width="1.6"/>
+<rect x="416" y="640" width="236" height="62" rx="10" ry="10" fill="none" stroke="#f0883e" stroke-width="1.6"/>
+<rect x="430" y="654" width="34" height="34" rx="7.48" ry="7.48" fill="#f0883e" stroke="#f0883e" stroke-width="1"/>
+<g transform="translate(436.46,660.46) scale(0.878)" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7.5a4 4 0 0 1 8 0V11"/></g>
+<text x="476" y="670" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="14.5" font-weight="700" fill="#e6edf3" text-anchor="start" letter-spacing="0">Secret relay-bot-env</text>
+<text x="476" y="687" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.5" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">TELEGRAM_* · channels · Gemini</text>
+<rect x="416" y="716" width="236" height="62" rx="10" ry="10" fill="#f0883e" fill-opacity="0.12" stroke="#f0883e" stroke-width="1.6"/>
+<rect x="416" y="716" width="236" height="62" rx="10" ry="10" fill="none" stroke="#f0883e" stroke-width="1.6"/>
+<rect x="430" y="730" width="34" height="34" rx="7.48" ry="7.48" fill="#f0883e" stroke="#f0883e" stroke-width="1"/>
+<g transform="translate(436.46,736.46) scale(0.878)" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7.5a4 4 0 0 1 8 0V11"/></g>
+<text x="476" y="746" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="14.5" font-weight="700" fill="#e6edf3" text-anchor="start" letter-spacing="0">Secret relay-bot-files</text>
+<text x="476" y="763" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.5" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">token.json · client_secret.json</text>
+<text x="432" y="800" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="10.8" font-weight="400" fill="#6e7681" text-anchor="start" letter-spacing="0">kubectl create secret … from .env</text>
+<text x="432" y="815" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="10.8" font-weight="400" fill="#6e7681" text-anchor="start" letter-spacing="0">and config/ — never committed</text>
+<rect x="700" y="540" width="424" height="220" rx="12" ry="12" fill="#4493f8" fill-opacity="0.12" stroke="#4493f8" stroke-width="1.8"/>
+<rect x="700" y="540" width="424" height="220" rx="12" ry="12" fill="none" stroke="#4493f8" stroke-width="1.8"/>
+<rect x="716" y="556" width="40" height="40" rx="8.8" ry="8.8" fill="#4493f8" stroke="#4493f8" stroke-width="1"/>
+<g transform="translate(723.6,563.6) scale(1.033)" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="6" width="12" height="12" rx="2"/><rect x="9.5" y="9.5" width="5" height="5"/><path d="M9 2v3M15 2v3M9 19v3M15 19v3M2 9h3M2 15h3M19 9h3M19 15h3"/></g>
+<text x="768" y="576" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="15.5" font-weight="700" fill="#e6edf3" text-anchor="start" letter-spacing="0">Deployment relay-bot · 1 pod</text>
+<text x="768" y="593" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.5" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">python 3.12-slim + ffmpeg · python -m src.main</text>
+<rect x="718" y="618" width="4" height="13" rx="1" fill="#3bb4ec"/>
+<text x="730" y="628" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12" font-weight="700" fill="#e6edf3" text-anchor="start" letter-spacing="0">telegram_bot</text>
+<text x="828" y="628" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.5" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">/run /status /next /help + notifications</text>
+<rect x="718" y="639" width="4" height="13" rx="1" fill="#4493f8"/>
+<text x="730" y="649" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12" font-weight="700" fill="#e6edf3" text-anchor="start" letter-spacing="0">scheduler</text>
+<text x="828" y="649" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.5" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">job_queue → scheduled_relay 06:00 / 18:00</text>
+<rect x="718" y="660" width="4" height="13" rx="1" fill="#ff4d4f"/>
+<text x="730" y="670" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12" font-weight="700" fill="#e6edf3" text-anchor="start" letter-spacing="0">pipeline</text>
+<text x="828" y="670" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.5" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">_relay_lock · asyncio.to_thread</text>
+<rect x="718" y="681" width="4" height="13" rx="1" fill="#ff4d4f"/>
+<text x="730" y="691" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12" font-weight="700" fill="#e6edf3" text-anchor="start" letter-spacing="0">  downloader</text>
+<text x="828" y="691" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.5" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">yt-dlp: flat listing → per-video metadata</text>
+<rect x="718" y="702" width="4" height="13" rx="1" fill="#ff4d4f"/>
+<text x="730" y="712" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12" font-weight="700" fill="#e6edf3" text-anchor="start" letter-spacing="0">  uploader</text>
+<text x="828" y="712" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.5" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">resumable insert · QuotaExceeded → abort</text>
+<text x="718" y="748" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11" font-weight="400" fill="#6e7681" text-anchor="start" letter-spacing="0">replicas 1 · Recreate · req 250m/512Mi · lim 1 CPU/1Gi</text>
+<rect x="700" y="780" width="276" height="62" rx="10" ry="10" fill="#3fb950" fill-opacity="0.12" stroke="#3fb950" stroke-width="1.6"/>
+<rect x="700" y="780" width="276" height="62" rx="10" ry="10" fill="none" stroke="#3fb950" stroke-width="1.6"/>
+<rect x="714" y="794" width="34" height="34" rx="7.48" ry="7.48" fill="#3fb950" stroke="#3fb950" stroke-width="1"/>
+<g transform="translate(720.46,800.46) scale(0.878)" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="6" rx="8" ry="2.6"/><path d="M4 6v12c0 1.5 3.6 2.6 8 2.6s8-1.1 8-2.6V6M4 12c0 1.5 3.6 2.6 8 2.6s8-1.1 8-2.6"/></g>
+<text x="760" y="810" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="14.5" font-weight="700" fill="#e6edf3" text-anchor="start" letter-spacing="0">PVC relay-data → /data</text>
+<text x="760" y="827" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.5" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">EVS 20 Gi SAS · csi-disk · RWO</text>
+<text x="988" y="800" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11" font-weight="600" fill="#3fb950" text-anchor="start" letter-spacing="0">token.json</text>
+<text x="988" y="815" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11" font-weight="600" fill="#3fb950" text-anchor="start" letter-spacing="0">processed_videos.json</text>
+<text x="988" y="830" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">downloads/ scratch</text>
+<rect x="1150" y="540" width="194" height="70" rx="10" ry="10" fill="#f85149" fill-opacity="0.12" stroke="#f85149" stroke-width="1.6"/>
+<rect x="1150" y="540" width="194" height="70" rx="10" ry="10" fill="none" stroke="#f85149" stroke-width="1.6"/>
+<rect x="1164" y="554" width="34" height="34" rx="7.48" ry="7.48" fill="#f85149" stroke="#f85149" stroke-width="1"/>
+<g transform="translate(1170.46,560.46) scale(0.878)" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M9 12l2 2 4-4"/></g>
+<text x="1210" y="570" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="14.5" font-weight="700" fill="#e6edf3" text-anchor="start" letter-spacing="0">NetworkPolicy</text>
+<text x="1210" y="587" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.5" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">ingress: none</text>
+<text x="1166" y="626" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="10.8" font-weight="400" fill="#6e7681" text-anchor="start" letter-spacing="0">egress: UDP/TCP 53, TCP 443</text>
+<rect x="1150" y="640" width="194" height="62" rx="10" ry="10" fill="#8b949e" fill-opacity="0.12" stroke="#8b949e" stroke-width="1.6"/>
+<rect x="1150" y="640" width="194" height="62" rx="10" ry="10" fill="none" stroke="#8b949e" stroke-width="1.6"/>
+<rect x="1164" y="654" width="34" height="34" rx="7.48" ry="7.48" fill="#8b949e" stroke="#8b949e" stroke-width="1"/>
+<g transform="translate(1170.46,660.46) scale(0.878)" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M5.6 5.6l12.8 12.8"/></g>
+<text x="1210" y="670" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="14.5" font-weight="700" fill="#e6edf3" text-anchor="start" letter-spacing="0">No Service</text>
+<text x="1210" y="687" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.5" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">no Ingress · no ELB</text>
+<text x="1166" y="726" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="10.8" font-weight="400" fill="#6e7681" text-anchor="start" letter-spacing="0">nothing listens; Telegram</text>
+<text x="1166" y="741" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="10.8" font-weight="400" fill="#6e7681" text-anchor="start" letter-spacing="0">is polled, not webhooked</text>
+<text x="392" y="918" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12" font-weight="700" fill="#6e7681" text-anchor="start" letter-spacing="1.2">GATEWAYS</text>
+<text x="392" y="936" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11" font-weight="400" fill="#6e7681" text-anchor="start" letter-spacing="0">egress path</text>
+<rect x="520" y="896" width="260" height="62" rx="10" ry="10" fill="#8b949e" fill-opacity="0.12" stroke="#8b949e" stroke-width="1.6"/>
+<rect x="520" y="896" width="260" height="62" rx="10" ry="10" fill="none" stroke="#8b949e" stroke-width="1.6"/>
+<rect x="534" y="910" width="34" height="34" rx="7.48" ry="7.48" fill="#8b949e" stroke="#8b949e" stroke-width="1"/>
+<g transform="translate(540.46,916.46) scale(0.878)" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="6" rx="1.5"/><rect x="3" y="14" width="18" height="6" rx="1.5"/><path d="M7 7h.01M7 17h.01"/></g>
+<text x="580" y="926" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="14.5" font-weight="700" fill="#e6edf3" text-anchor="start" letter-spacing="0">CoreDNS</text>
+<text x="580" y="943" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.5" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">in-cluster · port 53</text>
+<rect x="820" y="896" width="300" height="62" rx="10" ry="10" fill="#8b949e" fill-opacity="0.12" stroke="#8b949e" stroke-width="1.6"/>
+<rect x="820" y="896" width="300" height="62" rx="10" ry="10" fill="none" stroke="#8b949e" stroke-width="1.6"/>
+<rect x="834" y="910" width="34" height="34" rx="7.48" ry="7.48" fill="#8b949e" stroke="#8b949e" stroke-width="1"/>
+<g transform="translate(840.46,916.46) scale(0.878)" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h15M15 4l4 4-4 4M20 16H5M9 12l-4 4 4 4"/></g>
+<text x="880" y="926" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="14.5" font-weight="700" fill="#e6edf3" text-anchor="start" letter-spacing="0">NAT Gateway · SNAT</text>
+<text x="880" y="943" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.5" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">node subnet → EIP · fixed egress IP</text>
+<rect x="1150" y="896" width="230" height="62" rx="10" ry="10" fill="#8b949e" fill-opacity="0.12" stroke="#8b949e" stroke-width="1.6"/>
+<rect x="1150" y="896" width="230" height="62" rx="10" ry="10" fill="none" stroke="#8b949e" stroke-width="1.6"/>
+<rect x="1164" y="910" width="34" height="34" rx="7.48" ry="7.48" fill="#8b949e" stroke="#8b949e" stroke-width="1"/>
+<g transform="translate(1170.46,916.46) scale(0.878)" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="4" ry="9"/><path d="M3 12h18"/></g>
+<text x="1210" y="926" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="14.5" font-weight="700" fill="#e6edf3" text-anchor="start" letter-spacing="0">EIP</text>
+<text x="1210" y="943" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11.5" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">bound to the NAT rule</text>
+<path d="M470 244 L470 340" fill="none" stroke="#a371f7" stroke-width="1.8" marker-end="url(#ah-purple-dark)"/>
+<text x="478" y="282" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11" font-weight="700" fill="#a371f7" text-anchor="start" letter-spacing="0">docker push</text>
+<path d="M580 371 L684 371 L684 612 L700 612" fill="none" stroke="#a371f7" stroke-width="1.8" stroke-dasharray="6 5" marker-end="url(#ah-purple-dark)"/>
+<text x="690" y="514" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11" font-weight="700" fill="#a371f7" text-anchor="start" letter-spacing="0">image pull</text>
+<text x="690" y="528" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="10.5" font-weight="400" fill="#a371f7" text-anchor="start" letter-spacing="0">default-secret</text>
+<path d="M770 540 L770 244" fill="none" stroke="#3bb4ec" stroke-width="1.8" marker-end="url(#ah-tg-dark)"/>
+<text x="776" y="282" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11" font-weight="700" fill="#3bb4ec" text-anchor="start" letter-spacing="0">long-poll 443</text>
+<path d="M910 540 L910 244" fill="none" stroke="#ff4d4f" stroke-width="1.8" marker-end="url(#ah-yt-dark)"/>
+<text x="916" y="282" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11" font-weight="700" fill="#ff4d4f" text-anchor="start" letter-spacing="0">download 443</text>
+<path d="M1050 540 L1050 244" fill="none" stroke="#ff4d4f" stroke-width="1.8" marker-end="url(#ah-yt-dark)"/>
+<text x="1056" y="282" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="11" font-weight="700" fill="#ff4d4f" text-anchor="start" letter-spacing="0">insert 443</text>
+<path d="M652 575 L700 575" fill="none" stroke="#3fb950" stroke-width="1.8" stroke-dasharray="5 4" marker-end="url(#ah-green-dark)"/>
+<path d="M534 702 L534 716" fill="none" stroke="#f0883e" stroke-width="1.8"/>
+<path d="M652 668 L700 668" fill="none" stroke="#f0883e" stroke-width="1.8" stroke-dasharray="5 4" marker-end="url(#ah-orange-dark)"/>
+<text x="656" y="662" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="10" font-weight="700" fill="#f0883e" text-anchor="start" letter-spacing="0">env</text>
+<path d="M860 760 L860 780" fill="none" stroke="#3fb950" stroke-width="1.8" marker-end="url(#ah-green-dark)" marker-start="url(#ah-green-dark)"/>
+<text x="866" y="774" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="10.5" font-weight="700" fill="#3fb950" text-anchor="start" letter-spacing="0">mount</text>
+<path d="M1116 760 L1116 896" fill="none" stroke="#8b949e" stroke-width="1.8" stroke-dasharray="3 4" marker-end="url(#ah-grey-dark)"/>
+<text x="1010" y="880" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="10.5" font-weight="700" fill="#8b949e" text-anchor="start" letter-spacing="0">all egress</text>
+<rect x="336" y="284" width="330" height="32" rx="8" ry="8" fill="#0d1117" stroke="#f85149" stroke-width="1.8"/>
+<circle cx="354" cy="300" r="5.5" fill="#f85149"/>
+<text x="368" y="305.5" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="14.5" font-weight="700" fill="#f85149" text-anchor="start" letter-spacing="0">Huawei Cloud · me-east-1 (Riyadh)</text>
+<rect x="360" y="408" width="300" height="32" rx="8" ry="8" fill="#0d1117" stroke="#f0883e" stroke-width="1.8"/>
+<circle cx="378" cy="424" r="5.5" fill="#f0883e"/>
+<text x="392" y="429.5" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="14.5" font-weight="700" fill="#f0883e" text-anchor="start" letter-spacing="0">VPC · CCE cluster network</text>
+<rect x="384" y="450" width="280" height="32" rx="8" ry="8" fill="#0d1117" stroke="#4493f8" stroke-width="1.8"/>
+<circle cx="402" cy="466" r="5.5" fill="#4493f8"/>
+<text x="416" y="471.5" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="14.5" font-weight="700" fill="#4493f8" text-anchor="start" letter-spacing="0">node subnet · private · CCE</text>
+<rect x="408" y="490" width="260" height="32" rx="8" ry="8" fill="#0d1117" stroke="#a371f7" stroke-width="1.8"/>
+<circle cx="426" cy="506" r="5.5" fill="#a371f7"/>
+<text x="440" y="511.5" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="14.5" font-weight="700" fill="#a371f7" text-anchor="start" letter-spacing="0">namespace · relay-bot</text>
+<rect x="1466" y="120" width="414" height="902" rx="12" ry="12" fill="#161b22" stroke="#30363d" stroke-width="1.4"/>
+<text x="1484" y="152" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="16.5" font-weight="700" fill="#e6edf3" text-anchor="start" letter-spacing="0">Abbreviations</text>
+<text x="1484" y="172" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">every acronym used in this diagram</text>
+<text x="1490" y="204" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12" font-weight="700" fill="#6e7681" text-anchor="start" letter-spacing="1.2">HUAWEI CLOUD</text>
+<rect x="1490" y="216" width="3" height="15" fill="#4493f8"/>
+<text x="1504" y="228" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="13.5" font-weight="700" fill="#e6edf3" text-anchor="start" letter-spacing="0">CCE</text>
+<text x="1580" y="228" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">Cloud Container Engine (Kubernetes)</text>
+<rect x="1490" y="239" width="3" height="15" fill="#4493f8"/>
+<text x="1504" y="251" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="13.5" font-weight="700" fill="#e6edf3" text-anchor="start" letter-spacing="0">SWR</text>
+<text x="1580" y="251" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">SoftWare Repository for Container</text>
+<rect x="1490" y="262" width="3" height="15" fill="#4493f8"/>
+<text x="1504" y="274" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="13.5" font-weight="700" fill="#e6edf3" text-anchor="start" letter-spacing="0">EVS</text>
+<text x="1580" y="274" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">Elastic Volume Service (block disk)</text>
+<rect x="1490" y="285" width="3" height="15" fill="#4493f8"/>
+<text x="1504" y="297" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="13.5" font-weight="700" fill="#e6edf3" text-anchor="start" letter-spacing="0">VPC</text>
+<text x="1580" y="297" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">Virtual Private Cloud</text>
+<rect x="1490" y="308" width="3" height="15" fill="#4493f8"/>
+<text x="1504" y="320" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="13.5" font-weight="700" fill="#e6edf3" text-anchor="start" letter-spacing="0">NAT</text>
+<text x="1580" y="320" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">Network Address Translation</text>
+<rect x="1490" y="331" width="3" height="15" fill="#4493f8"/>
+<text x="1504" y="343" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="13.5" font-weight="700" fill="#e6edf3" text-anchor="start" letter-spacing="0">SNAT</text>
+<text x="1580" y="343" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">Source NAT (outbound only)</text>
+<rect x="1490" y="354" width="3" height="15" fill="#4493f8"/>
+<text x="1504" y="366" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="13.5" font-weight="700" fill="#e6edf3" text-anchor="start" letter-spacing="0">EIP</text>
+<text x="1580" y="366" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">Elastic IP</text>
+<rect x="1490" y="377" width="3" height="15" fill="#4493f8"/>
+<text x="1504" y="389" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="13.5" font-weight="700" fill="#e6edf3" text-anchor="start" letter-spacing="0">IAM</text>
+<text x="1580" y="389" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">Identity &amp; Access Management</text>
+<rect x="1490" y="400" width="3" height="15" fill="#4493f8"/>
+<text x="1504" y="412" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="13.5" font-weight="700" fill="#e6edf3" text-anchor="start" letter-spacing="0">AK</text>
+<text x="1580" y="412" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">Access Key (paired with a login key)</text>
+<text x="1490" y="449" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12" font-weight="700" fill="#6e7681" text-anchor="start" letter-spacing="1.2">KUBERNETES</text>
+<rect x="1490" y="461" width="3" height="15" fill="#a371f7"/>
+<text x="1504" y="473" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="13.5" font-weight="700" fill="#e6edf3" text-anchor="start" letter-spacing="0">ns</text>
+<text x="1580" y="473" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">Namespace</text>
+<rect x="1490" y="484" width="3" height="15" fill="#a371f7"/>
+<text x="1504" y="496" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="13.5" font-weight="700" fill="#e6edf3" text-anchor="start" letter-spacing="0">PVC</text>
+<text x="1580" y="496" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">PersistentVolumeClaim</text>
+<rect x="1490" y="507" width="3" height="15" fill="#a371f7"/>
+<text x="1504" y="519" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="13.5" font-weight="700" fill="#e6edf3" text-anchor="start" letter-spacing="0">RWO</text>
+<text x="1580" y="519" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">ReadWriteOnce — one node mounts it</text>
+<rect x="1490" y="530" width="3" height="15" fill="#a371f7"/>
+<text x="1504" y="542" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="13.5" font-weight="700" fill="#e6edf3" text-anchor="start" letter-spacing="0">DNS</text>
+<text x="1580" y="542" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">CoreDNS service discovery</text>
+<text x="1490" y="579" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12" font-weight="700" fill="#6e7681" text-anchor="start" letter-spacing="1.2">APPLICATION</text>
+<rect x="1490" y="591" width="3" height="15" fill="#f85149"/>
+<text x="1504" y="603" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="13.5" font-weight="700" fill="#e6edf3" text-anchor="start" letter-spacing="0">API v3</text>
+<text x="1580" y="603" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">YouTube Data API, version 3</text>
+<rect x="1490" y="614" width="3" height="15" fill="#f85149"/>
+<text x="1504" y="626" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="13.5" font-weight="700" fill="#e6edf3" text-anchor="start" letter-spacing="0">OAuth</text>
+<text x="1580" y="626" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">Google consent → refresh token</text>
+<rect x="1490" y="637" width="3" height="15" fill="#f85149"/>
+<text x="1504" y="649" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="13.5" font-weight="700" fill="#e6edf3" text-anchor="start" letter-spacing="0">yt-dlp</text>
+<text x="1580" y="649" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">YouTube downloader (Python)</text>
+<rect x="1490" y="660" width="3" height="15" fill="#f85149"/>
+<text x="1504" y="672" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="13.5" font-weight="700" fill="#e6edf3" text-anchor="start" letter-spacing="0">HLD</text>
+<text x="1580" y="672" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">High-Level Design</text>
+<text x="1490" y="709" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12" font-weight="700" fill="#6e7681" text-anchor="start" letter-spacing="1.2">FLOW KEY</text>
+<path d="M1500 729 L1552 729" fill="none" stroke="#a371f7" stroke-width="1.8" marker-end="url(#ah-purple-dark)"/>
+<text x="1580" y="733" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">Build — GitHub Actions → SWR → pull</text>
+<path d="M1500 753 L1552 753" fill="none" stroke="#3bb4ec" stroke-width="1.8" marker-end="url(#ah-tg-dark)"/>
+<text x="1580" y="757" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">Control — Telegram long-poll</text>
+<path d="M1500 777 L1552 777" fill="none" stroke="#ff4d4f" stroke-width="1.8" marker-end="url(#ah-yt-dark)"/>
+<text x="1580" y="781" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">Data — yt-dlp in · API v3 out</text>
+<path d="M1500 801 L1552 801" fill="none" stroke="#3fb950" stroke-width="1.8" marker-end="url(#ah-green-dark)"/>
+<text x="1580" y="805" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">State — EVS volume / token seed</text>
+<path d="M1500 825 L1552 825" fill="none" stroke="#f0883e" stroke-width="1.8" stroke-dasharray="5 4" marker-end="url(#ah-orange-dark)"/>
+<text x="1580" y="829" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">Config — Secrets → env + files</text>
+<path d="M1500 849 L1552 849" fill="none" stroke="#8b949e" stroke-width="1.8" stroke-dasharray="3 4" marker-end="url(#ah-grey-dark)"/>
+<text x="1580" y="853" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="12.5" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">Egress — every call via NAT + EIP</text>
+<text x="48" y="1048" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="13" font-weight="400" fill="#9198a1" text-anchor="start" letter-spacing="0">push to main → Actions → SWR :latest/:sha → rollout restart   ·   /run or 06:00/18:00 → yt-dlp → /data/downloads → videos.insert → target channel → Telegram report   ·   state: /data on EVS</text>
+<text x="48" y="1068" font-family="'Inter','Segoe UI','Noto Sans','DejaVu Sans',Helvetica,Arial,sans-serif" font-size="13" font-weight="700" fill="#9198a1" text-anchor="start" letter-spacing="0">Never scale past 1 replica   ·   cloud IPs can hit YouTube's bot-check: smoke-test yt-dlp from the cluster first   ·   OAuth only on a laptop   ·   secrets never in git or the image</text>
+</g>
+</svg>

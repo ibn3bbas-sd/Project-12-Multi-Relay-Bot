@@ -1,36 +1,79 @@
 name: build-push-swr
 
+# push to main -> build linux/amd64 image -> push to Huawei SWR as :latest and :<sha>.
+# Then on the cluster: kubectl -n relay-bot rollout restart deploy/relay-bot
+#
+# Repo SECRETS (Settings > Secrets and variables > Actions > Secrets):
+#   SWR_REGISTRY_USER   <region>@<AK>        e.g. me-east-1@XXXXXXXX
+#   SWR_REGISTRY_PASS   long-term login key  (SWR console > "Generate long-term login command")
+# Same names as <company-org>/<infra-repo>, so the same values can be pasted in.
+# GitHub never reveals a secret's value, so they cannot be copied between repos by API.
+#
+# Repo VARIABLES (same page > Variables), not secret:
+#   SWR_ORG             SWR organization the image goes into          (required)
+#   SWR_REGISTRY        defaults to swr.me-east-1.myhuaweicloud.com   (optional)
+
 on:
   push:
     branches: [main]
-    paths: [src/**, config/**, requirements.txt, Dockerfile]
+    paths: [src/**, config/**, requirements.txt, Dockerfile, .github/workflows/build-push-swr.yml]
   workflow_dispatch:
 
-# Repo secrets required:
-#   SWR_REGISTRY   e.g. swr.me-east-1.myhuaweicloud.com   (match your CCE region)
-#   SWR_ORG        your SWR organization
-#   SWR_USERNAME   <region>@<AK>              (from SWR console > "Generate login command")
-#   SWR_PASSWORD   long-term login key
+concurrency:
+  group: build-push-swr
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+    env:
+      SWR: ${{ vars.SWR_REGISTRY || 'swr.me-east-1.myhuaweicloud.com' }}
+      SWR_ORG: ${{ vars.SWR_ORG }}
+      IMAGE: youtube-relay-bot
     steps:
+      - name: Check registry settings
+        env:
+          SWR_USER: ${{ secrets.SWR_REGISTRY_USER }}
+          SWR_PASS: ${{ secrets.SWR_REGISTRY_PASS }}
+        run: |
+          missing=0
+          for v in SWR_USER SWR_PASS SWR_ORG; do
+            if [ -z "${!v}" ]; then echo "::error::$v is empty - see the header of this workflow"; missing=1; fi
+          done
+          exit $missing
+
       - uses: actions/checkout@v4
 
       - uses: docker/login-action@v3
         with:
-          registry: ${{ secrets.SWR_REGISTRY }}
-          username: ${{ secrets.SWR_USERNAME }}
-          password: ${{ secrets.SWR_PASSWORD }}
+          registry: ${{ env.SWR }}
+          username: ${{ secrets.SWR_REGISTRY_USER }}
+          password: ${{ secrets.SWR_REGISTRY_PASS }}
 
       - uses: docker/setup-buildx-action@v3
 
+      # linux/amd64 only: CCE nodes are x86 and SWR rejects multi-arch indexes.
       - uses: docker/build-push-action@v6
         with:
           context: .
+          platforms: linux/amd64
+          provenance: false
           push: true
+          labels: |
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
           tags: |
-            ${{ secrets.SWR_REGISTRY }}/${{ secrets.SWR_ORG }}/youtube-relay-bot:latest
-            ${{ secrets.SWR_REGISTRY }}/${{ secrets.SWR_ORG }}/youtube-relay-bot:${{ github.sha }}
+            ${{ env.SWR }}/${{ env.SWR_ORG }}/${{ env.IMAGE }}:latest
+            ${{ env.SWR }}/${{ env.SWR_ORG }}/${{ env.IMAGE }}:${{ github.sha }}
+
+      - name: Summary
+        run: |
+          {
+            echo "### Pushed"
+            echo "- \`${SWR}/${SWR_ORG}/${IMAGE}:latest\`"
+            echo "- \`${SWR}/${SWR_ORG}/${IMAGE}:${GITHUB_SHA}\`"
+            echo
+            echo "Roll out: \`kubectl -n relay-bot rollout restart deploy/relay-bot\`"
+          } >> "$GITHUB_STEP_SUMMARY"

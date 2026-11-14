@@ -8,62 +8,59 @@ Automated pipeline that downloads new videos from a source YouTube channel and r
 - Telegram control: `/run`, `/status`, `/next`, `/help`, plus run notifications
 - Keeps the original title and description, appends a source credit
 - Tracks processed video IDs — no duplicate uploads
-- Runs as a systemd service under WSL2, with crash restart and rate limiting
+- Runs as one pod on Huawei Cloud CCE (`me-east-1`, Riyadh), egress-only, state on an EVS volume
 - Resumable uploads with backoff; aborts cleanly when the daily API quota is spent
 
 ## Architecture
 
-```
-Source YouTube Channel
-        |
-        v
-  [yt-dlp Downloader]          discovery: flat listing -> per-video metadata
-        |
-        v
-  Local Temp Storage           /opt/youtube-relay-bot/downloads  (ext4, not /mnt/c)
-        |
-        v
-  [YouTube API v3 Uploader]    resumable, 8 MB chunks, quota-aware
-        |
-        v
-Target YouTube Channel
+![YouTube Relay Bot — High-Level Design on Huawei Cloud CCE](docs/hld/hld-relay-bot-cce.svg)
 
-[job_queue]     -> 06:00 / 18:00 Asia/Riyadh
-[Telegram Bot]  -> /run /status /next /help + notifications
+The diagram follows the viewer's light/dark theme. Edit `docs/hld/gen_hld.py` and run `python3 docs/hld/gen_hld.py` to regenerate it, never the SVG by hand.
 
-Host: WSL2 Ubuntu on <old-host>, systemd service
 ```
+GitHub main ──Actions──▶ SWR  swr.me-east-1.myhuaweicloud.com/<org>/youtube-relay-bot:{latest,<sha>}
+                           │ image pull (default-secret)
+                           ▼
+CCE · namespace relay-bot
+  Deployment relay-bot   1 replica · strategy Recreate · uid 10001 · read-only root FS
+    initContainer seed-token   copies token.json onto the volume once
+    bot container              telegram_bot · scheduler · pipeline (downloader → uploader)
+  Secret relay-bot-env         .env → environment
+  Secret relay-bot-files       token.json · client_secret.json
+  PVC relay-data (EVS 20 Gi)   /data: token.json · processed_videos.json · downloads/
+  NetworkPolicy                ingress none · egress 53 + 443
+        │ all egress
+        ▼
+NAT Gateway (SNAT) + EIP ──▶ api.telegram.org · youtube.com (yt-dlp) · YouTube Data API v3
+```
+
+No Service, Ingress or load balancer: Telegram is long-polled, so nothing connects in.
 
 ## Deployment
 
-Bash only. Full runbook: **[docs/wsl-deployment.md](docs/wsl-deployment.md)**.
+Bash only. Full runbook: **[docs/deploy-cce.md](docs/deploy-cce.md)**.
 
-Bootstrap WSL once, from an elevated Windows Command Prompt:
-
-```bat
-wsl --install -d Ubuntu
-wsl --set-default-version 2
-```
-
-Then everything else from inside Ubuntu:
+1. **Registry credentials.** In *Settings → Secrets and variables → Actions*, set the secrets
+   `SWR_REGISTRY_USER` (`me-east-1@<AK>`) and `SWR_REGISTRY_PASS` (long-term login key), and the variable `SWR_ORG`.
+   These are the same names `<infra-repo>` uses. GitHub never shows a secret's value, so paste them in yourself.
+2. **Image.** Push to `main` (or run the workflow by hand). Actions builds `linux/amd64` and pushes `:latest` + `:<sha>` to SWR.
+3. **OAuth, once, on a laptop.** The pod cannot open a browser. Produce `config/token.json` locally.
+4. **Cluster.**
 
 ```bash
-cd deploy/wsl && chmod +x *.sh
-
-sudo -E APPLY=true ./0010_install_prereqs.sh      # python, ffmpeg, tzdata, systemd
-./0020_preflight_check.sh                         # egress check — read-only
-sudo -E APPLY=true ./0030_setup_app.sh            # /opt/youtube-relay-bot + venv
-APPLY=true ./0040_oauth_bootstrap.sh              # one-time consent, no browser needed
-sudo -E APPLY=true ./0050_install_service.sh      # systemd unit
-APPLY=true WIN_USER='DOMAIN\you' WIN_PASS='...' ./0055_install_boot_task.sh
-./0060_service_control.sh status
+kubectl create ns relay-bot
+kubectl -n relay-bot create secret generic relay-bot-env --from-env-file=.env
+kubectl -n relay-bot create secret generic relay-bot-files \
+  --from-file=token.json=config/token.json \
+  --from-file=client_secret.json=config/client_secret.json
+sed -i 's#myhuaweicloud.com/ORG/#myhuaweicloud.com/<org>/#' k8s/relay-bot.yaml
+kubectl apply -f k8s/relay-bot.yaml
+kubectl -n relay-bot logs -f deploy/relay-bot
 ```
 
-Every script is dry-run by default. Set `APPLY=true` to make changes.
+Keep `replicas: 1` and `strategy: Recreate`. Two pods means every video is uploaded twice.
 
-Step 0055 is not optional: WSL distros do not start at boot, so without that scheduled task the bot stays dead after every reboot.
-
-The `Dockerfile` and `docker-compose.yml` from the earlier OCI Linux VM deployment are kept for reference and are no longer the supported path.
+The earlier WSL2/systemd install (`deploy/wsl/`, [docs/wsl-deployment.md](docs/wsl-deployment.md)) is kept as a fallback and is no longer the primary path. `docker-compose.yml` is for local development only.
 
 ## Configuration
 
@@ -76,7 +73,7 @@ TELEGRAM_ALLOWED_CHAT_ID=...
 
 Telegram token from [@BotFather](https://t.me/BotFather); chat ID from [@userinfobot](https://t.me/userinfobot).
 
-YouTube credentials: Google Cloud Console -> enable **YouTube Data API v3** -> create an OAuth 2.0 Client ID of type **Desktop app** -> download the JSON to `config/client_secret.json`. Step 0040 turns it into `config/token.json`.
+YouTube credentials: Google Cloud Console -> enable **YouTube Data API v3** -> create an OAuth 2.0 Client ID of type **Desktop app** -> download the JSON to `config/client_secret.json`. Run the OAuth flow once locally (runbook step 1, or `tools/oauth_bootstrap.py` on a headless box) to produce `config/token.json`.
 
 ## Telegram commands
 
@@ -90,10 +87,10 @@ YouTube credentials: Google Cloud Console -> enable **YouTube Data API v3** -> c
 ## Operations
 
 ```bash
-./deploy/wsl/0060_service_control.sh status
-./deploy/wsl/0060_service_control.sh logs -n 100
-./deploy/wsl/0060_service_control.sh follow
-journalctl -u youtube-relay-bot -f
+kubectl -n relay-bot get pod -l app=relay-bot
+kubectl -n relay-bot logs -f deploy/relay-bot
+kubectl -n relay-bot rollout restart deploy/relay-bot        # pick up a new :latest
+kubectl -n relay-bot exec deploy/relay-bot -- cat /data/processed_videos.json
 ```
 
 ## Quota
@@ -122,11 +119,18 @@ Project-12-YouTube-Relay-Bot/
 │   ├── scheduler.py       # daily job registration
 │   └── telegram_bot.py    # command handlers
 ├── tools/
-│   └── oauth_bootstrap.py # headless OAuth consent for WSL
-├── deploy/wsl/            # numbered bash deployment scripts
+│   └── oauth_bootstrap.py # headless OAuth consent
+├── k8s/relay-bot.yaml     # CCE: namespace, PVC, Deployment, NetworkPolicy
+├── .github/workflows/
+│   └── build-push-swr.yml # image → Huawei SWR
+├── deploy/wsl/            # fallback: WSL2 + systemd scripts
 ├── config/config.yaml     # application defaults
 ├── docs/
-│   └── wsl-deployment.md
+│   ├── deploy-cce.md      # runbook (primary)
+│   ├── hld/               # HLD diagram + generator
+│   └── wsl-deployment.md  # fallback runbook
+├── Dockerfile
+├── docker-compose.yml     # local dev only
 ├── .env.example
 └── requirements.txt
 ```
