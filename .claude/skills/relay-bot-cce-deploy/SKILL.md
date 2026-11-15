@@ -19,7 +19,7 @@ GitHub main --Actions--> Docker Hub docker.io/ibn3bbas/youtube-relay-bot:{latest
                                 Deployment (1 pod, Recreate)
                                   Secret relay-bot-env   (env from .env)
                                   Secret relay-bot-files (token.json, client_secret.json)
-                                  PVC relay-data (EVS, csi-disk) -> /data
+                                  PVC relay-data (EVS, csi-disk-topology) -> /data
                               egress: NAT Gateway (SNAT) + EIP -> Telegram / YouTube
 ```
 
@@ -27,7 +27,7 @@ No Service, Ingress or LB. The bot only dials out (Telegram long-polling + YouTu
 
 ## Files
 
-- `k8s/relay-bot.yaml`: Namespace, PVC (EVS 20Gi SAS `csi-disk`), Deployment, NetworkPolicy (deny ingress; egress 53 + 443).
+- `k8s/relay-bot.yaml`: Namespace, PVC (EVS 20Gi `csi-disk-topology` + disk tags), Deployment, NetworkPolicy (deny ingress; egress 53 + 443).
   - initContainer `seed-token` copies `/secrets/token.json` to `/data/token.json` only if it is missing.
   - Non-root uid 10001, `fsGroup` 10001, `readOnlyRootFilesystem`, emptyDir for `/app/logs` and `/tmp`.
   - `imagePullSecrets: dockerhub-pull` (docker-registry Secret holding a **read-only** Docker Hub token; it also covers the busybox pull, avoiding anonymous rate limits).
@@ -50,7 +50,7 @@ No Service, Ingress or LB. The bot only dials out (Telegram long-polling + YouTu
 
 - **This repo is public.** Never commit IPs, hostnames, SSH users or keys, company cluster/org/repo names, account names or any secret. Cluster access details live in Claude's private project memory (`relay-bot-cluster-access`), not here. Docs say "the jumpbox" and `<jumpbox-eip>`.
 - Runs #1 and #2 failed with `docker/login-action: Username and password required` because the secrets were never set. Set secrets **before** merging anything that triggers the build.
-- Huawei SWR was dropped: the available AK/SK could push to an existing company org but could not create one (`403 SVCSTG.SWR.4030170`). Docker Hub is used instead. The repo secrets `SWR_REGISTRY_USER` and `SWR_REGISTRY_PASS` are unused; delete them.
+- Huawei SWR was dropped: the available AK/SK could push to an existing company org but could not create one (`403 SVCSTG.SWR.4030170`). Docker Hub is used instead. The old SWR repo secrets were deleted on 2026-11-15; only `DOCKERHUB_TOKEN` remains.
 - Docker Hub's PAT dropdown defaults to **Repo Public Read-only**. That fails the push with `401 ... insufficient scopes` even though login succeeds. Push token: **Repo Read & Write**. Cluster pull token: **Repo Read-only**.
 - From the cluster's NAT IP, the yt-dlp channel **listing** works but every **video** hits "Sign in to confirm you're not a bot". Fixed with cookies from a throwaway Google account + deno (newest source video resolved at 1080p).
 - Cookie hygiene: export from InPrivate with the **throwaway** account, never the target channel's (it was nearly exported once). Close without signing out. The browser may save to the OneDrive Desktop: delete it and empty the OneDrive recycle bin. Shred the jumpbox copy.
@@ -62,26 +62,36 @@ No Service, Ingress or LB. The bot only dials out (Telegram long-polling + YouTu
 
 ## Status and next steps
 
-**BLOCKED since 2026-11-14: the cloud account behind the CCE cluster is frozen by its partner.**
-Every EVS create returns `403 Policy doesn't allow to be performed` (SAS and SSD alike), so PVC `relay-data`
-stays Pending. Deployment `relay-bot` is scaled to 0. Don't keep debugging the manifest; it's not the cause.
+**LIVE since 2026-11-15.** The account freeze (2026-11-14) was lifted. First full relay confirmed
+(download through cookies → upload → Telegram report). Runs at 06:00 and 18:00 Asia/Riyadh.
 
-On resume, **first ask the user whether the account is unfrozen**:
-- **Unfrozen:** `kubectl -n relay-bot scale deploy/relay-bot --replicas=1`. The PVC binds by itself. Then `kubectl cp` the processed
-  list (60 "start from now" IDs, in the user's private local setup folder) into `/data/processed_videos.json`
-  **before the next 06:00/18:00 run**, check the logs, and have the user send `/status`.
-- **Still frozen:** offer (a) another host, since the image (Docker Hub) and manifest are portable, or (b) a no-disk variant:
-  the processed list in a ConfigMap the bot patches (narrow RBAC), downloads on emptyDir.
+Single checklist: **`open-items.md`**. Remaining: delete the old retained EVS disk, kubeconform, Docker Hub token cleanup.
 
-Single checklist: **`open-items.md`**. Done so far:
-- Image builds and pushes to private Docker Hub with deno. Cluster egress verified. YouTube bot-check solved with cookies.
-- All 4 Secrets exist in ns `relay-bot`: `dockerhub-pull` (pull verified), `relay-bot-env`, `relay-bot-files`, `ytdlp-cookies`.
-- Telegram bot created. Google Cloud project with the OAuth app **In production** (needed home + privacy URLs, served from
-  the `gh-pages` branch via GitHub Pages: only those 2 pages are public). Desktop client created. Upload token for the
-  target channel works (scope `youtube.upload` only, so `channels.list` returns 403 by design).
-- PVC manifest uses `csi-disk-topology` + `everest.io/set-disk-tags: "true"`, matching the PVC that works on that cluster.
+- All 4 Secrets exist in ns `relay-bot`: `dockerhub-pull`, `relay-bot-env`, `relay-bot-files`, `ytdlp-cookies`.
+- PVC `relay-data` is on `csi-disk-topology` (Delete policy, own tagged disk, separate from company workloads).
+- Google Cloud OAuth app is **In production** (home + privacy pages on `gh-pages`). Upload token scope is
+  `youtube.upload` only, so `channels.list` returns 403 by design. The token auto-refreshes into `/data/token.json`.
 
-Private details (hosts, IPs, local paths, account names) are in Claude's project memory, never in this public repo.
+Private details (hosts, IPs, local paths, account names, the cookie account) are in Claude's project memory, never here.
+
+## Lessons from going live (2026-11-15)
+
+- **Storage class:** the user wants the bot's disk separate from company business. Use `csi-disk-topology` (repo manifest),
+  never `clickhouse-block` (a company class with **Retain** policy). A PVC's class is immutable: to switch, scale to 0,
+  delete PVC + PV, then delete the retained EVS disk in the console (it keeps billing), then re-apply the manifest.
+- Get the manifest onto the jumpbox with `curl` from raw.githubusercontent.com (repo is public) instead of scp.
+- Copy `processed_videos.json` in right after the first start and check the count
+  (`python -c "import json;print(len(json.load(open(...))))"`) before the next scheduled run.
+- **Cookie expiry** looks like `Sign in to confirm you're not a bot` + `Metadata fetch failed` in the logs. The Telegram report
+  now counts these as Failed and adds a "cookies likely expired" hint (commit `2fcfc92`). Refresh per runbook 2b; the pod
+  picks up the replaced Secret in about a minute, no restart needed. Test with `/run`.
+- **Don't suggest creating a new throwaway Google account:** the user's only phone number and the phone itself (QR
+  verification) are both "used too many times". Reuse the existing cookie account (named in private memory); recover it
+  via accounts.google.com/signin/usernamerecovery if needed.
+- Claude can push the cookie file itself without reading it: `scp` to the jumpbox, `kubectl create secret ... --dry-run=client -o yaml | kubectl apply -f -`,
+  `shred -u` there, `rm` the local file. The user still empties the OneDrive recycle bin.
+- After a push to main: wait for `build-push-dockerhub`, then `kubectl -n relay-bot rollout restart deploy/relay-bot`.
+- The bot ignores `/start`; only `/run`, `/status`, `/help` reply.
 
 ## More lessons from the setup
 

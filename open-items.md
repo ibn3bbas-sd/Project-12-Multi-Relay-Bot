@@ -25,12 +25,12 @@ Runbook: [docs/deploy-cce.md](docs/deploy-cce.md) · Diagram: [docs/hld/hld-rela
 ## Still open
 
 - [ ] Delete the old, retained EVS disk left by the first PVC (Retain policy) in the console
-- [ ] Bot-check failures are logged but the Telegram report shows `Failed: 0`; count them as failed and hint "cookies expired?"
+- [x] Bot-check failures now count as Failed in the Telegram report, with a "cookies likely expired" hint
 - [ ] `kubeconform -strict -summary k8s/relay-bot.yaml` (not yet validated)
 
 ## Cleanup
 
-- [ ] Delete the unused GitHub secrets: `gh secret delete SWR_REGISTRY_USER && gh secret delete SWR_REGISTRY_PASS`
+- [x] Unused GitHub secrets `SWR_REGISTRY_USER` / `SWR_REGISTRY_PASS` deleted
 - [ ] Delete the old `github-actions-push` Docker Hub token that had *Public Read-only* scope (if not already)
 - [ ] Review the auto-generated Docker Hub "desktop" tokens (Read/Write/Delete, never expire) and revoke unused ones
 - [ ] Empty the exported cookies file from the OneDrive recycle bin
