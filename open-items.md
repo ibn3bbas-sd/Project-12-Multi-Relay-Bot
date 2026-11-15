@@ -1,6 +1,6 @@
 # Open items
 
-Where the Huawei Cloud CCE deployment stands. Last updated **2026-11-14**.
+Where the Huawei Cloud CCE deployment stands. Last updated **2026-11-15**.
 Runbook: [docs/deploy-cce.md](docs/deploy-cce.md) · Diagram: [docs/hld/hld-relay-bot-cce.svg](docs/hld/hld-relay-bot-cce.svg)
 
 > This repo is **public**. Never write tokens, IPs, hostnames, SSH users/keys or account names here.
@@ -15,39 +15,17 @@ Runbook: [docs/deploy-cce.md](docs/deploy-cce.md) · Diagram: [docs/hld/hld-rela
 - [x] Bot code supports `YTDLP_COOKIES_FILE`; the manifest mounts the cookies Secret
 - [x] `processed_videos.json` prepared: "start from now", 60 current source IDs marked (none had been relayed before)
 
-## Blocked (2026-11-14): hosting account frozen
+## Deployed (2026-11-15)
 
-The cloud account behind the CCE cluster was **frozen by its partner** ("cannot purchase or use cloud services").
-New EVS disks are refused with `403 Policy doesn't allow to be performed` for every storage class, so the
-PVC stays Pending and the pod cannot start. Deployment `relay-bot` is scaled to 0. All four Secrets
-(`dockerhub-pull`, `relay-bot-env`, `relay-bot-files`, `ytdlp-cookies`) are in place.
+- [x] Account unfrozen. The PVC was recreated on `csi-disk-topology` (a separate disk, not shared with other workloads); pod running
+- [x] Processed list (60 "start from now" IDs) copied into `/data/`; `/status` answers
+- [x] First full relay confirmed: download through cookies → upload → Telegram report (Found 1, Uploaded 1)
+- [x] Cookie expiry symptom seen: the log shows `Sign in to confirm you're not a bot` and `Metadata fetch failed`; refreshed per runbook 2b
 
-- [ ] **Decide:** wait for the account to be unfrozen, or move to another host. The image is on Docker Hub and the
-      manifest is portable; any Kubernetes cluster or small VM works.
-- [ ] When unfrozen: `kubectl -n relay-bot scale deploy/relay-bot --replicas=1`. The PVC binds by itself.
-      Then `kubectl cp` the processed list (60 "start from now" IDs; local copy in `~/relay-setup/data/`) into `/data/`.
-- [ ] Fallback if disks stay unavailable: drop the PVC and keep the processed list in a ConfigMap (code change).
+## Still open
 
-## First deploy checklist (status as of 2026-11-14)
-
-Build everything in `~/relay-setup` inside WSL, **not** in this OneDrive-synced folder.
-Secret values are entered by the user directly (hidden prompts), never pasted into chat.
-
-- [x] **`.env`**: copy `.env.example`, set `TELEGRAM_BOT_TOKEN` and `TELEGRAM_ALLOWED_CHAT_ID`, with no quotes around values
-- [x] **`client_secret.json`**: Google Cloud Console → Credentials → Desktop OAuth client → download JSON
-- [x] **OAuth consent screen is "In production"** (home/privacy pages on GitHub Pages, `gh-pages` branch): in *Testing*, the refresh token expires every 7 days
-- [x] **`token.json`**: `APP_ROOT=~/relay-setup python tools/oauth_bootstrap.py`, signed in as the **target channel** account
-- [x] **Decide catch-up** (chose: start from now, 60 IDs marked): with an empty processed list, the first run relays the source's last 7 days (≤5 per run). To start from "now" instead, mark the current source IDs as processed.
-- [x] Copy `.env`, `config/`, `data/processed_videos.json` to the jumpbox (tar → scp → shred local copy)
-- [x] On the jumpbox, create Secrets `dockerhub-pull` (read-only token), `relay-bot-env`, `relay-bot-files`
-- [ ] `kubectl apply -f k8s/relay-bot.yaml` (applied; blocked on the PVC, see above); `kubectl -n relay-bot rollout status deploy/relay-bot`
-- [ ] `kubectl cp` `processed_videos.json` into `/data/` **before the next 06:00 / 18:00 run**
-- [ ] Shred every copy on the jumpbox. Send `/status` to the bot. Watch the first scheduled run's logs.
-
-## After the first deploy
-
-- [ ] Confirm one full relay: download through cookies → upload → Telegram report
-- [ ] Note the cookie expiry symptom (bot-check returns) and the refresh steps (runbook 2b) once seen in practice
+- [ ] Delete the old, retained EVS disk left by the first PVC (Retain policy) in the console
+- [ ] Bot-check failures are logged but the Telegram report shows `Failed: 0`; count them as failed and hint "cookies expired?"
 - [ ] `kubeconform -strict -summary k8s/relay-bot.yaml` (not yet validated)
 
 ## Cleanup
