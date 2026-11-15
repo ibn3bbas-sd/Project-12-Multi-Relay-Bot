@@ -113,7 +113,12 @@ def _list_candidate_ids(channel_id: str) -> list[str]:
     return ids
 
 
-def _fetch_metadata(video_id: str) -> dict | None:
+def is_bot_check(exc: BaseException) -> bool:
+    """YouTube's "Sign in to confirm you're not a bot" — means the cookies need a refresh."""
+    return "not a bot" in str(exc).lower()
+
+
+def _fetch_metadata(video_id: str, failures: list[dict] | None = None) -> dict | None:
     """Full metadata for one video — this is where upload_date actually exists."""
     url = f"https://www.youtube.com/watch?v={video_id}"
     ydl_opts = {"quiet": True, "no_warnings": True, "skip_download": True, **_cookie_opts()}
@@ -122,11 +127,17 @@ def _fetch_metadata(video_id: str) -> dict | None:
             return ydl.extract_info(url, download=False)
     except Exception as exc:  # noqa: BLE001 — yt-dlp raises a wide family
         logger.warning("Metadata fetch failed for %s: %s", video_id, exc)
+        if failures is not None:
+            failures.append({"id": video_id, "bot_check": is_bot_check(exc)})
         return None
 
 
-def fetch_new_videos(channel_id: str) -> list[dict]:
-    """Unprocessed videos published within MAX_VIDEO_AGE_DAYS, oldest first."""
+def fetch_new_videos(channel_id: str, failures: list[dict] | None = None) -> list[dict]:
+    """Unprocessed videos published within MAX_VIDEO_AGE_DAYS, oldest first.
+
+    Videos whose metadata could not be fetched are appended to `failures` (if given)
+    so the caller can report them; they stay unprocessed and are retried next run.
+    """
     if not channel_id:
         logger.error("SOURCE_CHANNEL_ID is empty — nothing to scan")
         return []
@@ -141,7 +152,7 @@ def fetch_new_videos(channel_id: str) -> list[dict]:
 
     new_videos: list[dict] = []
     for video_id in candidates:
-        info = _fetch_metadata(video_id)
+        info = _fetch_metadata(video_id, failures)
         if not info:
             continue
 
@@ -174,7 +185,7 @@ def fetch_new_videos(channel_id: str) -> list[dict]:
     return new_videos
 
 
-def download_video(video: dict) -> Path | None:
+def download_video(video: dict, failures: list[dict] | None = None) -> Path | None:
     """Download to DOWNLOAD_DIR. Returns the media file path, or None on failure."""
     config.DOWNLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -197,6 +208,8 @@ def download_video(video: dict) -> Path | None:
             ydl.download([video["url"]])
     except Exception as exc:  # noqa: BLE001
         logger.error("Download failed for %s: %s", video["id"], exc)
+        if failures is not None:
+            failures.append({"id": video["id"], "bot_check": is_bot_check(exc)})
         return None
 
     matches = [

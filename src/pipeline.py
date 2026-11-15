@@ -20,6 +20,7 @@ def new_summary() -> dict:
         "started_at": None,
         "finished_at": None,
         "aborted": None,
+        "bot_check": False,
     }
 
 
@@ -28,9 +29,11 @@ def run_relay() -> dict:
     summary = new_summary()
     summary["started_at"] = datetime.now(timezone.utc)
 
+    failures: list[dict] = []  # fetch/download errors; unmarked, so retried next run
     try:
-        videos = downloader.fetch_new_videos(config.SOURCE_CHANNEL_ID)
-        summary["found"] = len(videos)
+        videos = downloader.fetch_new_videos(config.SOURCE_CHANNEL_ID, failures)
+        summary["found"] = len(videos) + len(failures)
+        summary["failed"] = len(failures)
 
         if not videos:
             logger.info("No new videos to relay")
@@ -39,7 +42,7 @@ def run_relay() -> dict:
         for video in videos:
             logger.info("Processing %s — %s", video["id"], video["title"])
 
-            file_path = downloader.download_video(video)
+            file_path = downloader.download_video(video, failures)
             if file_path is None:
                 # Leave it unmarked: a transient failure should retry next run.
                 summary["failed"] += 1
@@ -69,6 +72,7 @@ def run_relay() -> dict:
         return summary
 
     finally:
+        summary["bot_check"] = any(f["bot_check"] for f in failures)
         summary["finished_at"] = datetime.now(timezone.utc)
 
 
@@ -84,6 +88,8 @@ def format_summary(summary: dict, header: str = "Relay complete") -> str:
     if summary.get("started_at") and summary.get("finished_at"):
         elapsed = (summary["finished_at"] - summary["started_at"]).total_seconds()
         lines.append(f"  Duration: {elapsed:.0f}s")
+    if summary.get("bot_check"):
+        lines.append("  ⚠️ YouTube bot-check: cookies likely expired, refresh them (runbook 2b)")
     if summary.get("aborted"):
         lines.append(f"  ABORTED:  {summary['aborted']}")
     return "\n".join(lines)
