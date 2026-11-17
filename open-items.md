@@ -48,6 +48,22 @@ Each relayed video is also posted to the owner's Facebook Page. Runbook section 
 - [x] Post text now starts with the video title (the feed doesn't show the title field); first post fixed in place
 - [ ] Confirm the first automatic relay reports `Facebook: 1 posted`
 
+## Next: rename to "Multi-Relay Bot" + more platforms (planned)
+
+Name chosen 2026-11-18: **Multi-Relay Bot**. Not started yet.
+
+Rename (keep infra names to avoid churn):
+- [ ] Rename the GitHub repo (old URLs redirect); update README title, `/help` text, runbook/skill references
+- [ ] Update the Google OAuth app's home + privacy page URLs (GitHub Pages path follows the repo name), then re-check the consent screen
+- [ ] Keep as is: Docker image `ibn3bbas/youtube-relay-bot`, namespace `relay-bot`, Telegram bot username
+
+Expansion, one platform at a time (same pattern as Facebook: own uploader module, `<PLATFORM>_ENABLED` flag,
+per-platform done/pending state, Telegram summary line, `/<platform>fill` backlog command, hidden test first):
+- [ ] **Instagram**: Reels via the Instagram Graph API with the same Meta app; needs an Instagram Business/Creator account linked to the Page; video must be at a public URL or uploaded via the resumable endpoint; Reels length/aspect limits apply
+- [ ] **TikTok**: Content Posting API; app audit required before posts can be public (unaudited apps post private-only)
+- [ ] **X**: media upload (chunked) + post; needs a paid API tier for write access with video
+- [ ] Refactor once a third target lands: a common uploader interface + generic per-platform state, instead of copying the Facebook code
+
 ## Still open
 
 - [x] Old retained EVS disk from the first PVC deleted (2026-11-18)
