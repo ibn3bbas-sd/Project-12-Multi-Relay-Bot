@@ -3,7 +3,7 @@
 Where the Huawei Cloud CCE deployment stands. Last updated **2026-11-17**.
 Runbook: [docs/deploy-cce.md](docs/deploy-cce.md) · Diagram: [docs/hld/hld-relay-bot-cce.svg](docs/hld/hld-relay-bot-cce.svg)
 
-> This repo is **private** since 2026-11-17, but keep it clean: Never write tokens, IPs, hostnames, SSH users/keys or account names here.
+> This repo is **public** (recreated clean 2026-11-18). Never write tokens, IPs, hostnames, SSH users/keys or account names here. Never write tokens, IPs, hostnames, SSH users/keys or account names here.
 > Use placeholders such as `<jumpbox-eip>`.
 
 ## Done
@@ -50,7 +50,7 @@ Counts per YouTube quota day (Pacific) in `/data/upload_counts.json`. Config: `C
 - [x] Docker Hub "desktop" tokens: 4 old ones revoked, newest kept (2026-11-18)
 - [x] Empty the exported cookies file from the OneDrive recycle bin (2026-11-18)
 - [x] Infrastructure details in git history: rewritten 2026-11-18 (see below)
-- [ ] GitHub Pages (home + privacy) went offline when the repo went private; host them elsewhere if Google needs the privacy URL
+- [x] GitHub Pages (home + privacy) back online
 
 ## Git history cleanup (2026-11-18)
 
@@ -58,7 +58,8 @@ History was rewritten with `git filter-repo` (infra IPs, host/cluster/key/repo n
 commit email mapped to the GitHub noreply address) and force-pushed. No passwords, tokens or keys were ever committed.
 
 - [x] Rewrite + force-push `main` and `gh-pages`; local clone reset and old objects purged
-- [ ] Ask GitHub Support to purge cached views and PR refs (#1, #2) and run GC: **ticket #5019511 open, awaiting reply**
+- [x] GitHub Support purge: declined (free plan). Old repo **deleted** and recreated public from the clean history, so PR refs and old commits are gone (2026-11-18)
 - [x] Check forks: none (2026-11-18)
 - [x] ~~Change the jumpbox public IP~~ skipped: port 22 is allow-listed, SSH is key-only with fail2ban, so a known IP gives no access
-- [ ] Make the repo public, re-enable Pages on `gh-pages`
+- [x] Repo public again, Pages on `gh-pages`, secret scanning + push protection on (2026-11-18)
+- [ ] Re-enter the `DOCKERHUB_TOKEN` Actions secret (lost with the old repo)
