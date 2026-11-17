@@ -108,9 +108,20 @@ YOUTUBE_TOKEN_FILE = _resolve(
 )
 
 # ── Scheduler ────────────────────────────────────────────────────────────────
-SCHEDULE_MORNING = str(_get("SCHEDULE_MORNING", "scheduler.morning", "06:00"))
-SCHEDULE_EVENING = str(_get("SCHEDULE_EVENING", "scheduler.evening", "18:00"))
 TIMEZONE = str(_get("TIMEZONE", "scheduler.timezone", "Asia/Riyadh"))
+# How often to look for new source uploads. Quiet checks (nothing found) don't
+# message Telegram, so a short interval only costs a cheap channel listing.
+CHECK_INTERVAL_MINUTES = max(
+    15, _as_int(_get("CHECK_INTERVAL_MINUTES", "scheduler.check_interval_minutes", 120), 120)
+)
+# Daily top-up: if fewer than DAILY_UPLOAD_TARGET videos went up in the current
+# YouTube quota day, fill the gap with older videos from the source channel.
+# The quota day resets at midnight Pacific (10:00–11:00 Riyadh), so the top-up
+# runs shortly before that, after the day's new videos have had their chance.
+# 0 disables the top-up.
+DAILY_UPLOAD_TARGET = _as_int(_get("DAILY_UPLOAD_TARGET", "scheduler.daily_upload_target", 6), 6)
+BACKFILL_TIME = str(_get("BACKFILL_TIME", "scheduler.backfill_time", "09:00"))
+QUOTA_TIMEZONE = "America/Los_Angeles"  # YouTube Data API quota resets at Pacific midnight
 
 # ── Download ─────────────────────────────────────────────────────────────────
 DOWNLOAD_DIR = _resolve(_get("DOWNLOAD_DIR", "download.dir"), "downloads")
@@ -122,6 +133,8 @@ SCAN_LIMIT = _as_int(_get("SCAN_LIMIT", "download.scan_limit", 20), 20)
 MAX_UPLOADS_PER_RUN = _as_int(
     _get("MAX_UPLOADS_PER_RUN", "download.max_uploads_per_run", 5), 5
 )
+# How deep into the channel's history the top-up may reach.
+BACKFILL_SCAN_LIMIT = _as_int(_get("BACKFILL_SCAN_LIMIT", "download.backfill_scan_limit", 300), 300)
 KEEP_AFTER_UPLOAD = _as_bool(_get("KEEP_AFTER_UPLOAD", "download.keep_after_upload", False))
 
 # Point yt-dlp at a specific ffmpeg build; blank means use PATH.
@@ -164,6 +177,7 @@ GEMINI_ENABLED = _as_bool(_get("GEMINI_ENABLED", "gemini.enabled", False))
 DATA_DIR = _resolve(_get("DATA_DIR", "runtime.data_dir"), "data")
 LOG_DIR = _resolve(_get("LOG_DIR", "runtime.log_dir"), "logs")
 PROCESSED_FILE = DATA_DIR / "processed_videos.json"
+UPLOAD_COUNTS_FILE = DATA_DIR / "upload_counts.json"
 LOG_FILE = LOG_DIR / "relay.log"
 
 LOG_LEVEL = str(_get("LOG_LEVEL", "runtime.log_level", "INFO")).upper()

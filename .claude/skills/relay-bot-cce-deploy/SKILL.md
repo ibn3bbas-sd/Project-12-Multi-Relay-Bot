@@ -63,7 +63,7 @@ No Service, Ingress or LB. The bot only dials out (Telegram long-polling + YouTu
 ## Status and next steps
 
 **LIVE since 2026-11-15.** The account freeze (2026-11-14) was lifted. First full relay confirmed
-(download through cookies → upload → Telegram report). Runs at 06:00 and 18:00 Asia/Riyadh.
+(download through cookies → upload → Telegram report). Checks for new videos every 2h (silent when nothing uploads); daily top-up to 6 uploads with older source videos at 09:00 Asia/Riyadh (before the Pacific-midnight quota reset). Per-quota-day counts in `/data/upload_counts.json`. This schedule (merged 2026-11-17) needs a `rollout restart` to go live; the resume steps are in `open-items.md`.
 
 Single checklist: **`open-items.md`**. Remaining: delete the old retained EVS disk, kubeconform, Docker Hub token cleanup.
 
@@ -91,7 +91,7 @@ Private details (hosts, IPs, local paths, account names, the cookie account) are
 - Claude can push the cookie file itself without reading it: `scp` to the jumpbox, `kubectl create secret ... --dry-run=client -o yaml | kubectl apply -f -`,
   `shred -u` there, `rm` the local file. The user still empties the OneDrive recycle bin.
 - After a push to main: wait for `build-push-dockerhub`, then `kubectl -n relay-bot rollout restart deploy/relay-bot`.
-- The bot ignores `/start`; only `/run`, `/status`, `/help` reply.
+- The bot ignores `/start`; only `/run`, `/fill`, `/status`, `/next`, `/help` reply.
 
 ## More lessons from the setup
 

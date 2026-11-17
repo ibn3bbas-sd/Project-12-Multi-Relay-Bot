@@ -1,11 +1,12 @@
 # YouTube Relay Bot
 
-Automated pipeline that downloads new videos from a source YouTube channel and re-uploads them to a target channel. Controlled via a Telegram bot, with scheduled runs at 06:00 and 18:00 Asia/Riyadh.
+Automated pipeline that downloads new videos from a source YouTube channel and re-uploads them to a target channel. Controlled via a Telegram bot. Checks for new videos every 2 hours, and at 09:00 Asia/Riyadh tops the day up to 6 uploads with older videos from the source channel.
 
 ## Features
 
-- Scheduled relay twice daily, times and timezone configurable
-- Telegram control: `/run`, `/status`, `/next`, `/help`, plus run notifications
+- Checks for new videos every `CHECK_INTERVAL_MINUTES` (default 120); checks that upload nothing stay silent
+- Daily top-up at `BACKFILL_TIME`: if fewer than `DAILY_UPLOAD_TARGET` (default 6) went up in the current YouTube quota day, relays older source videos, newest first
+- Telegram control: `/run`, `/fill`, `/status`, `/next`, `/help`, plus run notifications
 - Keeps the original title and description, appends a source credit
 - Tracks processed video IDs — no duplicate uploads
 - Runs as one pod on Huawei Cloud CCE (`me-east-1`, Riyadh), egress-only, state on an EVS volume
@@ -83,7 +84,8 @@ YouTube credentials: Google Cloud Console -> enable **YouTube Data API v3** -> c
 
 | Command | Description |
 |---------|-------------|
-| `/run` | Trigger the relay pipeline immediately |
+| `/run` | Relay new videos now |
+| `/fill` | Relay new videos, then top today up to the daily target with older ones |
 | `/status` | Last run summary (or "running" if one is in flight) |
 | `/next` | Next scheduled run times |
 | `/help` | Show available commands |
@@ -120,7 +122,7 @@ Project-12-YouTube-Relay-Bot/
 │   ├── downloader.py      # yt-dlp discovery + download
 │   ├── uploader.py        # YouTube Data API v3 upload
 │   ├── pipeline.py        # download -> upload orchestration
-│   ├── scheduler.py       # daily job registration
+│   ├── scheduler.py       # new-video checks + daily top-up job
 │   └── telegram_bot.py    # command handlers
 ├── tools/
 │   └── oauth_bootstrap.py # headless OAuth consent
