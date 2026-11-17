@@ -62,4 +62,4 @@ commit email mapped to the GitHub noreply address) and force-pushed. No password
 - [x] Check forks: none (2026-11-18)
 - [x] ~~Change the jumpbox public IP~~ skipped: port 22 is allow-listed, SSH is key-only with fail2ban, so a known IP gives no access
 - [x] Repo public again, Pages on `gh-pages`, secret scanning + push protection on (2026-11-18)
-- [ ] Re-enter the `DOCKERHUB_TOKEN` Actions secret (lost with the old repo)
+- [x] `DOCKERHUB_TOKEN` re-entered; manual build-push run green (2026-11-18)
