@@ -39,7 +39,7 @@ Counts per YouTube quota day (Pacific) in `/data/upload_counts.json`. Config: `C
 
 ## Still open
 
-- [ ] Delete the old, retained EVS disk left by the first PVC (Retain policy) in the console
+- [x] Old retained EVS disk from the first PVC deleted (2026-11-18)
 - [x] Bot-check failures now count as Failed in the Telegram report, with a "cookies likely expired" hint
 - [x] `kubeconform -strict -summary k8s/relay-bot.yaml`: 4 valid, 0 invalid (2026-11-17)
 
