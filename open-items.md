@@ -3,7 +3,7 @@
 Where the Huawei Cloud CCE deployment stands. Last updated **2026-11-17**.
 Runbook: [docs/deploy-cce.md](docs/deploy-cce.md) · Diagram: [docs/hld/hld-relay-bot-cce.svg](docs/hld/hld-relay-bot-cce.svg)
 
-> This repo is **public**. Never write tokens, IPs, hostnames, SSH users/keys or account names here.
+> This repo is **private** since 2026-11-17, but keep it clean: Never write tokens, IPs, hostnames, SSH users/keys or account names here.
 > Use placeholders such as `<jumpbox-eip>`.
 
 ## Done
@@ -22,7 +22,7 @@ Runbook: [docs/deploy-cce.md](docs/deploy-cce.md) · Diagram: [docs/hld/hld-rela
 - [x] First full relay confirmed: download through cookies → upload → Telegram report (Found 1, Uploaded 1)
 - [x] Cookie expiry symptom seen: the log shows `Sign in to confirm you're not a bot` and `Metadata fetch failed`; refreshed per runbook 2b
 
-## Schedule change: frequent checks + daily top-up (2026-11-17, merged, NOT yet rolled out)
+## Schedule change: frequent checks + daily top-up (2026-11-17, merged and rolled out)
 
 Why: the source posts ~1 video/day, often after the 18:00 run, so 06:00/18:00 runs mostly found 0 and the
 day ended with 1 upload. Now: check every 2h (silent unless something uploads / bot-check / quota), and at
@@ -31,17 +31,17 @@ Counts per YouTube quota day (Pacific) in `/data/upload_counts.json`. Config: `C
 `DAILY_UPLOAD_TARGET`, `BACKFILL_TIME`, `BACKFILL_SCAN_LIMIT`.
 
 - [x] Code + docs, offline-tested with yt-dlp/uploader stubbed (new relay, top-up to 6, target met, quota abort, job times)
-- [ ] Confirm the `build-push-dockerhub` run for the merge commit is green
-- [ ] Roll out: `kubectl -n relay-bot rollout restart deploy/relay-bot`, then `/next` should list `check_new` and `daily_topup`
-- [ ] Try `/fill` once and confirm it uploads older videos and reports `Today: n/6`
+- [x] Confirm the `build-push-dockerhub` run for the merge commit is green
+- [x] Roll out (2026-11-17 20:25): `kubectl -n relay-bot rollout restart deploy/relay-bot`, then `/next` should list `check_new` and `daily_topup` (confirmed)
+- [x] `/fill` tried 2026-11-17: 6 older videos uploaded, `Today: 6/6`
 - [ ] Next morning: check the 09:00 "Daily top-up done" report; watch for quota aborts on the first day (counter starts at 0)
-- [ ] Optional: remove `SCHEDULE_MORNING`/`SCHEDULE_EVENING` from the `relay-bot-env` Secret if present (now ignored)
+- [x] Removed `SCHEDULE_MORNING`/`SCHEDULE_EVENING` from the `relay-bot-env` Secret if present (now ignored)
 
 ## Still open
 
 - [ ] Delete the old, retained EVS disk left by the first PVC (Retain policy) in the console
 - [x] Bot-check failures now count as Failed in the Telegram report, with a "cookies likely expired" hint
-- [ ] `kubeconform -strict -summary k8s/relay-bot.yaml` (not yet validated)
+- [x] `kubeconform -strict -summary k8s/relay-bot.yaml`: 4 valid, 0 invalid (2026-11-17)
 
 ## Cleanup
 
@@ -49,11 +49,16 @@ Counts per YouTube quota day (Pacific) in `/data/upload_counts.json`. Config: `C
 - [ ] Delete the old `github-actions-push` Docker Hub token that had *Public Read-only* scope (if not already)
 - [ ] Review the auto-generated Docker Hub "desktop" tokens (Read/Write/Delete, never expire) and revoke unused ones
 - [ ] Empty the exported cookies file from the OneDrive recycle bin
-- [ ] Decide whether to purge infrastructure details from **git history** (see below)
+- [x] Infrastructure details in git history: rewritten 2026-11-18 (see below)
+- [ ] GitHub Pages (home + privacy) went offline when the repo went private; host them elsewhere if Google needs the privacy URL
 
-## Known: infrastructure details in git history
+## Git history cleanup (2026-11-18)
 
-Earlier commits of this public repo contain internal infrastructure identifiers (cluster/org names, a jumpbox
-public IP and SSH key name, the NAT egress IP, an old host's name and private IP). They were removed from the
-current files on 2026-11-14 but **remain in history**. No passwords, tokens or keys were ever committed.
-Options: rewrite history (e.g. `git filter-repo --replace-text`) and force-push `main`, or make the repo private.
+History was rewritten with `git filter-repo` (infra IPs, host/cluster/key/repo names replaced with placeholders;
+commit email mapped to the GitHub noreply address) and force-pushed. No passwords, tokens or keys were ever committed.
+
+- [x] Rewrite + force-push `main` and `gh-pages`; local clone reset and old objects purged
+- [ ] Ask GitHub Support to purge cached views and PR refs (#1, #2 still point at old commits) and run GC
+- [ ] Check forks: `gh api repos/<owner>/<repo>/forks`
+- [ ] Change the jumpbox public IP (copies scraped while public still point at it)
+- [ ] Make the repo public, re-enable Pages on `gh-pages`
