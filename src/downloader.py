@@ -219,6 +219,23 @@ def iter_backfill_videos(
             yield _to_video(video_id, info, _published_at(info))
 
 
+def relayed_ids_oldest_first(channel_id: str) -> list[str]:
+    """Source videos already relayed to YouTube, oldest first (within BACKFILL_SCAN_LIMIT)."""
+    if not channel_id:
+        return []
+    processed = _load_processed()
+    ids = _list_candidate_ids(channel_id, config.BACKFILL_SCAN_LIMIT)  # newest first
+    return [vid for vid in reversed(ids) if vid in processed]
+
+
+def fetch_video(video_id: str, failures: list[dict] | None = None) -> dict | None:
+    """Metadata for one video in the pipeline's video-dict shape, or None."""
+    info = _fetch_metadata(video_id, failures)
+    if not info or _is_live(info):
+        return None
+    return _to_video(video_id, info, _published_at(info))
+
+
 def download_video(video: dict, failures: list[dict] | None = None) -> Path | None:
     """Download to DOWNLOAD_DIR. Returns the media file path, or None on failure."""
     config.DOWNLOAD_DIR.mkdir(parents=True, exist_ok=True)

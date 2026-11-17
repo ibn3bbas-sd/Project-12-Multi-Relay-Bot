@@ -129,6 +129,9 @@ kubectl -n relay-bot patch secret relay-bot-env --type merge -p \
 kubectl -n relay-bot rollout restart deploy/relay-bot
 ```
 
+Videos already on YouTube before Facebook was enabled: send `/fbfill [n]` in Telegram
+(oldest first, default 3, max 10 per command).
+
 A failed Facebook post is queued in `/data/facebook_state.json` and retried on later runs
 (Facebook only, YouTube is not re-uploaded). A token/permission error shows as ⚠️ in Telegram.
 

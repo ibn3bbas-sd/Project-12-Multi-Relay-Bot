@@ -205,6 +205,64 @@ def run_relay(backfill: bool = False) -> dict:
         summary["finished_at"] = datetime.now(timezone.utc)
 
 
+FB_FILL_DEFAULT = 3
+FB_FILL_MAX = 10
+
+
+def run_fb_fill(limit: int = FB_FILL_DEFAULT) -> dict:
+    """Blocking. Post up to `limit` videos that are on YouTube but not yet on Facebook.
+
+    Oldest first, so the Page fills in roughly chronological order.
+    """
+    result = {"posted": 0, "failed": 0, "remaining": 0, "error": None}
+    if not config.FB_ENABLED:
+        result["error"] = "Facebook is disabled (FB_ENABLED=false)"
+        return result
+
+    summary = new_summary()
+    failures: list[dict] = []
+    try:
+        todo = [
+            vid
+            for vid in downloader.relayed_ids_oldest_first(config.SOURCE_CHANNEL_ID)
+            if not fb_uploader.is_done(vid)
+        ]
+        for vid in todo[:limit]:
+            video = downloader.fetch_video(vid, failures)
+            file_path = downloader.download_video(video, failures) if video else None
+            if file_path is None:
+                summary["fb_failed"] += 1
+                if failures and failures[-1]["bot_check"]:
+                    result["error"] = "YouTube bot-check: cookies likely expired (runbook 2b)"
+                    break
+                continue
+            try:
+                _facebook_one(video, file_path, summary)
+            finally:
+                downloader.cleanup(file_path)
+            if summary["fb_error"]:
+                result["error"] = f"Facebook token/permission: {summary['fb_error']}"
+                break
+        result["remaining"] = sum(1 for vid in todo if not fb_uploader.is_done(vid))
+    except Exception as exc:  # noqa: BLE001 — surfaced to Telegram
+        logger.exception("Facebook fill failed")
+        result["error"] = f"{type(exc).__name__}: {exc}"
+    result["posted"], result["failed"] = summary["fb_uploaded"], summary["fb_failed"]
+    return result
+
+
+def format_fb_fill(result: dict) -> str:
+    lines = [
+        "Facebook fill done",
+        f"  Posted:    {result['posted']}",
+        f"  Failed:    {result['failed']}",
+        f"  Remaining: {result['remaining']}",
+    ]
+    if result.get("error"):
+        lines.append(f"  ⚠️ {result['error']}")
+    return "\n".join(lines)
+
+
 def is_quiet(summary: dict) -> bool:
     """Nothing uploaded and nothing seriously wrong — not worth a Telegram message.
 

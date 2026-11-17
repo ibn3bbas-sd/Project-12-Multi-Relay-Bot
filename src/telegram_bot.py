@@ -1,4 +1,4 @@
-"""Telegram control surface: /run /fill /status /next /help."""
+"""Telegram control surface: /run /fill /fbfill /status /next /help."""
 
 from __future__ import annotations
 
@@ -9,7 +9,15 @@ from telegram import Update
 from telegram.ext import Application, CommandHandler, ContextTypes
 
 from . import config
-from .pipeline import format_summary, is_quiet, run_relay
+from .pipeline import (
+    FB_FILL_DEFAULT,
+    FB_FILL_MAX,
+    format_fb_fill,
+    format_summary,
+    is_quiet,
+    run_fb_fill,
+    run_relay,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -17,7 +25,12 @@ HELP_TEXT = (
     "Relay Bot (YouTube" + (" + Facebook" if config.FB_ENABLED else "") + ")\n\n"
     "/run     — relay new videos now\n"
     f"/fill    — relay new videos, then top today up to {config.DAILY_UPLOAD_TARGET} with older ones\n"
-    "/status  — last run summary\n"
+    + (
+        f"/fbfill [n] — post n older YouTube videos to Facebook (default {FB_FILL_DEFAULT}, max {FB_FILL_MAX})\n"
+        if config.FB_ENABLED
+        else ""
+    )
+    + "/status  — last run summary\n"
     "/next    — next scheduled runs\n"
     "/help    — this message"
 )
@@ -63,6 +76,28 @@ async def cmd_run(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
 async def cmd_fill(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await _manual_run(update, context, backfill=True)
+
+
+async def cmd_fbfill(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    if not _is_allowed(update):
+        return
+    if not config.FB_ENABLED:
+        await update.message.reply_text("Facebook is disabled (FB_ENABLED=false).")
+        return
+    if _relay_lock.locked():
+        await update.message.reply_text("A relay is already running — wait for it to finish.")
+        return
+    try:
+        limit = int(context.args[0]) if context.args else FB_FILL_DEFAULT
+    except ValueError:
+        await update.message.reply_text(f"Usage: /fbfill [n]  (1–{FB_FILL_MAX})")
+        return
+    limit = max(1, min(limit, FB_FILL_MAX))
+
+    await update.message.reply_text(f"Posting up to {limit} older video(s) to Facebook...")
+    async with _relay_lock:
+        result = await asyncio.to_thread(run_fb_fill, limit)
+    await update.message.reply_text(format_fb_fill(result))
 
 
 async def cmd_status(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -124,6 +159,7 @@ def build_app() -> Application:
     app.add_handler(CommandHandler("help", cmd_help))
     app.add_handler(CommandHandler("run", cmd_run))
     app.add_handler(CommandHandler("fill", cmd_fill))
+    app.add_handler(CommandHandler("fbfill", cmd_fbfill))
     app.add_handler(CommandHandler("status", cmd_status))
     app.add_handler(CommandHandler("next", cmd_next))
     app.add_error_handler(_on_error)
