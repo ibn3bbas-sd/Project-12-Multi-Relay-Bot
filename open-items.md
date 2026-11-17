@@ -1,6 +1,6 @@
 # Open items
 
-Where the Huawei Cloud CCE deployment stands. Last updated **2026-11-15**.
+Where the Huawei Cloud CCE deployment stands. Last updated **2026-11-17**.
 Runbook: [docs/deploy-cce.md](docs/deploy-cce.md) · Diagram: [docs/hld/hld-relay-bot-cce.svg](docs/hld/hld-relay-bot-cce.svg)
 
 > This repo is **public**. Never write tokens, IPs, hostnames, SSH users/keys or account names here.
@@ -21,6 +21,21 @@ Runbook: [docs/deploy-cce.md](docs/deploy-cce.md) · Diagram: [docs/hld/hld-rela
 - [x] Processed list (60 "start from now" IDs) copied into `/data/`; `/status` answers
 - [x] First full relay confirmed: download through cookies → upload → Telegram report (Found 1, Uploaded 1)
 - [x] Cookie expiry symptom seen: the log shows `Sign in to confirm you're not a bot` and `Metadata fetch failed`; refreshed per runbook 2b
+
+## Schedule change: frequent checks + daily top-up (2026-11-17, merged, NOT yet rolled out)
+
+Why: the source posts ~1 video/day, often after the 18:00 run, so 06:00/18:00 runs mostly found 0 and the
+day ended with 1 upload. Now: check every 2h (silent unless something uploads / bot-check / quota), and at
+09:00 Riyadh top up to 6 uploads/quota-day with older source videos (newest first). New `/fill` command.
+Counts per YouTube quota day (Pacific) in `/data/upload_counts.json`. Config: `CHECK_INTERVAL_MINUTES`,
+`DAILY_UPLOAD_TARGET`, `BACKFILL_TIME`, `BACKFILL_SCAN_LIMIT`.
+
+- [x] Code + docs, offline-tested with yt-dlp/uploader stubbed (new relay, top-up to 6, target met, quota abort, job times)
+- [ ] Confirm the `build-push-dockerhub` run for the merge commit is green
+- [ ] Roll out: `kubectl -n relay-bot rollout restart deploy/relay-bot`, then `/next` should list `check_new` and `daily_topup`
+- [ ] Try `/fill` once and confirm it uploads older videos and reports `Today: n/6`
+- [ ] Next morning: check the 09:00 "Daily top-up done" report; watch for quota aborts on the first day (counter starts at 0)
+- [ ] Optional: remove `SCHEDULE_MORNING`/`SCHEDULE_EVENING` from the `relay-bot-env` Secret if present (now ignored)
 
 ## Still open
 

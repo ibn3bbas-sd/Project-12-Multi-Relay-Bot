@@ -88,7 +88,7 @@ def _published_at(info: dict) -> datetime | None:
     return None
 
 
-def _list_candidate_ids(channel_id: str) -> list[str]:
+def _list_candidate_ids(channel_id: str, limit: int | None = None) -> list[str]:
     """Flat listing of the channel's newest uploads — cheap, IDs only.
 
     `extract_flat` deliberately skips per-video metadata, which is why the
@@ -99,7 +99,7 @@ def _list_candidate_ids(channel_id: str) -> list[str]:
         "quiet": True,
         "no_warnings": True,
         "extract_flat": "in_playlist",
-        "playlistend": config.SCAN_LIMIT,
+        "playlistend": limit or config.SCAN_LIMIT,
         "ignoreerrors": True,
         **_cookie_opts(),
     }
@@ -132,6 +132,26 @@ def _fetch_metadata(video_id: str, failures: list[dict] | None = None) -> dict |
         return None
 
 
+def _is_live(info: dict) -> bool:
+    """Live streams and premieres can't be downloaded as a finished file yet."""
+    if info.get("live_status") in ("is_live", "is_upcoming", "post_live"):
+        logger.info("%s is live/upcoming — skipping for now", info.get("id"))
+        return True
+    return False
+
+
+def _to_video(video_id: str, info: dict, published: datetime | None) -> dict:
+    return {
+        "id": video_id,
+        "title": info.get("title") or "",
+        "description": info.get("description") or "",
+        "url": f"https://www.youtube.com/watch?v={video_id}",
+        "channel_name": info.get("channel") or info.get("uploader") or "",
+        "published_at": published,
+        "duration": info.get("duration"),
+    }
+
+
 def fetch_new_videos(channel_id: str, failures: list[dict] | None = None) -> list[dict]:
     """Unprocessed videos published within MAX_VIDEO_AGE_DAYS, oldest first.
 
@@ -153,7 +173,7 @@ def fetch_new_videos(channel_id: str, failures: list[dict] | None = None) -> lis
     new_videos: list[dict] = []
     for video_id in candidates:
         info = _fetch_metadata(video_id, failures)
-        if not info:
+        if not info or _is_live(info):
             continue
 
         published = _published_at(info)
@@ -164,17 +184,7 @@ def fetch_new_videos(channel_id: str, failures: list[dict] | None = None) -> lis
             logger.debug("%s published %s, older than cutoff — skipping", video_id, published.date())
             continue
 
-        new_videos.append(
-            {
-                "id": video_id,
-                "title": info.get("title") or "",
-                "description": info.get("description") or "",
-                "url": f"https://www.youtube.com/watch?v={video_id}",
-                "channel_name": info.get("channel") or info.get("uploader") or "",
-                "published_at": published,
-                "duration": info.get("duration"),
-            }
-        )
+        new_videos.append(_to_video(video_id, info, published))
 
     new_videos.sort(key=lambda v: v["published_at"])  # relay in chronological order
 
@@ -183,6 +193,30 @@ def fetch_new_videos(channel_id: str, failures: list[dict] | None = None) -> lis
 
     logger.info("Found %d new video(s) to relay", len(new_videos))
     return new_videos
+
+
+def iter_backfill_videos(
+    channel_id: str, exclude: set[str], failures: list[dict] | None = None
+):
+    """Yield older unprocessed videos from the channel, newest first.
+
+    Used to top up a quiet day. Lazy: metadata is fetched only for the videos
+    the caller actually consumes, so a deep listing stays cheap. Yields None
+    for a video whose metadata fetch failed, so the caller can count it and stop.
+    """
+    if not channel_id:
+        return
+    processed = _load_processed()
+    ids = _list_candidate_ids(channel_id, config.BACKFILL_SCAN_LIMIT)
+    candidates = [vid for vid in ids if vid not in processed and vid not in exclude]
+    logger.info("Backfill scan: %d listed, %d not yet processed", len(ids), len(candidates))
+
+    for video_id in candidates:
+        info = _fetch_metadata(video_id, failures)
+        if not info:
+            yield None
+        elif not _is_live(info):
+            yield _to_video(video_id, info, _published_at(info))
 
 
 def download_video(video: dict, failures: list[dict] | None = None) -> Path | None:

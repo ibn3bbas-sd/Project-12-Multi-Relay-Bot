@@ -1,4 +1,4 @@
-"""Registers the daily relay jobs on the telegram job_queue."""
+"""Registers the relay jobs on the telegram job_queue: frequent checks + a daily top-up."""
 
 from __future__ import annotations
 
@@ -9,7 +9,7 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 from telegram.ext import Application
 
 from . import config
-from .telegram_bot import scheduled_relay
+from .telegram_bot import scheduled_backfill, scheduled_check
 
 logger = logging.getLogger(__name__)
 
@@ -38,20 +38,27 @@ def register_jobs(app: Application) -> None:
         )
 
     tz = _tz()
-    for name, value in (
-        ("relay_morning", config.SCHEDULE_MORNING),
-        ("relay_evening", config.SCHEDULE_EVENING),
-    ):
-        hour, minute = _parse_time(value)
+
+    # New-video check. First run a minute after start, so a restart also catches up.
+    app.job_queue.run_repeating(
+        scheduled_check,
+        interval=dt.timedelta(minutes=config.CHECK_INTERVAL_MINUTES),
+        first=dt.timedelta(minutes=1),
+        name="check_new",
+    )
+
+    if config.DAILY_UPLOAD_TARGET > 0:
+        hour, minute = _parse_time(config.BACKFILL_TIME)
         app.job_queue.run_daily(
-            scheduled_relay,
+            scheduled_backfill,
             time=dt.time(hour, minute, tzinfo=tz),
-            name=name,
+            name="daily_topup",
         )
 
     logger.info(
-        "Scheduled relay at %s and %s (%s)",
-        config.SCHEDULE_MORNING,
-        config.SCHEDULE_EVENING,
+        "Checking for new videos every %d min; daily top-up to %d at %s (%s)",
+        config.CHECK_INTERVAL_MINUTES,
+        config.DAILY_UPLOAD_TARGET,
+        config.BACKFILL_TIME,
         config.TIMEZONE,
     )
