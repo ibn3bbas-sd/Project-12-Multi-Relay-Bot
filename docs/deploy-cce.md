@@ -112,6 +112,26 @@ kubectl -n relay-bot logs -f deploy/relay-bot
 
 Send `/status` to the bot on Telegram.
 
+## 5. Facebook Page (optional second target)
+
+Each relayed video is also posted to a Facebook Page (`src/fb_uploader.py`). Off unless `FB_ENABLED=true`.
+
+1. Meta app (developers.facebook.com, use case "Manage everything on your Page", no business
+   portfolio; stays in development mode) with `pages_manage_posts`, `pages_read_engagement`, `pages_show_list`.
+2. Never-expiring Page token: Graph API Explorer user token → exchange for a long-lived user token
+   (`oauth/access_token?grant_type=fb_exchange_token` with the app secret) → `me/accounts` → the
+   Page's `access_token`. Check it in the Access Token Debugger: type PAGE, Expires: Never.
+3. Add `FB_ENABLED`, `FB_PAGE_ID`, `FB_PAGE_TOKEN` to `relay-bot-env`, then restart:
+
+```bash
+kubectl -n relay-bot patch secret relay-bot-env --type merge -p \
+  "{\"stringData\":{\"FB_ENABLED\":\"true\",\"FB_PAGE_ID\":\"<page id>\",\"FB_PAGE_TOKEN\":\"$FB_PAGE_TOKEN\"}}"
+kubectl -n relay-bot rollout restart deploy/relay-bot
+```
+
+A failed Facebook post is queued in `/data/facebook_state.json` and retried on later runs
+(Facebook only, YouTube is not re-uploaded). A token/permission error shows as ⚠️ in Telegram.
+
 ## Day 2
 
 ```bash

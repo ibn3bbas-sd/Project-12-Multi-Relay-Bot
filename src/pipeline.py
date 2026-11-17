@@ -7,7 +7,8 @@ import logging
 from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
 
-from . import config, downloader, uploader
+from . import config, downloader, fb_uploader, uploader
+from .fb_uploader import FacebookAuthError
 from .uploader import QuotaExceeded
 
 logger = logging.getLogger(__name__)
@@ -24,6 +25,9 @@ def new_summary() -> dict:
         "bot_check": False,
         "backfilled": 0,
         "today": None,  # uploads in the current quota day, set at the end of a run
+        "fb_uploaded": 0,
+        "fb_failed": 0,
+        "fb_error": None,  # token/permission problem: Facebook skipped for the rest of the run
     }
 
 
@@ -56,10 +60,30 @@ def _record_upload() -> None:
     tmp.replace(config.UPLOAD_COUNTS_FILE)
 
 
-def _relay_one(video: dict, summary: dict, failures: list[dict]) -> bool:
-    """Download + upload one video. Returns True if uploaded.
+def _facebook_one(video: dict, file_path, summary: dict) -> bool:
+    """Post one downloaded video to the Facebook Page. True if posted (or already there)."""
+    if not config.FB_ENABLED or fb_uploader.is_done(video["id"]):
+        return True
+    if summary["fb_error"]:
+        return False
+    try:
+        fb_id = fb_uploader.upload_video(file_path, video)
+    except FacebookAuthError as exc:
+        logger.error("Facebook auth problem — skipping Facebook this run: %s", exc)
+        summary["fb_error"] = str(exc)
+        fb_id = None
+    if fb_id:
+        fb_uploader.mark_done(video["id"])
+        summary["fb_uploaded"] += 1
+        return True
+    summary["fb_failed"] += 1
+    return False
 
-    Raises QuotaExceeded (after cleanup) so the caller can stop the run.
+
+def _relay_one(video: dict, summary: dict, failures: list[dict]) -> bool:
+    """Download + upload one video (YouTube, then Facebook). Returns True if on YouTube.
+
+    Raises QuotaExceeded (after the Facebook post and cleanup) so the caller can stop the run.
     """
     logger.info("Processing %s — %s", video["id"], video["title"])
 
@@ -69,18 +93,48 @@ def _relay_one(video: dict, summary: dict, failures: list[dict]) -> bool:
         summary["failed"] += 1
         return False
 
+    quota_exc = None
     try:
-        video_id = uploader.upload_video(file_path, video)
+        try:
+            video_id = uploader.upload_video(file_path, video)
+        except QuotaExceeded as exc:
+            video_id, quota_exc = None, exc
+        fb_ok = _facebook_one(video, file_path, summary)
     finally:
         downloader.cleanup(file_path)
 
-    if not video_id:
+    if video_id:
+        summary["uploaded"] += 1
+        downloader.mark_processed(video["id"])
+        _record_upload()
+        if not fb_ok:
+            # Off the YouTube scan list now, so queue it for a Facebook-only retry.
+            fb_uploader.add_pending(video)
+    elif not quota_exc:
         summary["failed"] += 1
-        return False
-    summary["uploaded"] += 1
-    downloader.mark_processed(video["id"])
-    _record_upload()
-    return True
+    # If YouTube failed, the video comes back next run; Facebook skips it if already posted.
+
+    if quota_exc:
+        raise quota_exc
+    return bool(video_id)
+
+
+def _retry_facebook_pending(summary: dict, failures: list[dict]) -> None:
+    """Re-download and post videos that reached YouTube but not Facebook."""
+    if not config.FB_ENABLED:
+        return
+    for video in fb_uploader.pending_videos()[: config.FB_RETRY_PER_RUN]:
+        if summary["fb_error"]:
+            return
+        logger.info("Facebook retry %s — %s", video["id"], video["title"])
+        file_path = downloader.download_video(video, failures)
+        if file_path is None:
+            summary["fb_failed"] += 1
+            continue
+        try:
+            _facebook_one(video, file_path, summary)
+        finally:
+            downloader.cleanup(file_path)
 
 
 def _backfill(summary: dict, failures: list[dict], tried: set[str]) -> None:
@@ -128,6 +182,8 @@ def run_relay(backfill: bool = False) -> dict:
         for video in videos:
             _relay_one(video, summary, failures)
 
+        _retry_facebook_pending(summary, failures)
+
         if backfill and config.DAILY_UPLOAD_TARGET > 0:
             tried = {v["id"] for v in videos} | {f["id"] for f in failures}
             _backfill(summary, failures, tried)
@@ -155,7 +211,13 @@ def is_quiet(summary: dict) -> bool:
     Plain per-video failures don't count: one unavailable video would otherwise
     ping every check. They still show in the daily top-up report and /status.
     """
-    return not (summary["uploaded"] or summary["aborted"] or summary["bot_check"])
+    return not (
+        summary["uploaded"]
+        or summary["aborted"]
+        or summary["bot_check"]
+        or summary.get("fb_uploaded")
+        or summary.get("fb_error")
+    )
 
 
 def format_summary(summary: dict, header: str = "Relay complete") -> str:
@@ -169,6 +231,12 @@ def format_summary(summary: dict, header: str = "Relay complete") -> str:
         lines.append(f"  (older videos: {summary['backfilled']})")
     if summary.get("today") is not None and config.DAILY_UPLOAD_TARGET > 0:
         lines.append(f"  Today:    {summary['today']}/{config.DAILY_UPLOAD_TARGET}")
+    if config.FB_ENABLED:
+        lines.append(
+            f"  Facebook: {summary.get('fb_uploaded', 0)} posted, {summary.get('fb_failed', 0)} failed"
+        )
+        if summary.get("fb_error"):
+            lines.append(f"  ⚠️ Facebook token/permission: {summary['fb_error']}")
     if summary.get("started_at") and summary.get("finished_at"):
         elapsed = (summary["finished_at"] - summary["started_at"]).total_seconds()
         lines.append(f"  Duration: {elapsed:.0f}s")

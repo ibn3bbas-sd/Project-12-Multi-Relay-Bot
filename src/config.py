@@ -169,6 +169,14 @@ SOURCE_CREDIT_TEMPLATE = str(
 )
 UPLOAD_MAX_RETRIES = _as_int(_get("UPLOAD_MAX_RETRIES", "upload.max_retries", 5), 5)
 
+# ── Facebook Page (optional second target) ───────────────────────────────────
+FB_ENABLED = _as_bool(_get("FB_ENABLED", "facebook.enabled", False))
+FB_PAGE_ID = str(_get("FB_PAGE_ID", "facebook.page_id", "") or "").strip()
+FB_PAGE_TOKEN = str(os.getenv("FB_PAGE_TOKEN", "") or "").strip()  # env only, never yaml
+FB_API_VERSION = str(_get("FB_API_VERSION", "facebook.api_version", "v27.0"))
+# Failed Facebook posts are retried on later runs; cap the re-downloads per run.
+FB_RETRY_PER_RUN = _as_int(_get("FB_RETRY_PER_RUN", "facebook.retry_per_run", 3), 3)
+
 # ── Gemini (optional) ────────────────────────────────────────────────────────
 GEMINI_API_KEY = str(_get("GEMINI_API_KEY", "gemini.api_key", "") or "")
 GEMINI_ENABLED = _as_bool(_get("GEMINI_ENABLED", "gemini.enabled", False))
@@ -178,6 +186,7 @@ DATA_DIR = _resolve(_get("DATA_DIR", "runtime.data_dir"), "data")
 LOG_DIR = _resolve(_get("LOG_DIR", "runtime.log_dir"), "logs")
 PROCESSED_FILE = DATA_DIR / "processed_videos.json"
 UPLOAD_COUNTS_FILE = DATA_DIR / "upload_counts.json"
+FB_STATE_FILE = DATA_DIR / "facebook_state.json"
 LOG_FILE = LOG_DIR / "relay.log"
 
 LOG_LEVEL = str(_get("LOG_LEVEL", "runtime.log_level", "INFO")).upper()

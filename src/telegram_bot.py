@@ -14,7 +14,7 @@ from .pipeline import format_summary, is_quiet, run_relay
 logger = logging.getLogger(__name__)
 
 HELP_TEXT = (
-    "YouTube Relay Bot\n\n"
+    "Relay Bot (YouTube" + (" + Facebook" if config.FB_ENABLED else "") + ")\n\n"
     "/run     — relay new videos now\n"
     f"/fill    — relay new videos, then top today up to {config.DAILY_UPLOAD_TARGET} with older ones\n"
     "/status  — last run summary\n"
