@@ -1,9 +1,9 @@
 # Open items
 
-Where the Huawei Cloud CCE deployment stands. Last updated **2026-11-17**.
+Where the Huawei Cloud CCE deployment stands. Last updated **2026-11-18**.
 Runbook: [docs/deploy-cce.md](docs/deploy-cce.md) · Diagram: [docs/hld/hld-relay-bot-cce.svg](docs/hld/hld-relay-bot-cce.svg)
 
-> This repo is **public** (recreated clean 2026-11-18). Never write tokens, IPs, hostnames, SSH users/keys or account names here. Never write tokens, IPs, hostnames, SSH users/keys or account names here.
+> This repo is **public** (recreated clean 2026-11-18). Never write tokens, IPs, hostnames, SSH users/keys or account names here.
 > Use placeholders such as `<jumpbox-eip>`.
 
 ## Done
@@ -36,6 +36,17 @@ Counts per YouTube quota day (Pacific) in `/data/upload_counts.json`. Config: `C
 - [x] `/fill` tried 2026-11-17: 6 older videos uploaded, `Today: 6/6`
 - [ ] Next morning: check the 09:00 "Daily top-up done" report; watch for quota aborts on the first day (counter starts at 0)
 - [x] Removed `SCHEDULE_MORNING`/`SCHEDULE_EVENING` from the `relay-bot-env` Secret if present (now ignored)
+
+## Facebook Page second target (2026-11-18, live)
+
+Each relayed video is also posted to the owner's Facebook Page. Runbook section 5.
+
+- [x] `src/fb_uploader.py` (Graph API resumable upload) + per-platform state; offline-tested (retry queue, auth error, quota)
+- [x] Meta app (dev mode, Pages use case) + never-expiring Page token; hidden unpublished test upload OK and deleted
+- [x] `FB_*` added to Secret `relay-bot-env`, rolled out; pod reaches the Graph API
+- [x] `/fbfill [n]` posts already-relayed videos, oldest first; first post confirmed on the Page
+- [x] Post text now starts with the video title (the feed doesn't show the title field); first post fixed in place
+- [ ] Confirm the first automatic relay reports `Facebook: 1 posted`
 
 ## Still open
 

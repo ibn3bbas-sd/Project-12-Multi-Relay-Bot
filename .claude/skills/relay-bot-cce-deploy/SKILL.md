@@ -1,6 +1,6 @@
 ---
 name: relay-bot-cce-deploy
-description: Continue or operate the YouTube Relay Bot deployment on Huawei Cloud CCE me-east-1 (k8s/relay-bot.yaml, build-push-dockerhub workflow, Docker Hub image, HLD diagram, runbook).
+description: Continue or operate the YouTube Relay Bot deployment on Huawei Cloud CCE me-east-1 (k8s/relay-bot.yaml, build-push-dockerhub workflow, Docker Hub image, HLD diagram, runbook), including the Facebook Page second target (fb_uploader, /fbfill, Page token).
 ---
 
 # YouTube Relay Bot on Huawei Cloud CCE
@@ -20,7 +20,7 @@ GitHub main --Actions--> Docker Hub docker.io/ibn3bbas/youtube-relay-bot:{latest
                                   Secret relay-bot-env   (env from .env)
                                   Secret relay-bot-files (token.json, client_secret.json)
                                   PVC relay-data (EVS, csi-disk-topology) -> /data
-                              egress: NAT Gateway (SNAT) + EIP -> Telegram / YouTube
+                              egress: NAT Gateway (SNAT) + EIP -> Telegram / YouTube / Facebook Graph API
 ```
 
 No Service, Ingress or LB. The bot only dials out (Telegram long-polling + YouTube).
@@ -91,7 +91,7 @@ Private details (hosts, IPs, local paths, account names, the cookie account) are
 - Claude can push the cookie file itself without reading it: `scp` to the jumpbox, `kubectl create secret ... --dry-run=client -o yaml | kubectl apply -f -`,
   `shred -u` there, `rm` the local file. The user still empties the OneDrive recycle bin.
 - After a push to main: wait for `build-push-dockerhub`, then `kubectl -n relay-bot rollout restart deploy/relay-bot`.
-- The bot ignores `/start`; only `/run`, `/fill`, `/status`, `/next`, `/help` reply.
+- The bot answers `/start` with help; commands: `/run`, `/fill`, `/fbfill [n]`, `/status`, `/next`, `/help`.
 
 ## More lessons from the setup
 
@@ -120,6 +120,39 @@ Private details (hosts, IPs, local paths, account names, the cookie account) are
 - `gh auth refresh -s delete_repo` uses a browser device flow that can end in `access_denied`; deleting the repo in the web UI (Settings → Danger Zone) is simpler.
 - Before every push: scan the diff for infra IPs/names/emails (patterns in Claude's private memory) and check `git log -1 --format=%ae` is the noreply address. Secret scanning + push protection are on (free for public repos).
 - Docker Hub tokens to keep: `github-actions-push` (Read & Write, the `DOCKERHUB_TOKEN` secret) and `cce-relay-bot-pull` (Read-only, Secret `dockerhub-pull`). Revoke stale auto-generated "desktop" tokens, keeping the newest.
+
+## Facebook Page target (2026-11-18)
+
+Each relayed video also goes to a Facebook Page (`src/fb_uploader.py`, runbook section 5). Off unless `FB_ENABLED=true`.
+Page ID, app ID and account names are in Claude's private memory, never here.
+
+- Flow in `_relay_one`: download once → YouTube → Facebook → cleanup. State in `/data/facebook_state.json`
+  (`done` + `pending`). YouTube marks the video processed, so a failed Facebook post goes to `pending` and is retried
+  Facebook-only (max `FB_RETRY_PER_RUN`) on later runs; YouTube is never re-uploaded. YouTube quota abort still posts
+  to Facebook, then re-raises. Auth errors (codes 190/102/10/200) skip Facebook for the rest of the run + ⚠️ in Telegram.
+- `/fbfill [n]` (default 3, max 10): already-relayed videos not yet on Facebook, oldest first, within
+  `BACKFILL_SCAN_LIMIT`. Holds `_relay_lock`, so scheduled checks skip while it runs. Only new videos go automatically.
+- **The feed shows only the post text (`description`), never the video `title` field.** The post text starts with
+  the title, then the YouTube description, then the source credit. Fix an existing post in place:
+  `POST /{video-id}` with `description=...`.
+- Resumable upload on `graph-video.facebook.com/{ver}/{page}/videos`: `start` (file_size) → `transfer` chunks
+  (`video_file_chunk`, follow returned offsets) → `finish` (title, description, published). Graph version is
+  configurable (`FB_API_VERSION`, default v27.0; the Explorer shows the current one).
+- Meta app setup: Get Started registers a developer account (no "My Apps" before that). Create App → filter
+  **Content management** → "Manage everything on your Page" (not in Featured) → no business portfolio → create.
+  Permissions `pages_manage_posts`, `pages_read_engagement`, `pages_show_list` ("Ready for testing" is enough in dev
+  mode for the Page admin; `publish_video` is not offered and not needed). In the consent popup choose
+  **"Opt in to current Pages only"**.
+- Never-expiring Page token: Explorer **User Token** (dropdown → "Return to User Token") → exchange with the app
+  secret (`oauth/access_token?grant_type=fb_exchange_token`) → `me/accounts` with the long-lived user token → Page
+  `access_token`. `debug_token` must show `type PAGE, expires_at 0`. Exchanging a *Page* token only gives 60 days.
+  Copy-pasting tokens from the Explorer is error-prone (placeholder left in, short-lived Page token copied):
+  check type/expiry with `debug_token` before using.
+- Test without touching the feed: upload with `published=false`, poll `status.video_status` until `ready`, `DELETE`.
+- Put the token in the cluster without showing it: build the `{"stringData":{FB_*}}` JSON locally and pipe it over ssh
+  into `kubectl patch secret relay-bot-env --type merge --patch-file /dev/stdin`, then `rollout restart`. Verify with
+  a `/me` call from inside the pod. Changing the Facebook password or removing the app invalidates the token.
+- The user states the source owner allows reposting; don't re-raise copyright.
 
 ## Deploy commands
 
