@@ -60,5 +60,5 @@ commit email mapped to the GitHub noreply address) and force-pushed. No password
 - [x] Rewrite + force-push `main` and `gh-pages`; local clone reset and old objects purged
 - [ ] Ask GitHub Support to purge cached views and PR refs (#1, #2 still point at old commits) and run GC
 - [x] Check forks: none (2026-11-18)
-- [ ] Change the jumpbox public IP (copies scraped while public still point at it)
+- [x] ~~Change the jumpbox public IP~~ skipped: port 22 is allow-listed, SSH is key-only with fail2ban, so a known IP gives no access
 - [ ] Make the repo public, re-enable Pages on `gh-pages`
