@@ -116,6 +116,11 @@ Private details (hosts, IPs, local paths, account names, the cookie account) are
 - Before deleting a retained EVS disk, prove nothing references it: `kubectl get pv,pvc -A`, `volumeattachment`, and the PV `volumeHandle`, grepping both disk name and ID.
 - Auto-mode may refuse edits to cluster Secrets; hand the user the exact `kubectl patch` command.
 
+- After re-entering `DOCKERHUB_TOKEN`, prove it with `gh workflow run build-push-dockerhub.yml` + `gh run watch` (rebuilds the same code; harmless).
+- `gh auth refresh -s delete_repo` uses a browser device flow that can end in `access_denied`; deleting the repo in the web UI (Settings → Danger Zone) is simpler.
+- Before every push: scan the diff for infra IPs/names/emails (patterns in Claude's private memory) and check `git log -1 --format=%ae` is the noreply address. Secret scanning + push protection are on (free for public repos).
+- Docker Hub tokens to keep: `github-actions-push` (Read & Write, the `DOCKERHUB_TOKEN` secret) and `cce-relay-bot-pull` (Read-only, Secret `dockerhub-pull`). Revoke stale auto-generated "desktop" tokens, keeping the newest.
+
 ## Deploy commands
 
 ```bash
