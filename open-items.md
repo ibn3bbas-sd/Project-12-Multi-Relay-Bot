@@ -59,6 +59,6 @@ commit email mapped to the GitHub noreply address) and force-pushed. No password
 
 - [x] Rewrite + force-push `main` and `gh-pages`; local clone reset and old objects purged
 - [ ] Ask GitHub Support to purge cached views and PR refs (#1, #2 still point at old commits) and run GC
-- [ ] Check forks: `gh api repos/<owner>/<repo>/forks`
+- [x] Check forks: none (2026-11-18)
 - [ ] Change the jumpbox public IP (copies scraped while public still point at it)
 - [ ] Make the repo public, re-enable Pages on `gh-pages`
