@@ -46,8 +46,8 @@ Counts per YouTube quota day (Pacific) in `/data/upload_counts.json`. Config: `C
 ## Cleanup
 
 - [x] Unused GitHub secrets `SWR_REGISTRY_USER` / `SWR_REGISTRY_PASS` deleted
-- [ ] Delete the old `github-actions-push` Docker Hub token that had *Public Read-only* scope (if not already)
-- [ ] Review the auto-generated Docker Hub "desktop" tokens (Read/Write/Delete, never expire) and revoke unused ones
+- [x] Old *Public Read-only* `github-actions-push` Docker Hub token: already gone
+- [x] Docker Hub "desktop" tokens: 4 old ones revoked, newest kept (2026-11-18)
 - [x] Empty the exported cookies file from the OneDrive recycle bin (2026-11-18)
 - [x] Infrastructure details in git history: rewritten 2026-11-18 (see below)
 - [ ] GitHub Pages (home + privacy) went offline when the repo went private; host them elsewhere if Google needs the privacy URL
