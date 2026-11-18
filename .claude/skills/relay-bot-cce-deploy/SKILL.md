@@ -158,6 +158,10 @@ Page ID, app ID and account names are in Claude's private memory, never here.
   Pacing in `facebook_state.json` (`counts`, `last_post`, `warmup_start`): `pacing_block()` defers posts over
   today's cap (schedule `1,3` then `FB_DAILY_LIMIT` 8) or inside the 16h/cap spacing; deferred videos go to
   `pending`, counted as "held back", not failed. Runbook 5a.
+- Not rolled out yet as of commit `3f43e57` (image built). Next: `rollout restart`, `/run`, check the `FB today` line,
+  and test the first real Reel (Reels endpoints only mock-tested). Offline test harness pattern: set
+  `TELEGRAM_BOT_TOKEN`, `TELEGRAM_ALLOWED_CHAT_ID`, `SOURCE_CHANNEL_ID`, `DATA_DIR`, `FB_*` env, patch
+  `fb_uploader._today` and `fb_uploader.requests.post`; generate clips with `ffmpeg -f lavfi -i testsrc`.
 
 ## Deploy commands
 

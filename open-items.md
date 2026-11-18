@@ -48,6 +48,23 @@ Each relayed video is also posted to the owner's Facebook Page. Runbook section 
 - [x] Post text now starts with the video title (the feed doesn't show the title field); first post fixed in place
 - [ ] Confirm the first automatic relay reports `Facebook: 1 posted`
 
+## Facebook Reels + warm-up pacing (2026-11-18, code merged, not rolled out)
+
+The Page was dormant for a long time; a sudden burst of posts looks like a hijacked account. Commit `3f43e57`,
+image built green. Runbook section 5a.
+
+- [x] Reels: 3–90 s clips via `/video_reels` → `rupload.facebook.com` → finish; short landscape clips padded to
+      1080x1920 with ffmpeg; longer videos stay normal posts; failed Reel falls back to a normal post (`FB_FORMAT=auto`)
+- [x] Warm-up: `FB_WARMUP_SCHEDULE=1,3` (week 1: 1/day, week 2: 3/day), then `FB_DAILY_LIMIT=8`; posts spaced
+      16h / cap apart (min `FB_MIN_GAP_MINUTES=90`); held-back videos queue in `facebook_state.json` `pending`
+- [x] Telegram report: `Facebook: n posted (r Reels), f failed, h held back` + `FB today: n/cap (warm-up week k), q queued`
+- [x] Offline tests: pacing over simulated days, real ffmpeg probe/pad, mocked Graph/rupload, Reel→video fallback, deferred ≠ failed
+- [ ] Roll out: `kubectl -n relay-bot rollout restart deploy/relay-bot`, then `/run`; check the `FB today` line
+- [ ] First real Reel: the Reels endpoints are untested against the live Page. If the source has no ≤90 s clips,
+      test with a hidden post (`video_state=DRAFT` or `published=false` then `DELETE`)
+- [ ] Watch the queue: it grows ~5/day during warm-up (YouTube ~6/day), drains ~2/day at 8/day
+- [ ] Optional: vertical 60 s teaser Reel cut from each long video (the API rejects Reels over 90 s), linking to the full post
+
 ## Next: rename to "Multi-Relay Bot" + more platforms (planned)
 
 Name chosen 2026-11-18: **Multi-Relay Bot**. Not started yet.
