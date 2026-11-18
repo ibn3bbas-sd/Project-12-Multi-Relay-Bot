@@ -1,6 +1,6 @@
 ---
 name: relay-bot-cce-deploy
-description: Continue or operate the YouTube Relay Bot deployment on Huawei Cloud CCE me-east-1 (k8s/relay-bot.yaml, build-push-dockerhub workflow, Docker Hub image, HLD diagram, runbook), including the Facebook Page second target (fb_uploader, /fbfill, Page token).
+description: Continue or operate the YouTube Relay Bot deployment on Huawei Cloud CCE me-east-1 (k8s/relay-bot.yaml, build-push-dockerhub workflow, Docker Hub image, HLD diagram, runbook), including the Facebook Page second target (fb_uploader, /fbfill, Page token) and the Instagram third target (Shorts only as Reels, ig_uploader, /igfill), plus the verified X/TikTok video limits for the next platforms.
 ---
 
 # YouTube Relay Bot on Huawei Cloud CCE
@@ -172,6 +172,56 @@ Page ID, app ID and account names are in Claude's private memory, never here.
 - Secrets stay out of OneDrive: the FB token lives in `~/relay-setup/.env` (WSL), never in the OneDrive repo's `.env`.
   uutils `shred -u` panics on the `/mnt/c` mount *after* overwriting and leaves a renamed `0000` file that is NOT
   gitignored: check `git status` for it and `rm` it. Then the user empties the OneDrive recycle bin.
+
+## Instagram target: Shorts only (2026-11-18)
+
+Commit `3ab20e7` (build green). **Not rolled out yet: `IG_ENABLED` is not in the Secret.** Runbook §6.
+
+- User's choice: only the source channel's **Shorts** (≤180 s) go to Instagram, as Reels.
+- The bot's YouTube relay reads only `/channel/<id>/videos`. Shorts live on `/shorts` (400+ at the source,
+  ~1–2/day, 58–142 s, mostly square, some 368px/15 fps), so Instagram lists the Shorts tab itself
+  (`downloader.list_short_ids`). Shorts never go to YouTube or Facebook.
+- `src/ig_uploader.py`: `POST /{ig-user}/media` (media_type=REELS, upload_type=resumable, share_to_feed) →
+  `POST` the returned `rupload.facebook.com/ig-api-upload/...` uri (headers `Authorization: OAuth`, `offset: 0`,
+  `file_size`) → poll `status_code` until FINISHED → `media_publish` (no blind retry; on error, check if the
+  container shows PUBLISHED). Resumable works only with **Facebook Login** (not Instagram Login).
+- ffmpeg: remux (`+faststart`, `-use_editlist 0`) when the file fits the spec, else re-encode (H.264, 30 fps when
+  outside 23–60, ≤1920 wide, AAC 48 kHz). Caption = title + description + credit, ≤2200 chars, ≤30 hashtags.
+- Pacing: one post per scheduled check, `IG_DAILY_LIMIT=3`/local day, `IG_MIN_GAP_MINUTES=180`;
+  `IG_TOPUP=true` posts older Shorts (newest first) when nothing new. `/igfill [n]` (max 5) ignores the gap,
+  keeps the cap. No retry queue: an unposted Short is picked up again. State `/data/instagram_state.json`
+  (`done`, `skipped`, `counts`, `last_post`). Auth error → ⚠️ in Telegram; code 9 / subcode 2207042 → stops for 24 h limit.
+- `IG_ACCESS_TOKEN` falls back to `FB_PAGE_TOKEN`; `IG_USER_ID` from `GET /{page}?fields=instagram_business_account`.
+- Offline-tested with the Graph API and ffmpeg mocked. No ffmpeg on the laptop, and the auto-mode check refused
+  downloading one. Real ffmpeg is exercised by the pod self-test.
+
+**Next steps (user, in order):**
+1. Instagram → Professional account (Business/Creator), linked to the Facebook Page.
+2. Meta app: add `instagram_basic` + `instagram_content_publish`.
+3. New never-expiring Page token with those ticked (same flow as Facebook); `debug_token`: PAGE, expires 0.
+4. Jumpbox (paste the `read` line alone first):
+   ```bash
+   read -s FB_PAGE_TOKEN
+   kubectl -n relay-bot patch secret relay-bot-env --type merge -p "{\"stringData\":{\"FB_PAGE_TOKEN\":\"$FB_PAGE_TOKEN\",\"IG_ENABLED\":\"true\"}}"
+   kubectl -n relay-bot rollout restart deploy/relay-bot && kubectl -n relay-bot rollout status deploy/relay-bot
+   kubectl -n relay-bot exec deploy/relay-bot -- python -m src.ig_uploader check
+   ```
+5. Put the printed `instagram_business_account` id in `IG_USER_ID`, restart, then
+   `python -m src.ig_uploader check --upload` (5 s test clip, never published; container expires in 24 h).
+6. Telegram `/igfill 1`; then confirm the first automatic post (`Instagram: 1 Shorts posted`, `IG today`).
+
+If the token lacks Instagram scopes, `check` shows the Page lookup failing or `NOT LINKED`; if resumable is refused,
+the app may need Facebook Login for Business (fallback would need a public `video_url`, not built).
+
+## Next platforms: verified video limits (2026-11-18, official docs)
+
+- **TikTok** (Content Posting API): API max 10 min, but per creator `max_video_post_duration_sec` from
+  creator_info (all 3 min; some 5 or 10). ≤4 GB, 23–60 fps, 360–4096 px. Unaudited app → posts private only
+  (`SELF_ONLY`) until TikTok's audit. User's plan: ≤10 min videos.
+- **X** (docs.x.com): video in a post 0.5 s–20 min / 8 GB normal account, up to 125 min / 16 GB with Premium;
+  the limit follows the posting account. Chunked upload. Pay-per-use API, ~$0.015 per post. User's plan: Shorts only.
+- Instagram Reels: 3 s–15 min, ≤300 MB; 100 API posts/24 h per docs (content_publishing_limit reports 50).
+- Same pattern for each: own uploader module, `<P>_ENABLED`, state file, Telegram line, `/<p>fill`, hidden test.
 
 ## Deploy commands
 
