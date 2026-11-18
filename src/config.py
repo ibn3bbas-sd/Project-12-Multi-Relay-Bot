@@ -69,6 +69,16 @@ def _as_int(value: Any, default: int) -> int:
         return default
 
 
+def _as_int_list(value: Any, default: list[int]) -> list[int]:
+    """"1,3" or [1, 3] -> [1, 3]. Bad input falls back to the default."""
+    items = value if isinstance(value, (list, tuple)) else str(value or "").split(",")
+    try:
+        out = [int(str(v).strip()) for v in items if str(v).strip()]
+    except ValueError:
+        return default
+    return out if out and all(n >= 0 for n in out) else default
+
+
 def _resolve(path_like: Any, default: str) -> Path:
     """Absolute path. Relative values are anchored at BASE_DIR."""
     raw = str(path_like or default)
@@ -176,6 +186,27 @@ FB_PAGE_TOKEN = str(os.getenv("FB_PAGE_TOKEN", "") or "").strip()  # env only, n
 FB_API_VERSION = str(_get("FB_API_VERSION", "facebook.api_version", "v27.0"))
 # Failed Facebook posts are retried on later runs; cap the re-downloads per run.
 FB_RETRY_PER_RUN = _as_int(_get("FB_RETRY_PER_RUN", "facebook.retry_per_run", 3), 3)
+
+# Format: auto = Reel when the clip fits the Reels API (3–90 s), else a normal
+# video post; reels = Reel or nothing; video = always a normal video post.
+FB_FORMAT = str(_get("FB_FORMAT", "facebook.format", "auto")).strip().lower()
+if FB_FORMAT not in {"auto", "reels", "video"}:
+    FB_FORMAT = "auto"
+FB_REELS_MAX_SECONDS = _as_int(_get("FB_REELS_MAX_SECONDS", "facebook.reels_max_seconds", 90), 90)
+# Landscape/square short clips get padded to 1080x1920 (ffmpeg) so they qualify as Reels.
+FB_REELS_PAD = _as_bool(_get("FB_REELS_PAD", "facebook.reels_pad", True), True)
+
+# Warm-up pacing for a Page that has been dormant. Posts per day for week 1,
+# week 2, ... then FB_DAILY_LIMIT (0 = no cap). Day boundaries use TIMEZONE.
+# Week 1 starts on FB_WARMUP_START (YYYY-MM-DD) or, if empty, the first day the
+# bot checks pacing (stored in facebook_state.json). Over-cap videos are queued.
+FB_WARMUP_SCHEDULE = _as_int_list(_get("FB_WARMUP_SCHEDULE", "facebook.warmup_schedule", "1,3"), [1, 3])
+FB_WARMUP_START = str(_get("FB_WARMUP_START", "facebook.warmup_start", "") or "").strip()
+# Default 8 > the ~6 YouTube uploads/day, so the queue built during warm-up drains.
+FB_DAILY_LIMIT = _as_int(_get("FB_DAILY_LIMIT", "facebook.daily_limit", 8), 8)
+# Automatic posts are spaced 16h / today's cap apart (1/day → 16h, 3/day → 5h20,
+# 8/day → 2h), and never closer than this. /fbfill ignores spacing, not the cap.
+FB_MIN_GAP_MINUTES = _as_int(_get("FB_MIN_GAP_MINUTES", "facebook.min_gap_minutes", 90), 90)
 
 # ── Gemini (optional) ────────────────────────────────────────────────────────
 GEMINI_API_KEY = str(_get("GEMINI_API_KEY", "gemini.api_key", "") or "")

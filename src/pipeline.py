@@ -27,6 +27,9 @@ def new_summary() -> dict:
         "today": None,  # uploads in the current quota day, set at the end of a run
         "fb_uploaded": 0,
         "fb_failed": 0,
+        "fb_reels": 0,
+        "fb_deferred": 0,  # held back by warm-up pacing; queued for a later run
+        "fb_paced": None,  # last pacing reason, for the report
         "fb_error": None,  # token/permission problem: Facebook skipped for the rest of the run
     }
 
@@ -60,14 +63,25 @@ def _record_upload() -> None:
     tmp.replace(config.UPLOAD_COUNTS_FILE)
 
 
-def _facebook_one(video: dict, file_path, summary: dict) -> bool:
-    """Post one downloaded video to the Facebook Page. True if posted (or already there)."""
+def _facebook_one(video: dict, file_path, summary: dict, ignore_gap: bool = False) -> bool:
+    """Post one downloaded video to the Facebook Page. True if posted (or already there).
+
+    False also when pacing holds it back (counted as deferred, not failed); the
+    caller queues it so a later run posts it.
+    """
     if not config.FB_ENABLED or fb_uploader.is_done(video["id"]):
         return True
     if summary["fb_error"]:
         return False
+    block = fb_uploader.pacing_block(ignore_gap=ignore_gap)
+    if block:
+        logger.info("Facebook post for %s deferred — %s", video["id"], block)
+        summary["fb_deferred"] += 1
+        summary["fb_paced"] = block
+        return False
+    kind = "video"
     try:
-        fb_id = fb_uploader.upload_video(file_path, video)
+        fb_id, kind = fb_uploader.upload_video(file_path, video)
     except FacebookAuthError as exc:
         logger.error("Facebook auth problem — skipping Facebook this run: %s", exc)
         summary["fb_error"] = str(exc)
@@ -75,6 +89,8 @@ def _facebook_one(video: dict, file_path, summary: dict) -> bool:
     if fb_id:
         fb_uploader.mark_done(video["id"])
         summary["fb_uploaded"] += 1
+        if kind == "reel":
+            summary["fb_reels"] += 1
         return True
     summary["fb_failed"] += 1
     return False
@@ -125,6 +141,10 @@ def _retry_facebook_pending(summary: dict, failures: list[dict]) -> None:
         return
     for video in fb_uploader.pending_videos()[: config.FB_RETRY_PER_RUN]:
         if summary["fb_error"]:
+            return
+        block = fb_uploader.pacing_block()
+        if block:  # check before re-downloading, not after
+            summary["fb_paced"] = block
             return
         logger.info("Facebook retry %s — %s", video["id"], video["title"])
         file_path = downloader.download_video(video, failures)
@@ -228,6 +248,10 @@ def run_fb_fill(limit: int = FB_FILL_DEFAULT) -> dict:
             if not fb_uploader.is_done(vid)
         ]
         for vid in todo[:limit]:
+            block = fb_uploader.pacing_block(ignore_gap=True)  # manual: cap applies, spacing doesn't
+            if block:
+                result["error"] = f"Paused by warm-up pacing ({block})"
+                break
             video = downloader.fetch_video(vid, failures)
             file_path = downloader.download_video(video, failures) if video else None
             if file_path is None:
@@ -237,7 +261,7 @@ def run_fb_fill(limit: int = FB_FILL_DEFAULT) -> dict:
                     break
                 continue
             try:
-                _facebook_one(video, file_path, summary)
+                _facebook_one(video, file_path, summary, ignore_gap=True)
             finally:
                 downloader.cleanup(file_path)
             if summary["fb_error"]:
@@ -248,19 +272,28 @@ def run_fb_fill(limit: int = FB_FILL_DEFAULT) -> dict:
         logger.exception("Facebook fill failed")
         result["error"] = f"{type(exc).__name__}: {exc}"
     result["posted"], result["failed"] = summary["fb_uploaded"], summary["fb_failed"]
+    result["reels"] = summary["fb_reels"]
     return result
 
 
 def format_fb_fill(result: dict) -> str:
     lines = [
         "Facebook fill done",
-        f"  Posted:    {result['posted']}",
+        f"  Posted:    {result['posted']} ({result.get('reels', 0)} as Reels)",
         f"  Failed:    {result['failed']}",
         f"  Remaining: {result['remaining']}",
     ]
     if result.get("error"):
         lines.append(f"  ⚠️ {result['error']}")
+    lines.append(format_fb_pacing())
     return "\n".join(lines)
+
+
+def format_fb_pacing() -> str:
+    st = fb_uploader.pacing_status()
+    cap = "no cap" if st["cap"] is None else f"{st['today']}/{st['cap']}"
+    phase = f"warm-up week {st['week']}" if st["week"] else "steady"
+    return f"  FB today: {cap} ({phase}), {st['queued']} queued"
 
 
 def is_quiet(summary: dict) -> bool:
@@ -291,8 +324,11 @@ def format_summary(summary: dict, header: str = "Relay complete") -> str:
         lines.append(f"  Today:    {summary['today']}/{config.DAILY_UPLOAD_TARGET}")
     if config.FB_ENABLED:
         lines.append(
-            f"  Facebook: {summary.get('fb_uploaded', 0)} posted, {summary.get('fb_failed', 0)} failed"
+            f"  Facebook: {summary.get('fb_uploaded', 0)} posted"
+            f" ({summary.get('fb_reels', 0)} Reels), {summary.get('fb_failed', 0)} failed,"
+            f" {summary.get('fb_deferred', 0)} held back"
         )
+        lines.append(format_fb_pacing())
         if summary.get("fb_error"):
             lines.append(f"  ⚠️ Facebook token/permission: {summary['fb_error']}")
     if summary.get("started_at") and summary.get("finished_at"):

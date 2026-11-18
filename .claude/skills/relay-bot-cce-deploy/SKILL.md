@@ -153,6 +153,11 @@ Page ID, app ID and account names are in Claude's private memory, never here.
   into `kubectl patch secret relay-bot-env --type merge --patch-file /dev/stdin`, then `rollout restart`. Verify with
   a `/me` call from inside the pod. Changing the Facebook password or removing the app invalidates the token.
 - The user states the source owner allows reposting; don't re-raise copyright.
+- **Reels + warm-up (2026-11-18):** `fb_uploader.upload_video` returns `(id, "reel"|"video")`. Reels API only
+  takes 3–90 s, 9:16, 30/24 h: longer source videos stay normal posts; short landscape clips are padded with ffmpeg.
+  Pacing in `facebook_state.json` (`counts`, `last_post`, `warmup_start`): `pacing_block()` defers posts over
+  today's cap (schedule `1,3` then `FB_DAILY_LIMIT` 8) or inside the 16h/cap spacing; deferred videos go to
+  `pending`, counted as "held back", not failed. Runbook 5a.
 
 ## Deploy commands
 

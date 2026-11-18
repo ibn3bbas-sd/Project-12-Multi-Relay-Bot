@@ -135,6 +135,28 @@ Videos already on YouTube before Facebook was enabled: send `/fbfill [n]` in Tel
 A failed Facebook post is queued in `/data/facebook_state.json` and retried on later runs
 (Facebook only, YouTube is not re-uploaded). A token/permission error shows as ⚠️ in Telegram.
 
+### 5a. Reels and warm-up pacing
+
+- **Format** (`FB_FORMAT`, default `auto`): clips of 3–90 s go up as Reels (`/video_reels` →
+  `rupload.facebook.com` → finish). Short landscape/square clips are letterboxed to 1080x1920 in the
+  pod first (`FB_REELS_PAD`). Longer videos can't be Reels through the API and stay normal video posts.
+  A failed Reel falls back to a normal post. The Reels API allows 30 posts per Page per 24 h.
+- **Warm-up** (`FB_WARMUP_SCHEDULE=1,3`, then `FB_DAILY_LIMIT=8`): week 1 one post a day, week 2 three,
+  then up to 8. Week 1 starts on `FB_WARMUP_START` or the first day after rollout. Posts are spaced
+  16 h / cap apart (minimum `FB_MIN_GAP_MINUTES`). Videos held back go to the pending queue and post
+  on later runs. `/fbfill` respects the daily cap but not the spacing.
+- Telegram reports show `FB today: n/cap (warm-up week k), q queued`.
+
+Change any of these without a rebuild:
+
+```bash
+kubectl -n relay-bot patch secret relay-bot-env --type merge -p \
+  '{"stringData":{"FB_WARMUP_SCHEDULE":"1,3","FB_DAILY_LIMIT":"8","FB_FORMAT":"auto"}}'
+kubectl -n relay-bot rollout restart deploy/relay-bot
+kubectl -n relay-bot exec deploy/relay-bot -- python -c \
+  "import json;s=json.load(open('/data/facebook_state.json'));print(s['counts'],len(s['pending']),s['warmup_start'])"
+```
+
 ## Day 2
 
 ```bash
