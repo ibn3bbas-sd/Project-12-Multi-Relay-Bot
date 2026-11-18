@@ -83,7 +83,7 @@ per-platform done/pending state, Telegram summary line, `/<platform>fill` backlo
       `check --upload` green, first Reel posted automatically 00:21 Riyadh
 - [x] rupload 400 `ProcessingFailedError` on 18–22 MB Shorts while the container is FINISHED → trust the container (`7246495`)
 - [x] Bot keeps relaying when the Telegram Bot API is down (per-bot 502 outage 2026-11-19, `ccfba0c`)
-- [ ] Confirm a large Short (≥18 MB) posts after the fix (`/igfill 1`)
+- [x] Large Short (18.6 MB, the one that failed before) posted after the fix via `/igfill 1` (2026-11-19 01:10)
 - [ ] **TikTok**: Content Posting API; app audit required before posts can be public (unaudited apps post private-only).
       Length (checked 2026-11-18): the API accepts up to 10 min, but each creator has their own cap
       (`max_video_post_duration_sec` from creator_info: 3 min for everyone, 5 or 10 min for some). Read it per post. ≤4 GB, 23–60 fps.

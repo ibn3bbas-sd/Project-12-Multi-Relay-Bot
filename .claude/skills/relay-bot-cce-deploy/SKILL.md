@@ -213,7 +213,7 @@ Commit `3ab20e7`; **LIVE since 2026-11-19 00:21 Riyadh** (first Reel posted auto
 
 - Some source Shorts exist only at 368x368 (YouTube's best format), so those Reels look soft. The user chose to
   post every Short anyway: **no minimum-resolution filter, don't offer it again.**
-- Still to confirm: a large Short (≥18 MB) posts after the rupload fix (`/igfill 1`).
+- Confirmed 2026-11-19 01:10: the 18.6 MB Short that failed before posted via `/igfill 1`.
 
 **Original setup steps (done):**
 1. ✅ Instagram → Professional account (Business), linked to the Facebook Page. Confirmed: Business Suite Page
