@@ -195,10 +195,20 @@ Commit `3ab20e7` (build green). **Not rolled out yet: `IG_ENABLED` is not in the
 - Offline-tested with the Graph API and ffmpeg mocked. No ffmpeg on the laptop, and the auto-mode check refused
   downloading one. Real ffmpeg is exercised by the pod self-test.
 
+**Progress (2026-11-18, 23:40 Riyadh): steps 1–2 DONE, step 3 in progress — resume at step 3.**
+
 **Next steps (user, in order):**
-1. Instagram → Professional account (Business/Creator), linked to the Facebook Page.
-2. Meta app: add `instagram_basic` + `instagram_content_publish`.
-3. New never-expiring Page token with those ticked (same flow as Facebook); `debug_token`: PAGE, expires 0.
+1. ✅ Instagram → Professional account (Business), linked to the Facebook Page. Confirmed: Business Suite Page
+   header shows "Edit Instagram Profile" + Instagram followers; asset reads "<Page>, ibn3bbas · Facebook, Instagram".
+2. ✅ Meta app "Relay Bot": added use case **Manage messaging & content on Instagram** (API setup with
+   **Facebook login**); `instagram_basic` + `instagram_content_publish` both "Ready for testing".
+3. ⏳ New never-expiring Page token. In the Explorer the user had selected app Relay Bot, User Token, and the 6
+   permissions `pages_show_list, pages_read_engagement, pages_manage_posts, business_management, instagram_basic,
+   instagram_content_publish`; next: Generate → consent "Opt in to current Pages only", tick the Page **and** the
+   IG account → exchange (`oauth/access_token?grant_type=fb_exchange_token&client_id=…&client_secret=…&fb_exchange_token=…`)
+   → paste long-lived user token → `me/accounts?fields=name,access_token,instagram_business_account`
+   (gives the Page token **and** `IG_USER_ID` in one call) → `debug_token`: PAGE, expires 0, scopes include
+   `instagram_content_publish`. Token goes only in `~/relay-setup/.env` (WSL).
 4. Jumpbox (paste the `read` line alone first):
    ```bash
    read -s FB_PAGE_TOKEN
@@ -212,6 +222,24 @@ Commit `3ab20e7` (build green). **Not rolled out yet: `IG_ENABLED` is not in the
 
 If the token lacks Instagram scopes, `check` shows the Page lookup failing or `NOT LINKED`; if resumable is refused,
 the app may need Facebook Login for Business (fallback would need a public `video_url`, not built).
+
+### Lessons from linking Instagram to the Page (2026-11-18)
+
+- "Can't Confirm — you must be an admin of the associated Page's business" = the Page is **owned by a business
+  portfolio** and the Facebook profile doing the link isn't a portfolio member. Check Page → Settings → Page setup →
+  Page access → "Owning business portfolio".
+- Here the portfolio's only Full-access admin was the user's **Instagram-login identity** (portfolio created from
+  the Instagram app), while the Facebook profile showed "Not in a business portfolio". Fix: in Business Suite
+  switch profile to the IG identity → business.facebook.com/settings (portfolio) → Pages → Add the Facebook
+  profile to the portfolio (Full access invite) → accept → link via Instagram accounts → Connect assets →
+  Facebook Page → Review connection.
+- The IG identity can't open Page views ("content isn't available"); switch back to the Facebook profile for
+  Page screens. "Verification Required (new device)" on the confirm step is a security check; doing the link from
+  the Facebook profile/home avoided it.
+- A pending connection request canceled itself once the user acted as admin; just link directly as admin.
+- Instagram web settings have no Page-link option (mobile app only: Edit profile → Page).
+- `instagram_basic` / `instagram_content_publish` aren't in the "Manage Pages" use case; add the Instagram use
+  case with **Facebook login**. Business/portfolio/app/IG IDs are private: never commit them.
 
 ## Next platforms: verified video limits (2026-11-18, official docs)
 
