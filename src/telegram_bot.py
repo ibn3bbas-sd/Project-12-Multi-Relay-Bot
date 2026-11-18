@@ -183,6 +183,15 @@ async def scheduled_backfill(context: ContextTypes.DEFAULT_TYPE) -> None:
     await _scheduled(context, backfill=True, header="Daily top-up done")
 
 
+async def send_offline_reports(context: ContextTypes.DEFAULT_TYPE) -> None:
+    """One-off job: deliver the reports of runs made while Telegram was down."""
+    reports = context.application.bot_data.pop("offline_reports", [])
+    text = f"Telegram was unreachable; the bot kept relaying. {len(reports)} report(s):"
+    await context.bot.send_message(chat_id=config.TELEGRAM_ALLOWED_CHAT_ID, text=text)
+    for report in reports[-10:]:
+        await context.bot.send_message(chat_id=config.TELEGRAM_ALLOWED_CHAT_ID, text=report)
+
+
 async def _on_error(update: object, context: ContextTypes.DEFAULT_TYPE) -> None:
     logger.exception("Unhandled error in handler", exc_info=context.error)
 
