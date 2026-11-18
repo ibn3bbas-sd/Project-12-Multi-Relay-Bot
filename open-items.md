@@ -79,8 +79,11 @@ per-platform done/pending state, Telegram summary line, `/<platform>fill` backlo
 - [x] **Instagram** code (2026-11-18): source **Shorts tab only** → Reels (`src/ig_uploader.py`, runbook §6),
       resumable upload, remux/re-encode to the Reels spec, `IG_DAILY_LIMIT=3` with a 180 min gap, `/igfill [n]`,
       hidden self-test `python -m src.ig_uploader check --upload`. Offline-tested (mocked Graph API, ffmpeg mocked).
-- [ ] Instagram setup: Professional account linked to the Page; add `instagram_basic` + `instagram_content_publish`;
-      new Page token; `IG_ENABLED` + `IG_USER_ID` in the Secret; `check --upload` green; first `/igfill 1`
+- [x] Instagram setup (2026-11-19): Professional account linked, new Page token with IG scopes, Secret updated,
+      `check --upload` green, first Reel posted automatically 00:21 Riyadh
+- [x] rupload 400 `ProcessingFailedError` on 18–22 MB Shorts while the container is FINISHED → trust the container (`7246495`)
+- [x] Bot keeps relaying when the Telegram Bot API is down (per-bot 502 outage 2026-11-19, `ccfba0c`)
+- [ ] Confirm a large Short (≥18 MB) posts after the fix (`/igfill 1`)
 - [ ] **TikTok**: Content Posting API; app audit required before posts can be public (unaudited apps post private-only).
       Length (checked 2026-11-18): the API accepts up to 10 min, but each creator has their own cap
       (`max_video_post_duration_sec` from creator_info: 3 min for everyone, 5 or 10 min for some). Read it per post. ≤4 GB, 23–60 fps.

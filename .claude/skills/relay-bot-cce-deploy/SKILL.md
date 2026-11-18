@@ -175,7 +175,7 @@ Page ID, app ID and account names are in Claude's private memory, never here.
 
 ## Instagram target: Shorts only (2026-11-18)
 
-Commit `3ab20e7` (build green). **Not rolled out yet: `IG_ENABLED` is not in the Secret.** Runbook §6.
+Commit `3ab20e7`; **LIVE since 2026-11-19 00:21 Riyadh** (first Reel posted automatically). Runbook §6.
 
 - User's choice: only the source channel's **Shorts** (≤180 s) go to Instagram, as Reels.
 - The bot's YouTube relay reads only `/channel/<id>/videos`. Shorts live on `/shorts` (400+ at the source,
@@ -197,7 +197,21 @@ Commit `3ab20e7` (build green). **Not rolled out yet: `IG_ENABLED` is not in the
 
 **Progress (2026-11-18, 23:40 Riyadh): steps 1–2 DONE, step 3 in progress — resume at step 3.**
 
-**Next steps (user, in order):**
+**Lessons from going live (2026-11-19):**
+- Token made with `~/relay-setup/ig-token.py` (laptop; hidden prompts; exchanges the Explorer USER token, checks
+  PAGE/expires 0/scopes/linked IG, writes `~/relay-setup/.env`, pipes the Secret patch over ssh, restarts, runs
+  both checks). Consent popup: keep the Facebook profile (not the Instagram one in the account switcher),
+  current Pages only, tick the business portfolio (Continue is greyed otherwise), current Instagram accounts only.
+  Paste multi-line commands one at a time: a pasted newline fills the hidden prompt.
+- Run `check --upload` only after the restart has settled: the first run hit the old pod as it was killed (exit 137).
+- **rupload answers 400 `ProcessingFailedError` for real 18–22 MB Shorts while the container still reaches
+  FINISHED.** Fixed in `7246495`: log it and trust the container status. Small clips (≤4 MB) never showed it.
+- **Telegram per-bot outage** (getMe 502 after ~16 s, also from the laptop; a fake token gets 401 at once; many
+  tdlib/telegram-bot-api issues since 2026-11-16, they recover by themselves). The bot crash-looped. Since
+  `ccfba0c` `main.py` runs the same jobs on a plain APScheduler without Telegram, retries getMe every minute,
+  then starts the normal bot and sends the saved reports.
+
+**Original setup steps (done):**
 1. ✅ Instagram → Professional account (Business), linked to the Facebook Page. Confirmed: Business Suite Page
    header shows "Edit Instagram Profile" + Instagram followers; asset reads "<Page>, ibn3bbas · Facebook, Instagram".
 2. ✅ Meta app "Relay Bot": added use case **Manage messaging & content on Instagram** (API setup with
