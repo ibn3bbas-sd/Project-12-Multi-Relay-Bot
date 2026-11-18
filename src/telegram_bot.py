@@ -1,4 +1,4 @@
-"""Telegram control surface: /run /fill /fbfill /status /next /help."""
+"""Telegram control surface: /run /fill /fbfill /igfill /status /next /help."""
 
 from __future__ import annotations
 
@@ -12,22 +12,34 @@ from . import config
 from .pipeline import (
     FB_FILL_DEFAULT,
     FB_FILL_MAX,
+    IG_FILL_DEFAULT,
+    IG_FILL_MAX,
     format_fb_fill,
+    format_ig_fill,
     format_summary,
     is_quiet,
     run_fb_fill,
+    run_ig_fill,
     run_relay,
 )
 
 logger = logging.getLogger(__name__)
 
 HELP_TEXT = (
-    "Relay Bot (YouTube" + (" + Facebook" if config.FB_ENABLED else "") + ")\n\n"
+    "Relay Bot (YouTube"
+    + (" + Facebook" if config.FB_ENABLED else "")
+    + (" + Instagram" if config.IG_ENABLED else "")
+    + ")\n\n"
     "/run     — relay new videos now\n"
     f"/fill    — relay new videos, then top today up to {config.DAILY_UPLOAD_TARGET} with older ones\n"
     + (
         f"/fbfill [n] — post n older YouTube videos to Facebook (default {FB_FILL_DEFAULT}, max {FB_FILL_MAX})\n"
         if config.FB_ENABLED
+        else ""
+    )
+    + (
+        f"/igfill [n] — post n source Shorts to Instagram now (default {IG_FILL_DEFAULT}, max {IG_FILL_MAX})\n"
+        if config.IG_ENABLED
         else ""
     )
     + "/status  — last run summary\n"
@@ -100,6 +112,28 @@ async def cmd_fbfill(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
     await update.message.reply_text(format_fb_fill(result))
 
 
+async def cmd_igfill(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    if not _is_allowed(update):
+        return
+    if not config.IG_ENABLED:
+        await update.message.reply_text("Instagram is disabled (IG_ENABLED=false).")
+        return
+    if _relay_lock.locked():
+        await update.message.reply_text("A relay is already running — wait for it to finish.")
+        return
+    try:
+        limit = int(context.args[0]) if context.args else IG_FILL_DEFAULT
+    except ValueError:
+        await update.message.reply_text(f"Usage: /igfill [n]  (1–{IG_FILL_MAX})")
+        return
+    limit = max(1, min(limit, IG_FILL_MAX))
+
+    await update.message.reply_text(f"Posting up to {limit} Short(s) to Instagram...")
+    async with _relay_lock:
+        result = await asyncio.to_thread(run_ig_fill, limit)
+    await update.message.reply_text(format_ig_fill(result))
+
+
 async def cmd_status(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if not _is_allowed(update):
         return
@@ -160,6 +194,7 @@ def build_app() -> Application:
     app.add_handler(CommandHandler("run", cmd_run))
     app.add_handler(CommandHandler("fill", cmd_fill))
     app.add_handler(CommandHandler("fbfill", cmd_fbfill))
+    app.add_handler(CommandHandler("igfill", cmd_igfill))
     app.add_handler(CommandHandler("status", cmd_status))
     app.add_handler(CommandHandler("next", cmd_next))
     app.add_error_handler(_on_error)

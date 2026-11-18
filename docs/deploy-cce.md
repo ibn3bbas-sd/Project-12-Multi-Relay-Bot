@@ -157,6 +157,43 @@ kubectl -n relay-bot exec deploy/relay-bot -- python -c \
   "import json;s=json.load(open('/data/facebook_state.json'));print(s['counts'],len(s['pending']),s['warmup_start'])"
 ```
 
+## 6. Instagram (optional third target: Shorts only)
+
+Only the source channel's **Shorts** go to Instagram, as Reels (`src/ig_uploader.py`). They come from the
+channel's Shorts tab. The YouTube relay reads only the Videos tab, so Shorts never reach YouTube or Facebook.
+Off unless `IG_ENABLED=true`.
+
+Platform limits (Meta docs, checked 2026-11-18): Reels 3 s – 15 min, ≤300 MB, H.264/HEVC, 23–60 fps,
+≤1920 px wide, AAC ≤48 kHz, moov atom first, no edit lists. 100 API posts per rolling 24 h
+(`content_publishing_limit` reports 50). YouTube Shorts are ≤3 min, so `IG_MAX_SECONDS=180`.
+Clips that already fit are only remuxed. Others (e.g. 15 fps or 44.1 kHz audio) are re-encoded in the pod.
+
+1. Instagram app → Settings → Account type → switch to **Professional** (Business or Creator), then link
+   it to the Facebook Page (Page settings → Linked accounts → Instagram).
+2. Meta app → add the Instagram permissions `instagram_basic` and `instagram_content_publish`
+   (Instagram API with **Facebook Login**). Resumable upload works only with Facebook Login for Business,
+   not "Instagram Login".
+3. Make a new never-expiring Page token the same way as 5.2, ticking the two new permissions as well.
+   It replaces `FB_PAGE_TOKEN` (Facebook keeps working), or put it in `IG_ACCESS_TOKEN`.
+4. Patch the Secret, restart, find the IG user id, then run the hidden upload test (never published):
+
+```bash
+kubectl -n relay-bot patch secret relay-bot-env --type merge -p '{"stringData":{"IG_ENABLED":"true"}}'
+kubectl -n relay-bot rollout restart deploy/relay-bot
+kubectl -n relay-bot exec deploy/relay-bot -- python -m src.ig_uploader check          # prints instagram_business_account id
+kubectl -n relay-bot patch secret relay-bot-env --type merge -p '{"stringData":{"IG_USER_ID":"<id>"}}'
+kubectl -n relay-bot rollout restart deploy/relay-bot
+kubectl -n relay-bot exec deploy/relay-bot -- python -m src.ig_uploader check --upload # test container, not published
+```
+
+5. In Telegram: `/igfill 1` posts the newest Short not yet on Instagram.
+
+Pacing: each scheduled check posts at most one Short, at least `IG_MIN_GAP_MINUTES` (180) after the last
+post and at most `IG_DAILY_LIMIT` (3) a day. New Shorts go first. With `IG_TOPUP=true`, older Shorts
+(newest first) fill the rest of the cap. `/igfill [n]` (max 5) ignores the gap but keeps the cap. A failed
+Short is picked up again on a later run. Clips that can never fit are recorded as `skipped`.
+State: `/data/instagram_state.json`.
+
 ## Day 2
 
 ```bash

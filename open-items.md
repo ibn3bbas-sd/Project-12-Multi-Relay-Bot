@@ -76,9 +76,17 @@ Rename (keep infra names to avoid churn):
 
 Expansion, one platform at a time (same pattern as Facebook: own uploader module, `<PLATFORM>_ENABLED` flag,
 per-platform done/pending state, Telegram summary line, `/<platform>fill` backlog command, hidden test first):
-- [ ] **Instagram**: Reels via the Instagram Graph API with the same Meta app; needs an Instagram Business/Creator account linked to the Page; video must be at a public URL or uploaded via the resumable endpoint; Reels length/aspect limits apply
-- [ ] **TikTok**: Content Posting API; app audit required before posts can be public (unaudited apps post private-only)
-- [ ] **X**: media upload (chunked) + post; needs a paid API tier for write access with video
+- [x] **Instagram** code (2026-11-18): source **Shorts tab only** → Reels (`src/ig_uploader.py`, runbook §6),
+      resumable upload, remux/re-encode to the Reels spec, `IG_DAILY_LIMIT=3` with a 180 min gap, `/igfill [n]`,
+      hidden self-test `python -m src.ig_uploader check --upload`. Offline-tested (mocked Graph API, ffmpeg mocked).
+- [ ] Instagram setup: Professional account linked to the Page; add `instagram_basic` + `instagram_content_publish`;
+      new Page token; `IG_ENABLED` + `IG_USER_ID` in the Secret; `check --upload` green; first `/igfill 1`
+- [ ] **TikTok**: Content Posting API; app audit required before posts can be public (unaudited apps post private-only).
+      Length (checked 2026-11-18): the API accepts up to 10 min, but each creator has their own cap
+      (`max_video_post_duration_sec` from creator_info: 3 min for everyone, 5 or 10 min for some). Read it per post. ≤4 GB, 23–60 fps.
+- [ ] **X**: video in a post (checked 2026-11-18, docs.x.com): 0.5 s – 20 min / 8 GB on a normal account,
+      up to 125 min / 16 GB with X Premium (limit follows the posting account, not the API plan). The API is
+      pay-per-use (~$0.015 per post created); chunked media upload. Shorts (≤180 s) fit easily.
 - [ ] Refactor once a third target lands: a common uploader interface + generic per-platform state, instead of copying the Facebook code
 
 ## SaaS MVP plan (drafted 2026-11-18, not started)

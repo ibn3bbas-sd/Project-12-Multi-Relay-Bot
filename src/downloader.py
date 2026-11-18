@@ -88,13 +88,15 @@ def _published_at(info: dict) -> datetime | None:
     return None
 
 
-def _list_candidate_ids(channel_id: str, limit: int | None = None) -> list[str]:
+def _list_candidate_ids(channel_id: str, limit: int | None = None, tab: str = "videos") -> list[str]:
     """Flat listing of the channel's newest uploads — cheap, IDs only.
 
     `extract_flat` deliberately skips per-video metadata, which is why the
     publish date is NOT available here. Dates come from _fetch_metadata().
+    tab: "videos" (the YouTube relay) or "shorts" (Instagram); YouTube lists
+    Shorts only on their own tab.
     """
-    url = f"https://www.youtube.com/channel/{channel_id}/videos"
+    url = f"https://www.youtube.com/channel/{channel_id}/{tab}"
     ydl_opts = {
         "quiet": True,
         "no_warnings": True,
@@ -226,6 +228,13 @@ def relayed_ids_oldest_first(channel_id: str) -> list[str]:
     processed = _load_processed()
     ids = _list_candidate_ids(channel_id, config.BACKFILL_SCAN_LIMIT)  # newest first
     return [vid for vid in reversed(ids) if vid in processed]
+
+
+def list_short_ids(channel_id: str, limit: int) -> list[str]:
+    """Newest Shorts of the source channel, newest first (IDs only)."""
+    if not channel_id:
+        return []
+    return _list_candidate_ids(channel_id, limit, tab="shorts")
 
 
 def fetch_video(video_id: str, failures: list[dict] | None = None) -> dict | None:

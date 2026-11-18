@@ -208,6 +208,26 @@ FB_DAILY_LIMIT = _as_int(_get("FB_DAILY_LIMIT", "facebook.daily_limit", 8), 8)
 # 8/day → 2h), and never closer than this. /fbfill ignores spacing, not the cap.
 FB_MIN_GAP_MINUTES = _as_int(_get("FB_MIN_GAP_MINUTES", "facebook.min_gap_minutes", 90), 90)
 
+# ── Instagram (optional third target: Shorts only, as Reels) ─────────────────
+# Source = the channel's Shorts tab (the YouTube relay only reads the Videos tab).
+# Uses the Instagram API with Facebook Login: a Professional IG account linked
+# to the Page, and a Page token that also has instagram_basic +
+# instagram_content_publish. IG_ACCESS_TOKEN falls back to FB_PAGE_TOKEN.
+IG_ENABLED = _as_bool(_get("IG_ENABLED", "instagram.enabled", False))
+IG_USER_ID = str(_get("IG_USER_ID", "instagram.user_id", "") or "").strip()
+IG_ACCESS_TOKEN = str(os.getenv("IG_ACCESS_TOKEN", "") or "").strip() or FB_PAGE_TOKEN
+IG_API_VERSION = str(_get("IG_API_VERSION", "instagram.api_version", FB_API_VERSION))
+# YouTube Shorts are ≤180 s; the Reels API takes 3 s – 15 min.
+IG_MAX_SECONDS = _as_int(_get("IG_MAX_SECONDS", "instagram.max_seconds", 180), 180)
+IG_SCAN_LIMIT = _as_int(_get("IG_SCAN_LIMIT", "instagram.scan_limit", 20), 20)
+# A new automated account posting a burst looks like spam: keep it modest.
+# Daily cap per local day (TIMEZONE); 0 = no cap (the API allows ~50/24h).
+IG_DAILY_LIMIT = _as_int(_get("IG_DAILY_LIMIT", "instagram.daily_limit", 3), 3)
+# Automatic posts at least this far apart; /igfill ignores it (not the cap).
+IG_MIN_GAP_MINUTES = _as_int(_get("IG_MIN_GAP_MINUTES", "instagram.min_gap_minutes", 180), 180)
+# The daily top-up also fills Instagram up to the cap with older Shorts.
+IG_TOPUP = _as_bool(_get("IG_TOPUP", "instagram.topup", True), True)
+
 # ── Gemini (optional) ────────────────────────────────────────────────────────
 GEMINI_API_KEY = str(_get("GEMINI_API_KEY", "gemini.api_key", "") or "")
 GEMINI_ENABLED = _as_bool(_get("GEMINI_ENABLED", "gemini.enabled", False))
@@ -218,6 +238,7 @@ LOG_DIR = _resolve(_get("LOG_DIR", "runtime.log_dir"), "logs")
 PROCESSED_FILE = DATA_DIR / "processed_videos.json"
 UPLOAD_COUNTS_FILE = DATA_DIR / "upload_counts.json"
 FB_STATE_FILE = DATA_DIR / "facebook_state.json"
+IG_STATE_FILE = DATA_DIR / "instagram_state.json"
 LOG_FILE = LOG_DIR / "relay.log"
 
 LOG_LEVEL = str(_get("LOG_LEVEL", "runtime.log_level", "INFO")).upper()
