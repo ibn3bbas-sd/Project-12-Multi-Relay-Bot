@@ -64,6 +64,49 @@ per-platform done/pending state, Telegram summary line, `/<platform>fill` backlo
 - [ ] **X**: media upload (chunked) + post; needs a paid API tier for write access with video
 - [ ] Refactor once a third target lands: a common uploader interface + generic per-platform state, instead of copying the Facebook code
 
+## SaaS MVP plan (drafted 2026-11-18, not started)
+
+Goal: turn Multi-Relay Bot into a first business. Full plan lives in a private Claude doc ("Multi-Relay Bot — MVP Plan").
+
+**Niche.** Arabic-first, Telegram-controlled "upload once, publish everywhere" for organizations that **own** their
+video: mosques, scholars' offices, Islamic/Arabic education channels. Incumbents (Repurpose.io, ShortSync, Later,
+Publer) are English-first web dashboards in USD. Customers relay only content they own: YouTube's reused-content
+policy applies even with the creator's permission and demonetizes the whole channel. The friend-channel relay stays a personal tool.
+
+**MVP scope.** Source = file sent to the Telegram bot or a Google Drive folder (no yt-dlp, cookies or bot-checks).
+Targets = YouTube, Facebook Page, Instagram Reels. Out: TikTok (until audit), X, AI clipping, analytics, teams.
+Telegram's hosted Bot API caps bot downloads at 20 MB → self-host the Bot API server (2 GB) or use Drive links.
+
+**Pricing (to test with first 10 customers).** Starter 49 SAR/mo (1 workspace, 3 platforms, 30 videos) ·
+Pro 149 SAR/mo (unlimited videos, backlog fill) · Organization 499 SAR/mo (up to 10 workspaces). Yearly = 2 months free.
+First 3 customers: free done-for-you setup instead of a free tier.
+
+**API approvals (file first, they take longer than the code).**
+- YouTube: Google OAuth verification for the upload scope + YouTube Audit and Quota Extension Form. Unverified projects upload private only. Google's quota page now lists `videos.insert` as its own bucket of 100 calls/day per project, shared by all customers. Weeks to months.
+- Meta (Facebook + Instagram): Business Verification + App Review for Page and Instagram publish permissions; one app covers both. ~1–4 weeks.
+- TikTok: Content Posting API audit; until then posts are private and max 5 users/24h. Several days to 2 weeks.
+- X: no approval; pay per use ($0.015/post, $0.20 with a link). The "paid tier" note above is outdated.
+
+**Architecture changes (single tenant → SaaS).**
+- Drop `replicas: 1` + `Recreate`: stateless upload workers (HPA) with a per-workspace lock in Postgres/Redis
+- Tokens: `.env`/K8s Secrets → per-workspace OAuth tokens in Postgres, encrypted with Huawei DEW
+- State: `processed_videos.json`/`upload_counts.json` on PVC → Postgres tables (videos, platform_posts, quota_usage)
+- Scheduling: APScheduler in-process → Redis queue; quota tracked per Google project
+- Telegram: long polling, one chat → webhook gateway, chat ID mapped to a workspace
+- Files: PVC downloads → OBS bucket with 7-day lifecycle
+- Keep: NetworkPolicy, NAT egress, non-root image, Docker Hub build pipeline
+
+**90-day plan.**
+- [ ] Days 1–30: register the business entity; privacy policy + terms on GitHub Pages; submit Google OAuth verification and Meta Business Verification + App Review; interview 10 target organizations
+- [ ] Days 31–60: multi-tenant core (workspaces in Postgres, encrypted tokens, Arabic Telegram onboarding, file intake); 3 free pilots on Facebook + Instagram
+- [ ] Days 61–90: YouTube once the audit passes, start billing, apply for the TikTok audit
+
+Kill criteria: by day 90, fewer than 3 pilots convert to paid, or Google/Meta reject the app twice.
+
+Open questions:
+- [ ] Source: customers send files (planned) or also pull from the customer's own YouTube channel?
+- [ ] Verify the real YouTube upload limit in Cloud Console (old docs say ~6/day, Google's quota page now says 100 calls/day)
+
 ## Still open
 
 - [x] Old retained EVS disk from the first PVC deleted (2026-11-18)
