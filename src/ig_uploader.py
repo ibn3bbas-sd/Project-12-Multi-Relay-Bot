@@ -339,7 +339,15 @@ def _upload_container(file_path: Path, caption: str) -> str:
     uri = created.get("uri") or (
         f"https://rupload.facebook.com/ig-api-upload/{config.IG_API_VERSION}/{container_id}"
     )
-    _rupload(uri, file_path)
+    try:
+        _rupload(uri, file_path)
+    except (InstagramAuthError, InstagramLimit):
+        raise
+    except RuntimeError as exc:
+        # rupload can answer 400 ProcessingFailedError although the bytes arrived
+        # and the container goes on to FINISHED (seen 2026-11-19 on 18–22 MB Shorts).
+        # The container status is the real verdict: ERROR or a timeout still fails.
+        logger.warning("rupload reported %s — checking the container status instead", exc)
     _wait_finished(container_id)
     return container_id
 
