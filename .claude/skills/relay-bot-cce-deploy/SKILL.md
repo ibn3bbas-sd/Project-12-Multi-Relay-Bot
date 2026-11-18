@@ -211,6 +211,10 @@ Commit `3ab20e7`; **LIVE since 2026-11-19 00:21 Riyadh** (first Reel posted auto
   `ccfba0c` `main.py` runs the same jobs on a plain APScheduler without Telegram, retries getMe every minute,
   then starts the normal bot and sends the saved reports.
 
+- Some source Shorts exist only at 368x368 (YouTube's best format), so those Reels look soft. The user chose to
+  post every Short anyway: **no minimum-resolution filter, don't offer it again.**
+- Still to confirm: a large Short (≥18 MB) posts after the rupload fix (`/igfill 1`).
+
 **Original setup steps (done):**
 1. ✅ Instagram → Professional account (Business), linked to the Facebook Page. Confirmed: Business Suite Page
    header shows "Edit Instagram Profile" + Instagram followers; asset reads "<Page>, ibn3bbas · Facebook, Instagram".
