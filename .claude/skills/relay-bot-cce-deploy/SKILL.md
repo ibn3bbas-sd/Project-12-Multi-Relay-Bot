@@ -158,10 +158,20 @@ Page ID, app ID and account names are in Claude's private memory, never here.
   Pacing in `facebook_state.json` (`counts`, `last_post`, `warmup_start`): `pacing_block()` defers posts over
   today's cap (schedule `1,3` then `FB_DAILY_LIMIT` 8) or inside the 16h/cap spacing; deferred videos go to
   `pending`, counted as "held back", not failed. Runbook 5a.
-- Not rolled out yet as of commit `3f43e57` (image built). Next: `rollout restart`, `/run`, check the `FB today` line,
-  and test the first real Reel (Reels endpoints only mock-tested). Offline test harness pattern: set
+- Rolled out 2026-11-18 (~11:39 Riyadh, image from `3f43e57`). First real `/fbfill`: a 354 MB / 31 min video
+  downloaded, uploaded 0→100% in ~2.5 min through the normal `/videos` path, post text led by the title, processing
+  → `ready` within minutes. Still to test: the first real short-clip Reel (Reels endpoints only mock-tested). Offline test harness pattern: set
   `TELEGRAM_BOT_TOKEN`, `TELEGRAM_ALLOWED_CHAT_ID`, `SOURCE_CHANNEL_ID`, `DATA_DIR`, `FB_*` env, patch
   `fb_uploader._today` and `fb_uploader.requests.post`; generate clips with `ffmpeg -f lavfi -i testsrc`.
+
+- **Facebook lists every Page video as a Reel**: `permalink_url` is `/reel/<id>` and the id shows in
+  `GET /{page}/video_reels`, even for 31-min posts made via `/videos`. That's Meta's format, not a bot bug; don't
+  "fix" it. To tell what the bot did, read its log line / return type, not the URL.
+- `kubectl logs -f ... | grep facebook` looks "stuck" when nothing matches yet: it's following. Check
+  `get pods` + `logs --tail`, then trigger `/fbfill 1` to see lines.
+- Secrets stay out of OneDrive: the FB token lives in `~/relay-setup/.env` (WSL), never in the OneDrive repo's `.env`.
+  uutils `shred -u` panics on the `/mnt/c` mount *after* overwriting and leaves a renamed `0000` file that is NOT
+  gitignored: check `git status` for it and `rm` it. Then the user empties the OneDrive recycle bin.
 
 ## Deploy commands
 
