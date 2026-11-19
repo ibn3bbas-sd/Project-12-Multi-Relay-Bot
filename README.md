@@ -1,4 +1,4 @@
-# YouTube Relay Bot
+# Multi-Relay Bot
 
 Automated pipeline that downloads new videos from a source YouTube channel and re-uploads them to a target channel. Controlled via a Telegram bot. Checks for new videos every 2 hours, and at 09:00 Asia/Riyadh tops the day up to 6 uploads with older videos from the source channel.
 
@@ -115,7 +115,7 @@ Free key at [aistudio.google.com](https://aistudio.google.com). Intended for Ara
 ## Project structure
 
 ```
-Project-12-YouTube-Relay-Bot/
+Project-12-Multi-Relay-Bot/
 ├── src/
 │   ├── main.py            # entry point, logging setup
 │   ├── config.py          # layered config loader

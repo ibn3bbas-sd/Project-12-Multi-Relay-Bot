@@ -5,7 +5,7 @@ description: Continue or operate the YouTube Relay Bot deployment on Huawei Clou
 
 # YouTube Relay Bot on Huawei Cloud CCE
 
-Repo: `ibn3bbas-sd/Project-12-YouTube-Relay-Bot`. Everything is on `main`. PR #1 (`deploy/huawei-cce`) is merged.
+Repo: `ibn3bbas-sd/Project-12-Multi-Relay-Bot`. Everything is on `main`. PR #1 (`deploy/huawei-cce`) is merged.
 Region: **me-east-1 (Riyadh)**. Bash only for this repo. No PowerShell.
 
 ## Architecture (keep it this simple)
@@ -106,7 +106,7 @@ Private details (hosts, IPs, local paths, account names, the cookie account) are
 
 - The upload counter starts at 0 on rollout, so uploads made earlier that quota day are not counted (day one saw 8 uploads, no quota error).
 - Extract downloaded tool tarballs (e.g. kubeconform) in a scratch dir: they contain `LICENSE`/`README.md` and silently overwrite the repo's.
-- `~/projects/Project-12-YouTube-Relay-Bot` is a **symlink** to the OneDrive clone, not a second clone.
+- `~/projects/Project-12-Multi-Relay-Bot` is a **symlink** to the OneDrive clone, not a second clone.
 - Global git email is the company address; this repo has a **repo-local** `user.email` = GitHub noreply. Check `git log -1 --format=%ae` before pushing.
 - History rewrite: `git filter-repo --replace-text F --replace-message F --mailmap M` on a `--mirror` clone, verify with `git log -p --all | grep`, `push --force --mirror` (`refs/pull/*` rejections are expected). Reset the working clone and `reflog expire` + `gc --prune=now` instead of deleting it (keeps ignored `data/`, `logs/`).
 - PR refs keep old commits and only GitHub Support can drop them, but Support **declines on the free plan**. What worked: back up with `git bundle`, delete the repo in the web UI (gh lacks `delete_repo` scope), recreate with the same name, push `main` + `gh-pages`, re-enter `DOCKERHUB_TOKEN`. Never pick **Deletes** on the support form (it purges the whole repo).

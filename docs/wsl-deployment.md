@@ -49,8 +49,8 @@ Reboot, then open Ubuntu and create your user. WSL2 needs Windows Server 2022 or
 Every script is **dry-run by default**. Set `APPLY=true` to execute. Run them from inside the Ubuntu shell.
 
 ```bash
-git clone <repo> ~/Project-12-YouTube-Relay-Bot   # or work from /mnt/c/...
-cd ~/Project-12-YouTube-Relay-Bot/deploy/wsl
+git clone <repo> ~/Project-12-Multi-Relay-Bot   # or work from /mnt/c/...
+cd ~/Project-12-Multi-Relay-Bot/deploy/wsl
 chmod +x *.sh
 
 ./0010_install_prereqs.sh                         # report what's missing

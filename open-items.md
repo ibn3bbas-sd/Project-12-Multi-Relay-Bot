@@ -67,10 +67,10 @@ image built green. Runbook section 5a.
 
 ## Next: rename to "Multi-Relay Bot" + more platforms (planned)
 
-Name chosen 2026-11-18: **Multi-Relay Bot**. Not started yet.
+Name chosen 2026-11-18: **Multi-Relay Bot**. Repo renamed 2026-11-19.
 
 Rename (keep infra names to avoid churn):
-- [ ] Rename the GitHub repo (old URLs redirect); update README title, `/help` text, runbook/skill references
+- [x] Rename the GitHub repo to `Project-12-Multi-Relay-Bot` (2026-11-19; old URLs redirect); README title, `/help` text, runbook/skill references updated
 - [ ] Update the Google OAuth app's home + privacy page URLs (GitHub Pages path follows the repo name), then re-check the consent screen
 - [ ] Keep as is: Docker image `ibn3bbas/youtube-relay-bot`, namespace `relay-bot`, Telegram bot username
 

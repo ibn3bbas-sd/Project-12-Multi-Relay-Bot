@@ -26,7 +26,7 @@ from .pipeline import (
 logger = logging.getLogger(__name__)
 
 HELP_TEXT = (
-    "Relay Bot (YouTube"
+    "Multi-Relay Bot (YouTube"
     + (" + Facebook" if config.FB_ENABLED else "")
     + (" + Instagram" if config.IG_ENABLED else "")
     + ")\n\n"

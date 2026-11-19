@@ -1,4 +1,4 @@
-# YouTube Relay Bot — Claude Code Context
+# Multi-Relay Bot — Claude Code Context
 
 ## What this project does
 Downloads new videos from a source YouTube channel and re-uploads them to the owner's channel. Runs on Huawei Cloud CCE (namespace `relay-bot`) with a Telegram bot as the control interface.
