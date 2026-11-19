@@ -7,10 +7,11 @@ import logging
 from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
 
-from . import config, downloader, fb_uploader, ig_uploader, uploader
+from . import config, downloader, fb_uploader, ig_uploader, uploader, x_uploader
 from .fb_uploader import FacebookAuthError
 from .ig_uploader import InstagramAuthError, InstagramLimit
 from .uploader import QuotaExceeded
+from .x_uploader import XAuthError, XLimit
 
 logger = logging.getLogger(__name__)
 
@@ -36,6 +37,10 @@ def new_summary() -> dict:
         "ig_failed": 0,
         "ig_paced": None,  # why Instagram waited this run (cap, spacing, 24h API limit)
         "ig_error": None,  # token/permission problem
+        "x_posted": 0,
+        "x_failed": 0,
+        "x_paced": None,
+        "x_error": None,  # keys/permission/credit problem
     }
 
 
@@ -186,104 +191,130 @@ def _backfill(summary: dict, failures: list[dict], tried: set[str]) -> None:
             missing -= 1
 
 
-def _instagram(summary: dict, failures: list[dict], limit: int = 1, manual: bool = False) -> None:
-    """Post up to `limit` source Shorts to Instagram, newest first.
+def _shorts_targets() -> dict[str, dict]:
+    """Shorts-only targets. Read at call time so config stays the single source."""
+    return {
+        "ig": {
+            "name": "Instagram", "short": "IG", "mod": ig_uploader,
+            "enabled": config.IG_ENABLED, "flag": "IG_ENABLED",
+            "auth_exc": InstagramAuthError, "limit_exc": InstagramLimit,
+            "limit_text": "Instagram 24h API publishing limit",
+            "max_seconds": config.IG_MAX_SECONDS, "scan_limit": config.IG_SCAN_LIMIT,
+            "topup": config.IG_TOPUP,
+        },
+        "x": {
+            "name": "X", "short": "X", "mod": x_uploader,
+            "enabled": config.X_ENABLED, "flag": "X_ENABLED",
+            "auth_exc": XAuthError, "limit_exc": XLimit,
+            "limit_text": "X API rate limit (429)",
+            "max_seconds": config.X_MAX_SECONDS, "scan_limit": config.X_SCAN_LIMIT,
+            "topup": config.X_TOPUP,
+        },
+    }
 
-    Scheduled runs post at most one, so IG_MIN_GAP_MINUTES spreads the day's
-    posts out. New Shorts come first; with IG_TOPUP (or /igfill) older Shorts
+
+def _post_shorts(key: str, summary: dict, failures: list[dict], limit: int = 1, manual: bool = False) -> None:
+    """Post up to `limit` source Shorts to one Shorts target, newest first.
+
+    Scheduled runs post at most one, so the target's MIN_GAP spreads the day's
+    posts out. New Shorts come first; with TOPUP (or /igfill, /xfill) older Shorts
     fill the rest of the daily cap. Unposted Shorts are simply picked up again
     by a later run, so there is no retry queue.
     """
-    if not config.IG_ENABLED:
+    t = _shorts_targets()[key]
+    mod = t["mod"]
+    if not t["enabled"]:
         return
-    block = ig_uploader.pacing_block(ignore_gap=manual)
+    block = mod.pacing_block(ignore_gap=manual)
     if block:
-        summary["ig_paced"] = block
+        summary[f"{key}_paced"] = block
         return
 
-    deep = manual or config.IG_TOPUP
+    deep = manual or t["topup"]
     ids = downloader.list_short_ids(
-        config.SOURCE_CHANNEL_ID, config.BACKFILL_SCAN_LIMIT if deep else config.IG_SCAN_LIMIT
+        config.SOURCE_CHANNEL_ID, config.BACKFILL_SCAN_LIMIT if deep else t["scan_limit"]
     )
-    todo = [vid for vid in ids if not ig_uploader.is_handled(vid)]
-    logger.info("Instagram: %d Shorts listed, %d not posted yet", len(ids), len(todo))
+    todo = [vid for vid in ids if not mod.is_handled(vid)]
+    logger.info("%s: %d Shorts listed, %d not posted yet", t["name"], len(ids), len(todo))
     cutoff = datetime.now(timezone.utc).timestamp() - config.MAX_VIDEO_AGE_DAYS * 86400
     posted, attempts_left = 0, limit + 3
 
     for vid in todo:
         if posted >= limit or attempts_left <= 0:
             break
-        block = ig_uploader.pacing_block(ignore_gap=manual or posted == 0)
+        block = mod.pacing_block(ignore_gap=manual or posted == 0)
         if block:
-            summary["ig_paced"] = block
+            summary[f"{key}_paced"] = block
             break
         attempts_left -= 1
         video = downloader.fetch_video(vid, failures)
         if video is None:
-            summary["ig_failed"] += 1
+            summary[f"{key}_failed"] += 1
             if failures and failures[-1]["bot_check"]:
                 break
             continue
         published = video.get("published_at")
         if not deep and published and published.timestamp() < cutoff:
             break  # newest first: everything after this is older still
-        if (video.get("duration") or 0) > config.IG_MAX_SECONDS:
-            ig_uploader.mark_skipped(vid, f"too long ({video['duration']}s)")
+        if (video.get("duration") or 0) > t["max_seconds"]:
+            mod.mark_skipped(vid, f"too long ({video['duration']}s)")
             continue
         file_path = downloader.download_video(video, failures)
         if file_path is None:
-            summary["ig_failed"] += 1
+            summary[f"{key}_failed"] += 1
             if failures and failures[-1]["bot_check"]:
                 break
             continue
         try:
-            media_id = ig_uploader.upload_short(file_path, video)
-        except InstagramAuthError as exc:
-            logger.error("Instagram auth problem — skipping Instagram this run: %s", exc)
-            summary["ig_error"] = str(exc)
+            media_id = mod.upload_short(file_path, video)
+        except t["auth_exc"] as exc:
+            logger.error("%s auth problem — skipping %s this run: %s", t["name"], t["name"], exc)
+            summary[f"{key}_error"] = str(exc)
             break
-        except InstagramLimit as exc:
-            logger.warning("Instagram publishing limit reached: %s", exc)
-            summary["ig_paced"] = "Instagram 24h API publishing limit"
+        except t["limit_exc"] as exc:
+            logger.warning("%s limit reached: %s", t["name"], exc)
+            summary[f"{key}_paced"] = t["limit_text"]
             break
         finally:
             downloader.cleanup(file_path)
         if media_id:
-            ig_uploader.mark_done(vid)
-            summary["ig_posted"] += 1
+            mod.mark_done(vid)
+            summary[f"{key}_posted"] += 1
             posted += 1
-        elif not ig_uploader.is_handled(vid):  # skipped clips aren't failures
-            summary["ig_failed"] += 1
+        elif not mod.is_handled(vid):  # skipped clips aren't failures
+            summary[f"{key}_failed"] += 1
 
 
-IG_FILL_DEFAULT = 1
-IG_FILL_MAX = 5
+SHORTS_FILL_DEFAULT = 1
+SHORTS_FILL_MAX = 5
 
 
-def run_ig_fill(limit: int = IG_FILL_DEFAULT) -> dict:
-    """Blocking. Post up to `limit` Shorts to Instagram now (spacing ignored, daily cap kept)."""
+def run_shorts_fill(key: str, limit: int = SHORTS_FILL_DEFAULT) -> dict:
+    """Blocking. Post up to `limit` Shorts to one target now (spacing ignored, daily cap kept)."""
+    t = _shorts_targets()[key]
     summary = new_summary()
     failures: list[dict] = []
     error = None
-    if not config.IG_ENABLED:
-        error = "Instagram is disabled (IG_ENABLED=false)"
+    if not t["enabled"]:
+        error = f"{t['name']} is disabled ({t['flag']}=false)"
     else:
         try:
-            _instagram(summary, failures, limit=limit, manual=True)
+            _post_shorts(key, summary, failures, limit=limit, manual=True)
         except Exception as exc:  # noqa: BLE001 — surfaced to Telegram
-            logger.exception("Instagram fill failed")
+            logger.exception("%s fill failed", t["name"])
             error = f"{type(exc).__name__}: {exc}"
-    if summary["ig_error"]:
-        error = f"Instagram token/permission: {summary['ig_error']}"
+    if summary[f"{key}_error"]:
+        error = f"{t['name']} token/permission: {summary[f'{key}_error']}"
     elif any(f["bot_check"] for f in failures):
         error = "YouTube bot-check: cookies likely expired (runbook 2b)"
-    return {"posted": summary["ig_posted"], "failed": summary["ig_failed"],
-            "paced": summary["ig_paced"], "error": error}
+    return {"key": key, "posted": summary[f"{key}_posted"], "failed": summary[f"{key}_failed"],
+            "paced": summary[f"{key}_paced"], "error": error}
 
 
-def format_ig_fill(result: dict) -> str:
+def format_shorts_fill(result: dict) -> str:
+    t = _shorts_targets()[result["key"]]
     lines = [
-        "Instagram fill done",
+        f"{t['name']} fill done",
         f"  Posted: {result['posted']}",
         f"  Failed: {result['failed']}",
     ]
@@ -291,14 +322,15 @@ def format_ig_fill(result: dict) -> str:
         lines.append(f"  Waiting: {result['paced']}")
     if result.get("error"):
         lines.append(f"  ⚠️ {result['error']}")
-    lines.append(format_ig_pacing())
+    lines.append(format_shorts_pacing(result["key"]))
     return "\n".join(lines)
 
 
-def format_ig_pacing() -> str:
-    st = ig_uploader.pacing_status()
+def format_shorts_pacing(key: str) -> str:
+    t = _shorts_targets()[key]
+    st = t["mod"].pacing_status()
     cap = "no cap" if st["cap"] is None else f"{st['today']}/{st['cap']}"
-    return f"  IG today: {cap}, {st['done']} Shorts posted in total"
+    return f"  {t['short']} today: {cap}, {st['done']} Shorts posted in total"
 
 
 def run_relay(backfill: bool = False) -> dict:
@@ -323,7 +355,8 @@ def run_relay(backfill: bool = False) -> dict:
             _relay_one(video, summary, failures)
 
         _retry_facebook_pending(summary, failures)
-        _instagram(summary, failures)
+        _post_shorts("ig", summary, failures)
+        _post_shorts("x", summary, failures)
 
         if backfill and config.DAILY_UPLOAD_TARGET > 0:
             tried = {v["id"] for v in videos} | {f["id"] for f in failures}
@@ -431,6 +464,8 @@ def is_quiet(summary: dict) -> bool:
         or summary.get("fb_error")
         or summary.get("ig_posted")
         or summary.get("ig_error")
+        or summary.get("x_posted")
+        or summary.get("x_error")
     )
 
 
@@ -454,13 +489,16 @@ def format_summary(summary: dict, header: str = "Relay complete") -> str:
         lines.append(format_fb_pacing())
         if summary.get("fb_error"):
             lines.append(f"  ⚠️ Facebook token/permission: {summary['fb_error']}")
-    if config.IG_ENABLED:
+    for key, t in _shorts_targets().items():
+        if not t["enabled"]:
+            continue
         lines.append(
-            f"  Instagram: {summary.get('ig_posted', 0)} Shorts posted, {summary.get('ig_failed', 0)} failed"
+            f"  {t['name']}: {summary.get(f'{key}_posted', 0)} Shorts posted,"
+            f" {summary.get(f'{key}_failed', 0)} failed"
         )
-        lines.append(format_ig_pacing())
-        if summary.get("ig_error"):
-            lines.append(f"  ⚠️ Instagram token/permission: {summary['ig_error']}")
+        lines.append(format_shorts_pacing(key))
+        if summary.get(f"{key}_error"):
+            lines.append(f"  ⚠️ {t['name']} token/permission: {summary[f'{key}_error']}")
     if summary.get("started_at") and summary.get("finished_at"):
         elapsed = (summary["finished_at"] - summary["started_at"]).total_seconds()
         lines.append(f"  Duration: {elapsed:.0f}s")

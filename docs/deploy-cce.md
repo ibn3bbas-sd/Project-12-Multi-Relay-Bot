@@ -194,6 +194,37 @@ post and at most `IG_DAILY_LIMIT` (3) a day. New Shorts go first. With `IG_TOPUP
 Short is picked up again on a later run. Clips that can never fit are recorded as `skipped`.
 State: `/data/instagram_state.json`.
 
+## 7. X (optional fourth target: Shorts only)
+
+The same source Shorts go to X as video posts (`src/x_uploader.py`, API v2 chunked media upload,
+OAuth 1.0a user context). Post text = the video title only; URLs are stripped because X bills
+~$0.015 per post and $0.20 for a post with a link. Off unless `X_ENABLED=true`.
+
+Platform limits (docs.x.com, checked 2026-11-18): 0.5 s – 20 min on a normal account, MP4 H.264 +
+AAC, yuv420p, ≤60 fps, ≤1920x1200 / 1200x1920. Clips that fit are only remuxed, others re-encoded.
+
+1. console.x.com → developer account (pay-per-use, buy credit, auto-recharge off) → app →
+   User authentication settings: **Read and write**, Web App/Automated App or Bot. The callback is
+   unused but required; `https://localhost` is rejected, so use any real https URL.
+2. Keys & Tokens → Consumer Key/Secret. The console's own Access Token is for the account that owns the
+   developer account. To post to a **different** account, run an OAuth 1.0a PIN flow with the Consumer
+   Key and open the authorize URL in a private window logged in as the posting account.
+3. Secret: `X_API_KEY`, `X_API_SECRET`, `X_ACCESS_TOKEN`, `X_ACCESS_TOKEN_SECRET`, then test before enabling:
+
+```bash
+kubectl -n relay-bot exec deploy/relay-bot -- python -m src.x_uploader check           # prints the posting @handle
+kubectl -n relay-bot exec deploy/relay-bot -- python -m src.x_uploader check --upload  # media upload only, not posted
+kubectl -n relay-bot patch secret relay-bot-env --type merge -p '{"stringData":{"X_ENABLED":"true"}}'
+kubectl -n relay-bot rollout restart deploy/relay-bot
+```
+
+4. In Telegram: `/xfill 1`.
+
+Pacing is the same as Instagram: `X_DAILY_LIMIT` (3), `X_MIN_GAP_MINUTES` (180), `X_TOPUP`, `/xfill [n]`
+(max 5). HTTP 401/402/403 (bad keys, no credit, no write access) stop X for the run and show in Telegram;
+429 waits for a later run. If X refuses a post as duplicate text (same title twice), it retries once with
+the upload date appended. State: `/data/x_state.json`.
+
 ## Day 2
 
 ```bash

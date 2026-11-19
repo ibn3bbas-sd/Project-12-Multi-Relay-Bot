@@ -285,6 +285,19 @@ the app may need Facebook Login for Business (fallback would need a public `vide
 - Instagram Reels: 3 s–15 min, ≤300 MB; 100 API posts/24 h per docs (content_publishing_limit reports 50).
 - Same pattern for each: own uploader module, `<P>_ENABLED`, state file, Telegram line, `/<p>fill`, hidden test.
 
+## X target (code 2026-11-19, runbook §7)
+
+- `src/x_uploader.py`: API v2 `/2/media/upload/initialize|append|finalize` + STATUS poll, `/2/tweets`,
+  OAuth 1.0a via `requests-oauthlib`. Text = title only (URLs stripped: a link costs $0.20 vs ~$0.015).
+  401/402/403 → `XAuthError` (stops X for the run; 402 = credit used up), 429 → `XLimit`; a
+  "duplicate content" 403 retries once with the upload date appended. Post creation never blind-retries.
+- Instagram and X share `_post_shorts(key, ...)` / `run_shorts_fill` in `pipeline.py` (targets in
+  `_shorts_targets()`); Telegram `/igfill` and `/xfill` share `_shorts_fill`.
+- Setup gotchas: the console rejects `https://localhost` as callback ("Not a valid callback URL format");
+  the console's own Access Token is for the developer-account owner, so a different posting account needs
+  the OAuth 1.0a PIN flow opened in a private window logged in as that account. Don't create a project
+  under the posting account (it opens a second, empty developer account). Never commit handles or IDs.
+
 ## Deploy commands
 
 ```bash

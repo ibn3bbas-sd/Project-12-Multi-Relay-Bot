@@ -228,6 +228,23 @@ IG_MIN_GAP_MINUTES = _as_int(_get("IG_MIN_GAP_MINUTES", "instagram.min_gap_minut
 # The daily top-up also fills Instagram up to the cap with older Shorts.
 IG_TOPUP = _as_bool(_get("IG_TOPUP", "instagram.topup", True), True)
 
+# ── X / Twitter (optional fourth target: Shorts only) ────────────────────────
+# OAuth 1.0a user context: the app's Consumer Key/Secret plus an Access Token
+# for the POSTING account (made with the PIN flow, so the developer account can
+# be a different X account). Pay-per-use API: ~$0.015 per post, $0.20 with a link,
+# so posts carry the title only.
+X_ENABLED = _as_bool(_get("X_ENABLED", "x.enabled", False))
+X_API_KEY = str(os.getenv("X_API_KEY", "") or "").strip()
+X_API_SECRET = str(os.getenv("X_API_SECRET", "") or "").strip()
+X_ACCESS_TOKEN = str(os.getenv("X_ACCESS_TOKEN", "") or "").strip()
+X_ACCESS_TOKEN_SECRET = str(os.getenv("X_ACCESS_TOKEN_SECRET", "") or "").strip()
+# A normal account takes 0.5 s – 20 min; Shorts are ≤180 s.
+X_MAX_SECONDS = _as_int(_get("X_MAX_SECONDS", "x.max_seconds", 180), 180)
+X_SCAN_LIMIT = _as_int(_get("X_SCAN_LIMIT", "x.scan_limit", 20), 20)
+X_DAILY_LIMIT = _as_int(_get("X_DAILY_LIMIT", "x.daily_limit", 3), 3)
+X_MIN_GAP_MINUTES = _as_int(_get("X_MIN_GAP_MINUTES", "x.min_gap_minutes", 180), 180)
+X_TOPUP = _as_bool(_get("X_TOPUP", "x.topup", True), True)
+
 # ── Gemini (optional) ────────────────────────────────────────────────────────
 GEMINI_API_KEY = str(_get("GEMINI_API_KEY", "gemini.api_key", "") or "")
 GEMINI_ENABLED = _as_bool(_get("GEMINI_ENABLED", "gemini.enabled", False))
@@ -239,6 +256,7 @@ PROCESSED_FILE = DATA_DIR / "processed_videos.json"
 UPLOAD_COUNTS_FILE = DATA_DIR / "upload_counts.json"
 FB_STATE_FILE = DATA_DIR / "facebook_state.json"
 IG_STATE_FILE = DATA_DIR / "instagram_state.json"
+X_STATE_FILE = DATA_DIR / "x_state.json"
 LOG_FILE = LOG_DIR / "relay.log"
 
 LOG_LEVEL = str(_get("LOG_LEVEL", "runtime.log_level", "INFO")).upper()

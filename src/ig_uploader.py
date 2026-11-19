@@ -178,7 +178,7 @@ def probe(path: Path) -> dict | None:
     try:
         out = subprocess.run(
             ["ffprobe", "-v", "error", "-show_entries",
-             "stream=codec_type,codec_name,width,height,avg_frame_rate,sample_rate:format=duration",
+             "stream=codec_type,codec_name,width,height,avg_frame_rate,sample_rate,pix_fmt:format=duration",
              "-of", "json", str(path)],
             capture_output=True, text=True, timeout=60, check=True,
         ).stdout
@@ -192,6 +192,7 @@ def probe(path: Path) -> dict | None:
             "width": int(video["width"]),
             "height": int(video["height"]),
             "fps": _fps(video.get("avg_frame_rate")),
+            "pix_fmt": video.get("pix_fmt"),
             "acodec": audio.get("codec_name") if audio else None,
             "sample_rate": int(audio.get("sample_rate") or 0) if audio else 0,
         }

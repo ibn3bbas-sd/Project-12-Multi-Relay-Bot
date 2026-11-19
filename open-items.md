@@ -87,10 +87,15 @@ per-platform done/pending state, Telegram summary line, `/<platform>fill` backlo
 - [ ] **TikTok**: Content Posting API; app audit required before posts can be public (unaudited apps post private-only).
       Length (checked 2026-11-18): the API accepts up to 10 min, but each creator has their own cap
       (`max_video_post_duration_sec` from creator_info: 3 min for everyone, 5 or 10 min for some). Read it per post. ≤4 GB, 23–60 fps.
+- [x] X code (2026-11-19): `src/x_uploader.py` (v2 chunked upload, OAuth 1.0a, title-only text, 3/day, 180 min gap),
+      `/xfill [n]`, `check [--upload]`. Instagram and X now share one Shorts runner in `pipeline.py`. Offline-tested (mocked API).
+- [x] X setup: pay-per-use app (Read and write); posting account authorised via PIN flow (it differs from the
+      developer account). `https://localhost` callback is rejected by the console.
+- [ ] X go-live: push → image build → Secret patch → `check --upload` → `X_ENABLED=true` → `/xfill 1`
 - [ ] **X**: video in a post (checked 2026-11-18, docs.x.com): 0.5 s – 20 min / 8 GB on a normal account,
       up to 125 min / 16 GB with X Premium (limit follows the posting account, not the API plan). The API is
       pay-per-use (~$0.015 per post created); chunked media upload. Shorts (≤180 s) fit easily.
-- [ ] Refactor once a third target lands: a common uploader interface + generic per-platform state, instead of copying the Facebook code
+- [ ] Refactor: Instagram + X share one Shorts runner (done); still to do: shared state/probe helpers, and one download per Short for both targets
 
 ## SaaS MVP plan (drafted 2026-11-18, not started)
 

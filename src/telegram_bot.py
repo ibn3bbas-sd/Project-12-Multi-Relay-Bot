@@ -1,4 +1,4 @@
-"""Telegram control surface: /run /fill /fbfill /igfill /status /next /help."""
+"""Telegram control surface: /run /fill /fbfill /igfill /xfill /status /next /help."""
 
 from __future__ import annotations
 
@@ -12,15 +12,15 @@ from . import config
 from .pipeline import (
     FB_FILL_DEFAULT,
     FB_FILL_MAX,
-    IG_FILL_DEFAULT,
-    IG_FILL_MAX,
+    SHORTS_FILL_DEFAULT,
+    SHORTS_FILL_MAX,
     format_fb_fill,
-    format_ig_fill,
+    format_shorts_fill,
     format_summary,
     is_quiet,
     run_fb_fill,
-    run_ig_fill,
     run_relay,
+    run_shorts_fill,
 )
 
 logger = logging.getLogger(__name__)
@@ -29,6 +29,7 @@ HELP_TEXT = (
     "Multi-Relay Bot (YouTube"
     + (" + Facebook" if config.FB_ENABLED else "")
     + (" + Instagram" if config.IG_ENABLED else "")
+    + (" + X" if config.X_ENABLED else "")
     + ")\n\n"
     "/run     — relay new videos now\n"
     f"/fill    — relay new videos, then top today up to {config.DAILY_UPLOAD_TARGET} with older ones\n"
@@ -38,8 +39,13 @@ HELP_TEXT = (
         else ""
     )
     + (
-        f"/igfill [n] — post n source Shorts to Instagram now (default {IG_FILL_DEFAULT}, max {IG_FILL_MAX})\n"
+        f"/igfill [n] — post n source Shorts to Instagram now (default {SHORTS_FILL_DEFAULT}, max {SHORTS_FILL_MAX})\n"
         if config.IG_ENABLED
+        else ""
+    )
+    + (
+        f"/xfill [n]  — post n source Shorts to X now (default {SHORTS_FILL_DEFAULT}, max {SHORTS_FILL_MAX})\n"
+        if config.X_ENABLED
         else ""
     )
     + "/status  — last run summary\n"
@@ -112,26 +118,35 @@ async def cmd_fbfill(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
     await update.message.reply_text(format_fb_fill(result))
 
 
-async def cmd_igfill(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+async def _shorts_fill(update: Update, context: ContextTypes.DEFAULT_TYPE,
+                       key: str, name: str, enabled: bool, flag: str, command: str) -> None:
     if not _is_allowed(update):
         return
-    if not config.IG_ENABLED:
-        await update.message.reply_text("Instagram is disabled (IG_ENABLED=false).")
+    if not enabled:
+        await update.message.reply_text(f"{name} is disabled ({flag}=false).")
         return
     if _relay_lock.locked():
         await update.message.reply_text("A relay is already running — wait for it to finish.")
         return
     try:
-        limit = int(context.args[0]) if context.args else IG_FILL_DEFAULT
+        limit = int(context.args[0]) if context.args else SHORTS_FILL_DEFAULT
     except ValueError:
-        await update.message.reply_text(f"Usage: /igfill [n]  (1–{IG_FILL_MAX})")
+        await update.message.reply_text(f"Usage: /{command} [n]  (1–{SHORTS_FILL_MAX})")
         return
-    limit = max(1, min(limit, IG_FILL_MAX))
+    limit = max(1, min(limit, SHORTS_FILL_MAX))
 
-    await update.message.reply_text(f"Posting up to {limit} Short(s) to Instagram...")
+    await update.message.reply_text(f"Posting up to {limit} Short(s) to {name}...")
     async with _relay_lock:
-        result = await asyncio.to_thread(run_ig_fill, limit)
-    await update.message.reply_text(format_ig_fill(result))
+        result = await asyncio.to_thread(run_shorts_fill, key, limit)
+    await update.message.reply_text(format_shorts_fill(result))
+
+
+async def cmd_igfill(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    await _shorts_fill(update, context, "ig", "Instagram", config.IG_ENABLED, "IG_ENABLED", "igfill")
+
+
+async def cmd_xfill(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    await _shorts_fill(update, context, "x", "X", config.X_ENABLED, "X_ENABLED", "xfill")
 
 
 async def cmd_status(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -204,6 +219,7 @@ def build_app() -> Application:
     app.add_handler(CommandHandler("fill", cmd_fill))
     app.add_handler(CommandHandler("fbfill", cmd_fbfill))
     app.add_handler(CommandHandler("igfill", cmd_igfill))
+    app.add_handler(CommandHandler("xfill", cmd_xfill))
     app.add_handler(CommandHandler("status", cmd_status))
     app.add_handler(CommandHandler("next", cmd_next))
     app.add_error_handler(_on_error)

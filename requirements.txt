@@ -8,6 +8,7 @@ google-auth-httplib2==0.2.0
 python-telegram-bot[job-queue]==21.9
 python-dotenv==1.0.1
 requests==2.32.3
+requests-oauthlib==2.0.0
 PyYAML==6.0.2
 # zoneinfo needs an IANA tz database; the wheel guarantees one is present.
 tzdata==2024.2
