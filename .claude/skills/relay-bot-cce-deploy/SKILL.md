@@ -1,6 +1,6 @@
 ---
 name: relay-bot-cce-deploy
-description: Continue or operate the YouTube Relay Bot deployment on Huawei Cloud CCE me-east-1 (k8s/relay-bot.yaml, build-push-dockerhub workflow, Docker Hub image, HLD diagram, runbook), including the Facebook Page second target (fb_uploader, /fbfill, Page token) and the Instagram third target (Shorts only as Reels, ig_uploader, /igfill), plus the verified X/TikTok video limits for the next platforms.
+description: Continue or operate the YouTube Relay Bot deployment on Huawei Cloud CCE me-east-1 (k8s/relay-bot.yaml, build-push-dockerhub workflow, Docker Hub image, HLD diagram, runbook), including the Facebook Page second target (fb_uploader, /fbfill, Page token) the Instagram third target (Shorts only as Reels, ig_uploader, /igfill) and the X fourth target (Shorts as title-only posts, x_uploader, /xfill, OAuth 1.0a PIN flow), plus the verified TikTok video limits for the next platform.
 ---
 
 # Multi-Relay Bot (formerly YouTube Relay Bot) on Huawei Cloud CCE
@@ -297,6 +297,12 @@ the app may need Facebook Login for Business (fallback would need a public `vide
   the console's own Access Token is for the developer-account owner, so a different posting account needs
   the OAuth 1.0a PIN flow opened in a private window logged in as that account. Don't create a project
   under the posting account (it opens a second, empty developer account). Never commit handles or IDs.
+- Go-live (2026-11-19): a private helper patches the Secret with the 4 keys and `X_ENABLED=false`, runs
+  `check` (prints the posting @handle) + `check --upload` (media processed, not posted), then asks before
+  `X_ENABLED=true` + restart. Keep the helpers outside the repo (they hold the jumpbox address).
+- After any restart, the first `check_new` runs ~1 min later and holds the relay lock for ~1 min per
+  Short; a `/xfill` or `/igfill` sent then gets "A relay is already running". Not a bug — wait for its report.
+- Cost: ~$0.015 per post → 3/day ≈ $1.35/month. 402 from X = credit used up (shows in Telegram).
 
 ## Deploy commands
 
