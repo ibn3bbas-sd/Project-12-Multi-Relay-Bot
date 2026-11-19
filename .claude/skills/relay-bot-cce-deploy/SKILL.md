@@ -3,7 +3,7 @@ name: relay-bot-cce-deploy
 description: Continue or operate the YouTube Relay Bot deployment on Huawei Cloud CCE me-east-1 (k8s/relay-bot.yaml, build-push-dockerhub workflow, Docker Hub image, HLD diagram, runbook), including the Facebook Page second target (fb_uploader, /fbfill, Page token) and the Instagram third target (Shorts only as Reels, ig_uploader, /igfill), plus the verified X/TikTok video limits for the next platforms.
 ---
 
-# YouTube Relay Bot on Huawei Cloud CCE
+# Multi-Relay Bot (formerly YouTube Relay Bot) on Huawei Cloud CCE
 
 Repo: `ibn3bbas-sd/Project-12-Multi-Relay-Bot`. Everything is on `main`. PR #1 (`deploy/huawei-cce`) is merged.
 Region: **me-east-1 (Riyadh)**. Bash only for this repo. No PowerShell.
@@ -120,6 +120,22 @@ Private details (hosts, IPs, local paths, account names, the cookie account) are
 - `gh auth refresh -s delete_repo` uses a browser device flow that can end in `access_denied`; deleting the repo in the web UI (Settings → Danger Zone) is simpler.
 - Before every push: scan the diff for infra IPs/names/emails (patterns in Claude's private memory) and check `git log -1 --format=%ae` is the noreply address. Secret scanning + push protection are on (free for public repos).
 - Docker Hub tokens to keep: `github-actions-push` (Read & Write, the `DOCKERHUB_TOKEN` secret) and `cce-relay-bot-pull` (Read-only, Secret `dockerhub-pull`). Revoke stale auto-generated "desktop" tokens, keeping the newest.
+
+## Rename to Multi-Relay Bot (2026-11-19)
+
+- Repo renamed with `gh repo rename Project-12-Multi-Relay-Bot`, then `git remote set-url`. The old git URL redirects.
+- Kept on purpose: Docker image `ibn3bbas/youtube-relay-bot`, namespace `relay-bot`, Telegram bot, GCP project `youtube-relay-bot`, this skill's name.
+- **GitHub Pages does not redirect**: the old `/Project-12-YouTube-Relay-Bot/` path returns 404. After any rename, update Google Auth
+  Platform → Branding home + privacy URLs to `https://ibn3bbas-sd.github.io/Project-12-Multi-Relay-Bot/` (+ `privacy.html`).
+  The authorised domain `ibn3bbas-sd.github.io` stays. Status stays **In production** (token does not expire).
+- Branding then shows "needs to be verified before it can be shown to users". Harmless for this single-user app; the
+  token keeps refreshing. Never press "Back to testing" (Testing tokens expire every 7 days).
+- The new `/help` title ("Multi-Relay Bot") only appears after the next image build + rollout.
+- Local folder rename: close Claude Code first (its cwd is the folder), `mv` the OneDrive folder, recreate the
+  `~/projects` symlink. WSL may keep a stale view of the renamed OneDrive folder (neither name visible while Windows shows
+  the new one); `wsl --shutdown` from PowerShell fixes it.
+- Claude memory is keyed by the folder path: copy `~/.claude/projects/<old-key>/memory` to the new key before reopening.
+  Paths starting with `-` need `./` in shell commands.
 
 ## Facebook Page target (2026-11-18)
 
