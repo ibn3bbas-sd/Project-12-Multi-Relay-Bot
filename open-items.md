@@ -91,7 +91,7 @@ per-platform done/pending state, Telegram summary line, `/<platform>fill` backlo
       `/xfill [n]`, `check [--upload]`. Instagram and X now share one Shorts runner in `pipeline.py`. Offline-tested (mocked API).
 - [x] X setup: pay-per-use app (Read and write); posting account authorised via PIN flow (it differs from the
       developer account). `https://localhost` callback is rejected by the console.
-- [ ] X go-live: push → image build → Secret patch → `check --upload` → `X_ENABLED=true` → `/xfill 1`
+- [x] X live (2026-11-19 16:52 Riyadh): `check --upload` green, X enabled, first Short posted by the scheduled check (`d4a0b3f`)
 - [ ] **X**: video in a post (checked 2026-11-18, docs.x.com): 0.5 s – 20 min / 8 GB on a normal account,
       up to 125 min / 16 GB with X Premium (limit follows the posting account, not the API plan). The API is
       pay-per-use (~$0.015 per post created); chunked media upload. Shorts (≤180 s) fit easily.
