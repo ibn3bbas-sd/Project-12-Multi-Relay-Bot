@@ -51,6 +51,7 @@ MIN_SECONDS = 3
 MAX_BYTES = 4 * 1024 ** 3
 MIN_CHUNK = 5 * 1024 * 1024
 CHUNK = 10 * 1024 * 1024
+MAX_CHUNK = 64 * 1024 * 1024
 RETRIABLE_STATUS = {500, 502, 503, 504}
 POLL_TIMEOUT = 10 * 60
 REFRESH_MARGIN = timedelta(minutes=10)
@@ -322,11 +323,12 @@ def creator_info() -> dict:
 
 
 def _chunks(size: int) -> tuple[int, int]:
-    """(chunk_size, total_chunk_count) per TikTok's rules: < 5 MB → one chunk; the last
-    chunk absorbs the remainder (so it can be up to 2x chunk_size)."""
-    if size < MIN_CHUNK:
+    """(chunk_size, total_chunk_count) per TikTok's rules: chunk_size 5–64 MB, except a file under
+    5 MB, which goes whole. chunk_size may never exceed the file, so anything up to 64 MB is sent as
+    one chunk; bigger files use 10 MB chunks and the last chunk absorbs the remainder."""
+    if size <= MAX_CHUNK:
         return size, 1
-    return CHUNK, max(1, size // CHUNK)
+    return CHUNK, size // CHUNK
 
 
 def _put_chunks(upload_url: str, path: Path, size: int, chunk_size: int, count: int) -> None:

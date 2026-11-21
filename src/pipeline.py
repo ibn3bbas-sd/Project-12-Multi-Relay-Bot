@@ -328,9 +328,14 @@ def run_shorts_fill(key: str, limit: int = SHORTS_FILL_DEFAULT) -> dict:
 
 def format_shorts_fill(result: dict) -> str:
     t = _shorts_targets()[result["key"]]
-    ok = not result.get("error")
+    if result.get("error") or result["failed"]:
+        icon = "⚠️"
+    elif not result["posted"] and result.get("paced"):
+        icon = "⏳"
+    else:
+        icon = "✅"
     lines = [
-        f"{'✅' if ok else '⚠️'} {t['icon']} {t['name']} fill done",
+        f"{icon} {t['icon']} {t['name']} fill done",
         SEP,
         f"📤 Posted: {result['posted']}   ❌ Failed: {result['failed']}",
         format_shorts_pacing(result["key"]),
