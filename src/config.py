@@ -245,6 +245,21 @@ X_DAILY_LIMIT = _as_int(_get("X_DAILY_LIMIT", "x.daily_limit", 3), 3)
 X_MIN_GAP_MINUTES = _as_int(_get("X_MIN_GAP_MINUTES", "x.min_gap_minutes", 180), 180)
 X_TOPUP = _as_bool(_get("X_TOPUP", "x.topup", True), True)
 
+# ── TikTok (optional fifth target: Shorts only) ──────────────────────────────
+# Content Posting API, Direct Post. Client key/secret from the TikTok app; the posting
+# account's OAuth token lives in DATA_DIR/tiktok_token.json (refreshed by the bot).
+# Unaudited apps can only post SELF_ONLY (private); after the audit use PUBLIC_TO_EVERYONE.
+TIKTOK_ENABLED = _as_bool(_get("TIKTOK_ENABLED", "tiktok.enabled", False))
+TIKTOK_CLIENT_KEY = str(os.getenv("TIKTOK_CLIENT_KEY", "") or "").strip()
+TIKTOK_CLIENT_SECRET = str(os.getenv("TIKTOK_CLIENT_SECRET", "") or "").strip()
+TIKTOK_PRIVACY = str(_get("TIKTOK_PRIVACY", "tiktok.privacy", "SELF_ONLY")).strip().upper()
+# Also capped per post by the creator's own max_video_post_duration_sec.
+TIKTOK_MAX_SECONDS = _as_int(_get("TIKTOK_MAX_SECONDS", "tiktok.max_seconds", 180), 180)
+TIKTOK_SCAN_LIMIT = _as_int(_get("TIKTOK_SCAN_LIMIT", "tiktok.scan_limit", 20), 20)
+TIKTOK_DAILY_LIMIT = _as_int(_get("TIKTOK_DAILY_LIMIT", "tiktok.daily_limit", 3), 3)
+TIKTOK_MIN_GAP_MINUTES = _as_int(_get("TIKTOK_MIN_GAP_MINUTES", "tiktok.min_gap_minutes", 180), 180)
+TIKTOK_TOPUP = _as_bool(_get("TIKTOK_TOPUP", "tiktok.topup", True), True)
+
 # ── Gemini (optional) ────────────────────────────────────────────────────────
 GEMINI_API_KEY = str(_get("GEMINI_API_KEY", "gemini.api_key", "") or "")
 GEMINI_ENABLED = _as_bool(_get("GEMINI_ENABLED", "gemini.enabled", False))
@@ -257,6 +272,8 @@ UPLOAD_COUNTS_FILE = DATA_DIR / "upload_counts.json"
 FB_STATE_FILE = DATA_DIR / "facebook_state.json"
 IG_STATE_FILE = DATA_DIR / "instagram_state.json"
 X_STATE_FILE = DATA_DIR / "x_state.json"
+TIKTOK_STATE_FILE = DATA_DIR / "tiktok_state.json"
+TIKTOK_TOKEN_FILE = DATA_DIR / "tiktok_token.json"
 LOG_FILE = LOG_DIR / "relay.log"
 
 LOG_LEVEL = str(_get("LOG_LEVEL", "runtime.log_level", "INFO")).upper()

@@ -1,4 +1,4 @@
-"""Telegram control surface: /run /fill /fbfill /igfill /xfill /status /next /help."""
+"""Telegram control surface: /run /fill /fbfill /igfill /xfill /ttfill /status /next /help."""
 
 from __future__ import annotations
 
@@ -30,6 +30,7 @@ HELP_TEXT = (
     + (" + Facebook" if config.FB_ENABLED else "")
     + (" + Instagram" if config.IG_ENABLED else "")
     + (" + X" if config.X_ENABLED else "")
+    + (" + TikTok" if config.TIKTOK_ENABLED else "")
     + ")\n\n"
     "/run     — relay new videos now\n"
     f"/fill    — relay new videos, then top today up to {config.DAILY_UPLOAD_TARGET} with older ones\n"
@@ -46,6 +47,11 @@ HELP_TEXT = (
     + (
         f"/xfill [n]  — post n source Shorts to X now (default {SHORTS_FILL_DEFAULT}, max {SHORTS_FILL_MAX})\n"
         if config.X_ENABLED
+        else ""
+    )
+    + (
+        f"/ttfill [n] — post n source Shorts to TikTok now (default {SHORTS_FILL_DEFAULT}, max {SHORTS_FILL_MAX})\n"
+        if config.TIKTOK_ENABLED
         else ""
     )
     + "/status  — last run summary\n"
@@ -149,6 +155,10 @@ async def cmd_xfill(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await _shorts_fill(update, context, "x", "X", config.X_ENABLED, "X_ENABLED", "xfill")
 
 
+async def cmd_ttfill(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    await _shorts_fill(update, context, "tt", "TikTok", config.TIKTOK_ENABLED, "TIKTOK_ENABLED", "ttfill")
+
+
 async def cmd_status(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if not _is_allowed(update):
         return
@@ -220,6 +230,7 @@ def build_app() -> Application:
     app.add_handler(CommandHandler("fbfill", cmd_fbfill))
     app.add_handler(CommandHandler("igfill", cmd_igfill))
     app.add_handler(CommandHandler("xfill", cmd_xfill))
+    app.add_handler(CommandHandler("ttfill", cmd_ttfill))
     app.add_handler(CommandHandler("status", cmd_status))
     app.add_handler(CommandHandler("next", cmd_next))
     app.add_error_handler(_on_error)

@@ -87,6 +87,11 @@ per-platform done/pending state, Telegram summary line, `/<platform>fill` backlo
 - [ ] **TikTok**: Content Posting API; app audit required before posts can be public (unaudited apps post private-only).
       Length (checked 2026-11-18): the API accepts up to 10 min, but each creator has their own cap
       (`max_video_post_duration_sec` from creator_info: 3 min for everyone, 5 or 10 min for some). Read it per post. ≤4 GB, 23–60 fps.
+- [x] TikTok app (2026-11-21): app + sandbox, URL prefix verified on Pages, Login Kit + Content Posting API (Direct Post),
+      scopes user.info.basic + video.publish, posting account as sandbox target user. Pages: terms, privacy (all platforms), callback.
+- [x] TikTok code (2026-11-21): `src/tiktok_uploader.py` (FILE_UPLOAD chunks, creator_info per post, token refresh on /data,
+      15 fps → 30 fps re-encode), `/ttfill [n]`, `seed` / `check`, runbook §8. Offline-tested (mocked API).
+- [ ] TikTok go-live: login + seed + check, `/ttfill 1` (private), then record the demo video and submit the app for review.
 - [x] X code (2026-11-19): `src/x_uploader.py` (v2 chunked upload, OAuth 1.0a, title-only text, 3/day, 180 min gap),
       `/xfill [n]`, `check [--upload]`. Instagram and X now share one Shorts runner in `pipeline.py`. Offline-tested (mocked API).
 - [x] X setup: pay-per-use app (Read and write); posting account authorised via PIN flow (it differs from the

@@ -225,6 +225,45 @@ Pacing is the same as Instagram: `X_DAILY_LIMIT` (3), `X_MIN_GAP_MINUTES` (180),
 429 waits for a later run. If X refuses a post as duplicate text (same title twice), it retries once with
 the upload date appended. State: `/data/x_state.json`.
 
+## 8. TikTok (optional fifth target: Shorts only)
+
+The same source Shorts go to TikTok (`src/tiktok_uploader.py`, Content Posting API, Direct Post,
+`FILE_UPLOAD` in 10 MB chunks). Post title = the video title, links stripped. Off unless `TIKTOK_ENABLED=true`.
+
+Limits (developers.tiktok.com): MP4 H.264, 23–60 fps, 360–4096 px per side, ≤ 4 GB, length ≤ the creator's
+`max_video_post_duration_sec` (read from `creator_info` before every post; 3 min for most accounts). Low-fps
+(15 fps) Shorts are re-encoded to 30 fps; clips that already fit are only remuxed.
+
+**Unaudited apps post `SELF_ONLY` (private) only**, so `TIKTOK_PRIVACY=SELF_ONLY` until TikTok's app review
+passes; then set `TIKTOK_PRIVACY=PUBLIC_TO_EVERYONE` and switch to the production client key/secret
+(the token must then be made again with the production keys).
+
+1. developers.tiktok.com → Manage apps → Connect an app (type Other). Terms/Privacy/Web URL on the Pages site;
+   verify them under **URL properties → URL prefix** (signature `.txt` file published on `gh-pages`).
+2. Sandbox: Login Kit (redirect URI `…/tiktok-callback.html` on the Pages site; type it by hand, a pasted
+   hidden character gives "Invalid Redirect Uri"), Content Posting API with **Direct Post** on, scopes
+   `user.info.basic` + `video.publish`, the posting account under Target Users. `Verify domains` is only for
+   `PULL_FROM_URL`, not needed.
+3. Laptop: `TIKTOK_CLIENT_KEY` / `TIKTOK_CLIENT_SECRET` in `.env`, then a one-time Login Kit authorization as the
+   posting account; the callback page shows the code, which is exchanged for an access token (24 h) and a
+   refresh token (365 days) → `tiktok_token.json`.
+4. Secret: `TIKTOK_CLIENT_KEY`, `TIKTOK_CLIENT_SECRET`. Seed the token onto the volume and test before enabling:
+
+```bash
+kubectl -n relay-bot exec -i deploy/relay-bot -- python -m src.tiktok_uploader seed < tiktok_token.json
+kubectl -n relay-bot exec deploy/relay-bot -- python -m src.tiktok_uploader check   # @handle, privacy options, max length
+kubectl -n relay-bot patch secret relay-bot-env --type merge -p '{"stringData":{"TIKTOK_ENABLED":"true"}}'
+kubectl -n relay-bot rollout restart deploy/relay-bot
+```
+
+5. In Telegram: `/ttfill 1`.
+
+The bot refreshes the access token itself and rewrites `/data/tiktok_token.json` (the refresh token may rotate),
+so the token must stay on the persistent volume, not in the Secret. Redo step 3–4 before the refresh token
+expires (`check` prints the days left). Pacing as Instagram/X: `TIKTOK_DAILY_LIMIT` (3),
+`TIKTOK_MIN_GAP_MINUTES` (180), `TIKTOK_TOPUP`, `/ttfill [n]` (max 5). Token/scope/privacy errors stop TikTok for
+the run and show in Telegram; rate/spam limits wait for a later run. State: `/data/tiktok_state.json`.
+
 ## Day 2
 
 ```bash

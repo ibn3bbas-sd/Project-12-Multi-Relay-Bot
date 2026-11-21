@@ -7,9 +7,10 @@ import logging
 from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
 
-from . import config, downloader, fb_uploader, ig_uploader, uploader, x_uploader
+from . import config, downloader, fb_uploader, ig_uploader, tiktok_uploader, uploader, x_uploader
 from .fb_uploader import FacebookAuthError
 from .ig_uploader import InstagramAuthError, InstagramLimit
+from .tiktok_uploader import TikTokAuthError, TikTokLimit
 from .uploader import QuotaExceeded
 from .x_uploader import XAuthError, XLimit
 
@@ -41,6 +42,10 @@ def new_summary() -> dict:
         "x_failed": 0,
         "x_paced": None,
         "x_error": None,  # keys/permission/credit problem
+        "tt_posted": 0,
+        "tt_failed": 0,
+        "tt_paced": None,
+        "tt_error": None,  # token/app/permission problem
     }
 
 
@@ -210,6 +215,14 @@ def _shorts_targets() -> dict[str, dict]:
             "max_seconds": config.X_MAX_SECONDS, "scan_limit": config.X_SCAN_LIMIT,
             "topup": config.X_TOPUP,
         },
+        "tt": {
+            "name": "TikTok", "short": "TT", "mod": tiktok_uploader,
+            "enabled": config.TIKTOK_ENABLED, "flag": "TIKTOK_ENABLED",
+            "auth_exc": TikTokAuthError, "limit_exc": TikTokLimit,
+            "limit_text": "TikTok posting/rate limit",
+            "max_seconds": config.TIKTOK_MAX_SECONDS, "scan_limit": config.TIKTOK_SCAN_LIMIT,
+            "topup": config.TIKTOK_TOPUP,
+        },
     }
 
 
@@ -217,7 +230,7 @@ def _post_shorts(key: str, summary: dict, failures: list[dict], limit: int = 1, 
     """Post up to `limit` source Shorts to one Shorts target, newest first.
 
     Scheduled runs post at most one, so the target's MIN_GAP spreads the day's
-    posts out. New Shorts come first; with TOPUP (or /igfill, /xfill) older Shorts
+    posts out. New Shorts come first; with TOPUP (or /igfill, /xfill, /ttfill) older Shorts
     fill the rest of the daily cap. Unposted Shorts are simply picked up again
     by a later run, so there is no retry queue.
     """
@@ -357,6 +370,7 @@ def run_relay(backfill: bool = False) -> dict:
         _retry_facebook_pending(summary, failures)
         _post_shorts("ig", summary, failures)
         _post_shorts("x", summary, failures)
+        _post_shorts("tt", summary, failures)
 
         if backfill and config.DAILY_UPLOAD_TARGET > 0:
             tried = {v["id"] for v in videos} | {f["id"] for f in failures}
@@ -466,6 +480,8 @@ def is_quiet(summary: dict) -> bool:
         or summary.get("ig_error")
         or summary.get("x_posted")
         or summary.get("x_error")
+        or summary.get("tt_posted")
+        or summary.get("tt_error")
     )
 
 
