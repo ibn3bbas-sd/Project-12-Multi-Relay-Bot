@@ -1,0 +1,20 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="referrer" content="no-referrer"><meta name="robots" content="noindex">
+<title>TikTok login · Multi-Relay Bot</title><style>body{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;max-width:680px;margin:48px auto;padding:0 16px;line-height:1.6;color:#1f2328;background:#fff}@media(prefers-color-scheme:dark){body{color:#e6edf3;background:#0d1117}a{color:#4493f8}}h1{font-size:1.6rem}code{word-break:break-all}</style></head><body>
+<h1>TikTok login</h1>
+<p id="msg">Reading the login result…</p>
+<p><code id="code"></code></p>
+<p><button id="copy" hidden>Copy code</button></p>
+<p>Paste the code into the terminal that is waiting for it. Nothing is sent from this page.</p>
+<script>
+(function(){
+  var q=new URLSearchParams(location.search), c=q.get('code'), e=q.get('error');
+  var msg=document.getElementById('msg'), box=document.getElementById('code'), btn=document.getElementById('copy');
+  if(c){msg.textContent='Login code (valid for a few minutes):';box.textContent=c;btn.hidden=false;
+    btn.onclick=function(){navigator.clipboard.writeText(c).then(function(){btn.textContent='Copied';});};}
+  else if(e){msg.textContent='TikTok returned an error: '+e+' '+(q.get('error_description')||'');}
+  else{msg.textContent='No code in the address. Start the login from the token script.';}
+})();
+</script>
+<p><a href="index.html">Home</a> · <a href="terms.html">Terms of service</a> · <a href="privacy.html">Privacy policy</a></p>
+</body></html>
