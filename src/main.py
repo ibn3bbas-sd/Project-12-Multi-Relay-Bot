@@ -83,7 +83,7 @@ def run_without_telegram_until_back() -> list[str]:
             reports.append(format_summary(summary, f"{header} (while Telegram was down)"))
 
     sched = BackgroundScheduler(timezone=_tz())
-    sched.add_job(job, "interval", args=(False, "New video relayed"), id="check_new",
+    sched.add_job(job, "interval", args=(False, "Scheduled check"), id="check_new",
                   minutes=config.CHECK_INTERVAL_MINUTES, max_instances=1, coalesce=True,
                   next_run_time=dt.datetime.now(_tz()) + dt.timedelta(minutes=1))
     if config.DAILY_UPLOAD_TARGET > 0:

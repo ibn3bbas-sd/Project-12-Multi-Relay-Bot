@@ -30,6 +30,7 @@ import json
 import logging
 import os
 import random
+import re
 import subprocess
 import sys
 import time
@@ -63,6 +64,22 @@ LIMIT_CODES = {"rate_limit_exceeded", "spam_risk_too_many_posts", "spam_risk_too
                "reached_active_user_cap", "spam_risk"}
 
 
+# Plain-language text for the codes that reach Telegram (TikTok's own messages carry doc links).
+FRIENDLY = {
+    "unaudited_client_can_only_post_to_private_accounts":
+        "waiting for TikTok app review: until it passes, posts need a private account",
+    "access_token_invalid": "login expired: redo the TikTok login (runbook §8)",
+    "scope_not_authorized": "login lacks video.publish: redo the TikTok login (runbook §8)",
+    "privacy_level_option_mismatch": "TIKTOK_PRIVACY is not allowed for this account",
+    "spam_risk_too_many_posts": "TikTok daily posting limit reached",
+    "spam_risk_user_banned_from_posting": "this account is blocked from posting via apps",
+    "reached_active_user_cap": "app's daily user cap reached (unaudited apps: 5 users/day)",
+    "rate_limit_exceeded": "TikTok rate limit, retry later",
+}
+PAUSE_CODES = {"unaudited_client_can_only_post_to_private_accounts"}
+PAUSE_HOURS = 12
+
+
 class TikTokAuthError(RuntimeError):
     """Token/permission/app problem — every further post this run would fail too."""
 
@@ -85,6 +102,8 @@ def _load_state() -> dict:
         "skipped": dict(state.get("skipped", {})),
         "counts": {k: int(v) for k, v in dict(state.get("counts", {})).items()},
         "last_post": state.get("last_post"),
+        "paused_until": state.get("paused_until"),
+        "pause_reason": state.get("pause_reason"),
     }
 
 
@@ -97,6 +116,9 @@ def _save_state(state: dict) -> None:
         "counts": dict(sorted(state["counts"].items())[-30:]),
         "last_post": state.get("last_post"),
     }
+    if state.get("paused_until"):
+        out["paused_until"] = state["paused_until"]
+        out["pause_reason"] = state.get("pause_reason")
     with tmp.open("w", encoding="utf-8") as fh:
         json.dump(out, fh, indent=2)
     tmp.replace(config.TIKTOK_STATE_FILE)
@@ -113,6 +135,7 @@ def mark_done(video_id: str) -> None:
     day = _today().isoformat()
     state["counts"][day] = state["counts"].get(day, 0) + 1
     state["last_post"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    state["paused_until"] = None
     _save_state(state)
 
 
@@ -138,10 +161,18 @@ def pacing_status() -> dict:
 
 
 def pacing_block(ignore_gap: bool = False) -> str | None:
-    """Why a post must wait now, or None if it may go."""
+    """Why a post must wait now, or None if it may go. /ttfill (ignore_gap) skips the pause."""
     st = pacing_status()
     if st["cap"] is not None and st["today"] >= st["cap"]:
         return f"daily limit: {st['today']}/{st['cap']} posted today"
+    state = _load_state()
+    if not ignore_gap and state.get("paused_until"):
+        try:
+            until = datetime.fromisoformat(state["paused_until"])
+        except ValueError:
+            until = None
+        if until and until > datetime.now(timezone.utc):
+            return state.get("pause_reason") or "paused"
     gap = config.TIKTOK_MIN_GAP_MINUTES
     if not ignore_gap and st["last_post"] and gap > 0:
         try:
@@ -237,6 +268,20 @@ def refresh_days_left() -> int | None:
 
 
 # ── API ──────────────────────────────────────────────────────────────────────
+def _no_links(text: str) -> str:
+    """TikTok error messages end with 'Please review ... https://…' — drop that for Telegram."""
+    return re.sub(r"\s*(Please review\b.*|https?://\S+)", "", text or "").strip()
+
+
+def _pause(reason: str) -> None:
+    """Stop automatic TikTok attempts for PAUSE_HOURS (each one downloads a Short first)."""
+    state = _load_state()
+    state["paused_until"] = (datetime.now(timezone.utc) + timedelta(hours=PAUSE_HOURS)).isoformat(timespec="seconds")
+    state["pause_reason"] = reason
+    _save_state(state)
+    logger.warning("TikTok paused for %d h: %s", PAUSE_HOURS, reason)
+
+
 def _api(path: str, body: dict, retries: int | None = None) -> dict:
     """POST to the Content Posting API. Returns `data`. Raises TikTokAuthError / TikTokLimit."""
     retries = config.UPLOAD_MAX_RETRIES if retries is None else retries
@@ -255,7 +300,10 @@ def _api(path: str, body: dict, retries: int | None = None) -> dict:
             code = str(err.get("code") or "")
             if resp.ok and code in ("", "ok"):
                 return payload.get("data") or {}
-            error = f"HTTP {resp.status_code} {code}: {err.get('message', '')}".strip()
+            error = FRIENDLY.get(code) or f"HTTP {resp.status_code} {code}: {_no_links(err.get('message', ''))}".strip()
+            if code in PAUSE_CODES:
+                _pause(error)
+                raise TikTokLimit(error)
             if code in AUTH_CODES or resp.status_code == 401:
                 raise TikTokAuthError(error)
             if code in LIMIT_CODES or resp.status_code == 429:

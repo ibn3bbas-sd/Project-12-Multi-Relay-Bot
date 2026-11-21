@@ -16,6 +16,8 @@ from .x_uploader import XAuthError, XLimit
 
 logger = logging.getLogger(__name__)
 
+SEP = "━━━━━━━━━━━━━━"  # Telegram message divider
+
 
 def new_summary() -> dict:
     return {
@@ -200,7 +202,7 @@ def _shorts_targets() -> dict[str, dict]:
     """Shorts-only targets. Read at call time so config stays the single source."""
     return {
         "ig": {
-            "name": "Instagram", "short": "IG", "mod": ig_uploader,
+            "name": "Instagram", "short": "IG", "icon": "📸", "mod": ig_uploader,
             "enabled": config.IG_ENABLED, "flag": "IG_ENABLED",
             "auth_exc": InstagramAuthError, "limit_exc": InstagramLimit,
             "limit_text": "Instagram 24h API publishing limit",
@@ -208,7 +210,7 @@ def _shorts_targets() -> dict[str, dict]:
             "topup": config.IG_TOPUP,
         },
         "x": {
-            "name": "X", "short": "X", "mod": x_uploader,
+            "name": "X", "short": "X", "icon": "✖️", "mod": x_uploader,
             "enabled": config.X_ENABLED, "flag": "X_ENABLED",
             "auth_exc": XAuthError, "limit_exc": XLimit,
             "limit_text": "X API rate limit (429)",
@@ -216,10 +218,10 @@ def _shorts_targets() -> dict[str, dict]:
             "topup": config.X_TOPUP,
         },
         "tt": {
-            "name": "TikTok", "short": "TT", "mod": tiktok_uploader,
+            "name": "TikTok", "short": "TT", "icon": "🎵", "mod": tiktok_uploader,
             "enabled": config.TIKTOK_ENABLED, "flag": "TIKTOK_ENABLED",
             "auth_exc": TikTokAuthError, "limit_exc": TikTokLimit,
-            "limit_text": "TikTok posting/rate limit",
+            "limit_text": "TikTok posting/rate limit", "limit_detail": True,
             "max_seconds": config.TIKTOK_MAX_SECONDS, "scan_limit": config.TIKTOK_SCAN_LIMIT,
             "topup": config.TIKTOK_TOPUP,
         },
@@ -286,7 +288,7 @@ def _post_shorts(key: str, summary: dict, failures: list[dict], limit: int = 1, 
             break
         except t["limit_exc"] as exc:
             logger.warning("%s limit reached: %s", t["name"], exc)
-            summary[f"{key}_paced"] = t["limit_text"]
+            summary[f"{key}_paced"] = str(exc) if t.get("limit_detail") else t["limit_text"]
             break
         finally:
             downloader.cleanup(file_path)
@@ -326,16 +328,17 @@ def run_shorts_fill(key: str, limit: int = SHORTS_FILL_DEFAULT) -> dict:
 
 def format_shorts_fill(result: dict) -> str:
     t = _shorts_targets()[result["key"]]
+    ok = not result.get("error")
     lines = [
-        f"{t['name']} fill done",
-        f"  Posted: {result['posted']}",
-        f"  Failed: {result['failed']}",
+        f"{'✅' if ok else '⚠️'} {t['icon']} {t['name']} fill done",
+        SEP,
+        f"📤 Posted: {result['posted']}   ❌ Failed: {result['failed']}",
+        format_shorts_pacing(result["key"]),
     ]
     if result.get("paced"):
-        lines.append(f"  Waiting: {result['paced']}")
+        lines.append(f"⏳ {result['paced']}")
     if result.get("error"):
-        lines.append(f"  ⚠️ {result['error']}")
-    lines.append(format_shorts_pacing(result["key"]))
+        lines.append(f"⚠️ {result['error']}")
     return "\n".join(lines)
 
 
@@ -343,7 +346,7 @@ def format_shorts_pacing(key: str) -> str:
     t = _shorts_targets()[key]
     st = t["mod"].pacing_status()
     cap = "no cap" if st["cap"] is None else f"{st['today']}/{st['cap']}"
-    return f"  {t['short']} today: {cap}, {st['done']} Shorts posted in total"
+    return f"📅 Today {cap} · {st['done']} Shorts in total"
 
 
 def run_relay(backfill: bool = False) -> dict:
@@ -445,15 +448,16 @@ def run_fb_fill(limit: int = FB_FILL_DEFAULT) -> dict:
 
 
 def format_fb_fill(result: dict) -> str:
+    ok = not result.get("error")
     lines = [
-        "Facebook fill done",
-        f"  Posted:    {result['posted']} ({result.get('reels', 0)} as Reels)",
-        f"  Failed:    {result['failed']}",
-        f"  Remaining: {result['remaining']}",
+        f"{'✅' if ok else '⚠️'} 📘 Facebook fill done",
+        SEP,
+        f"📤 Posted: {result['posted']} ({result.get('reels', 0)} Reels)   ❌ Failed: {result['failed']}",
+        f"📥 Remaining: {result['remaining']}",
+        format_fb_pacing(),
     ]
     if result.get("error"):
-        lines.append(f"  ⚠️ {result['error']}")
-    lines.append(format_fb_pacing())
+        lines.append(f"⚠️ {result['error']}")
     return "\n".join(lines)
 
 
@@ -461,7 +465,7 @@ def format_fb_pacing() -> str:
     st = fb_uploader.pacing_status()
     cap = "no cap" if st["cap"] is None else f"{st['today']}/{st['cap']}"
     phase = f"warm-up week {st['week']}" if st["week"] else "steady"
-    return f"  FB today: {cap} ({phase}), {st['queued']} queued"
+    return f"📅 Today {cap} ({phase}) · 📥 {st['queued']} queued"
 
 
 def is_quiet(summary: dict) -> bool:
@@ -485,41 +489,56 @@ def is_quiet(summary: dict) -> bool:
     )
 
 
+def _has_problem(summary: dict) -> bool:
+    return bool(
+        summary.get("aborted") or summary.get("bot_check") or summary.get("fb_error")
+        or any(summary.get(f"{k}_error") for k in _shorts_targets())
+    )
+
+
 def format_summary(summary: dict, header: str = "Relay complete") -> str:
-    lines = [
-        header,
-        f"  Found:    {summary['found']}",
-        f"  Uploaded: {summary['uploaded']}",
-        f"  Failed:   {summary['failed']}",
-    ]
-    if summary.get("backfilled"):
-        lines.append(f"  (older videos: {summary['backfilled']})")
+    icon = "⚠️" if _has_problem(summary) else "✅"
+    lines = [f"{icon} {header}", SEP]
+
+    yt = f"▶️ YouTube: {summary['uploaded']} uploaded · {summary['failed']} failed · 🔎 {summary['found']} found"
+    lines.append(yt)
+    extra = []
     if summary.get("today") is not None and config.DAILY_UPLOAD_TARGET > 0:
-        lines.append(f"  Today:    {summary['today']}/{config.DAILY_UPLOAD_TARGET}")
+        extra.append(f"📅 Today {summary['today']}/{config.DAILY_UPLOAD_TARGET}")
+    if summary.get("backfilled"):
+        extra.append(f"+{summary['backfilled']} older")
+    if extra:
+        lines.append(" · ".join(extra))
+    if summary.get("aborted"):
+        lines.append(f"🛑 {summary['aborted']}")
+    if summary.get("bot_check"):
+        lines.append("🍪 YouTube bot-check: cookies likely expired (runbook 2b)")
+
     if config.FB_ENABLED:
+        lines.append("")
         lines.append(
-            f"  Facebook: {summary.get('fb_uploaded', 0)} posted"
-            f" ({summary.get('fb_reels', 0)} Reels), {summary.get('fb_failed', 0)} failed,"
-            f" {summary.get('fb_deferred', 0)} held back"
+            f"📘 Facebook: {summary.get('fb_uploaded', 0)} posted ({summary.get('fb_reels', 0)} Reels)"
+            f" · {summary.get('fb_failed', 0)} failed · {summary.get('fb_deferred', 0)} held"
         )
         lines.append(format_fb_pacing())
         if summary.get("fb_error"):
-            lines.append(f"  ⚠️ Facebook token/permission: {summary['fb_error']}")
+            lines.append(f"⚠️ Facebook token/permission: {summary['fb_error']}")
+
     for key, t in _shorts_targets().items():
         if not t["enabled"]:
             continue
+        lines.append("")
         lines.append(
-            f"  {t['name']}: {summary.get(f'{key}_posted', 0)} Shorts posted,"
-            f" {summary.get(f'{key}_failed', 0)} failed"
+            f"{t['icon']} {t['name']}: {summary.get(f'{key}_posted', 0)} posted"
+            f" · {summary.get(f'{key}_failed', 0)} failed"
         )
         lines.append(format_shorts_pacing(key))
+        if summary.get(f"{key}_paced"):
+            lines.append(f"⏳ {summary[f'{key}_paced']}")
         if summary.get(f"{key}_error"):
-            lines.append(f"  ⚠️ {t['name']} token/permission: {summary[f'{key}_error']}")
+            lines.append(f"⚠️ {t['name']} token/permission: {summary[f'{key}_error']}")
+
     if summary.get("started_at") and summary.get("finished_at"):
         elapsed = (summary["finished_at"] - summary["started_at"]).total_seconds()
-        lines.append(f"  Duration: {elapsed:.0f}s")
-    if summary.get("bot_check"):
-        lines.append("  ⚠️ YouTube bot-check: cookies likely expired, refresh them (runbook 2b)")
-    if summary.get("aborted"):
-        lines.append(f"  ABORTED:  {summary['aborted']}")
+        lines += [SEP, f"⏱ {elapsed:.0f}s"]
     return "\n".join(lines)
