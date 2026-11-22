@@ -1,6 +1,6 @@
 ---
 name: relay-bot-cce-deploy
-description: Continue or operate the YouTube Relay Bot deployment on Huawei Cloud CCE me-east-1 (k8s/relay-bot.yaml, build-push-dockerhub workflow, Docker Hub image, HLD diagram, runbook), including the Facebook Page second target (fb_uploader, /fbfill, Page token) the Instagram third target (Shorts only as Reels, ig_uploader, /igfill) and the X fourth target (Shorts as title-only posts, x_uploader, /xfill, OAuth 1.0a PIN flow), plus the verified TikTok video limits for the next platform.
+description: Continue or operate the Multi-Relay Bot (formerly YouTube Relay Bot) on Huawei Cloud CCE me-east-1 (k8s/relay-bot.yaml, build-push-dockerhub workflow gated by pytest, Docker Hub image, HLD diagram, runbook), including the Facebook Page target (fb_uploader, /fbfill), Instagram (Shorts as Reels, /igfill), X (Shorts, OAuth 1.0a PIN flow, /xfill), TikTok (Content Posting API Direct Post, sandbox/app review, private-account rule, /ttfill), per-platform Arabic captions, /stats SQLite history, expiry reminders, watchdog and healthchecks.io.
 ---
 
 # Multi-Relay Bot (formerly YouTube Relay Bot) on Huawei Cloud CCE
@@ -303,6 +303,54 @@ the app may need Facebook Login for Business (fallback would need a public `vide
 - After any restart, the first `check_new` runs ~1 min later and holds the relay lock for ~1 min per
   Short; a `/xfill` or `/igfill` sent then gets "A relay is already running". Not a bug — wait for its report.
 - Cost: ~$0.015 per post → 3/day ≈ $1.35/month. 402 from X = credit used up (shows in Telegram).
+
+## TikTok target (2026-11-21, runbook §8)
+
+- `src/tiktok_uploader.py`: Content Posting API, Direct Post, `FILE_UPLOAD`. `creator_info` before every post
+  (privacy options, `max_video_post_duration_sec`), `video/init` (no blind retry), PUT chunks, poll
+  `status/fetch` (still processing after 10 min → counted as posted, to avoid double posts).
+- **Chunk rule (bug hit live):** `chunk_size` may never exceed the file. Files ≤64 MB go as ONE chunk
+  (`chunk_size = size`); bigger: 10 MB chunks, last absorbs the remainder. A 5–10 MB file with a 10 MB
+  chunk gave `invalid_params: The chunk size is invalid`.
+- OAuth 2: access token 24 h, refresh token 365 days, **the bot refreshes and rewrites
+  `/data/tiktok_token.json`** (refresh token may rotate) — keep it on the volume, not in the Secret.
+  Seed: `python -m src.tiktok_uploader seed < tiktok_token.json`; `check` prints @handle, privacy options, max length.
+- Portal setup: app type **Other**; Terms/Privacy/Web URL on the Pages site, verified via **URL properties →
+  URL prefix** (download the `tiktok….txt` signature, publish it on `gh-pages`, then Verify). Production can't be
+  saved without a demo video → build everything in a **Sandbox** first (clone from production). Login Kit
+  redirect URI `…/tiktok-callback.html` (Pages page that shows `?code=`); **pasted URI gave "Invalid Redirect
+  Uri", typing it by hand worked**. Content Posting API: Direct Post ON; "Verify domains" only for PULL_FROM_URL.
+  `video.upload` is auto-added with the product. Add the posting account under Sandbox → Target Users.
+- **Unaudited app rule:** `unaudited_client_can_only_post_to_private_accounts` — the whole TikTok ACCOUNT must
+  be private, `SELF_ONLY` alone is not enough (even though creator_info lists PUBLIC_TO_EVERYONE). The bot maps
+  it to a plain message and **pauses automatic TikTok attempts 12 h** (each attempt downloads a Short first);
+  `/ttfill` ignores the pause. Test + demo recording = flip the account private for ~15 min, then back.
+- Public posting only after TikTok's app review: then production client key/secret, re-login,
+  `TIKTOK_PRIVACY=PUBLIC_TO_EVERYONE`. Risk: TikTok's UX guidelines expect per-post privacy choice in a UI;
+  fallback = `video.upload` (drafts to the creator's inbox).
+- Private helpers outside the repo: `tiktok-auth.py` (prints authorize URL, exchanges pasted code, checks scopes)
+  and `tiktok-deploy.py` (Secret with `TIKTOK_ENABLED=false`, seed, check, ask before enabling).
+
+## Telegram, stats, health, captions, tests (2026-11-21/22)
+
+- Messages: icon per platform (▶️ 📘 📸 ✖️ 🎵), `━━━` dividers, ✅/⚠️/⏳ headers, link previews off
+  (`Defaults(link_preview_options=LinkPreviewOptions(is_disabled=True))`). Scheduled reports are headed
+  "Scheduled check". `/status` = last scheduled run (in memory, empty after restart); `/stats [days]` = history.
+- `src/stats_db.py`: SQLite `/data/relay.db` (`posts`, `runs`, `meta`); best-effort writes, one-time import
+  of the state files' per-day counters (`source='import'`). Shorts uploaders set `LAST_ERROR` for the reason.
+- `src/health.py`: daily 10:00 reminder ≤14 days before expiry of yt-dlp Google login cookies (earliest auth
+  cookie), Facebook token (`debug_token` with the Page token itself: `expires_at` 0 = never,
+  `data_access_expires_at`), TikTok refresh token; listed in `/stats`. Watchdog every 30 min: silent 6 h,
+  stuck 90 min, last 3 runs aborted (quota stops excluded); alert once + "recovered".
+  `HEALTHCHECK_URL` (healthchecks.io, 2 h period + 1 h grace, Telegram integration) pinged after each run,
+  `/fail` on abort. Use the **uuid** ping URL, not the slug one (needs a ping key). Its "TEST is DOWN"
+  message is the integration's test button, not a real check.
+- `src/captions.py`: Arabic credit `المصدر: <channel>` (+ link on YouTube/Facebook only), hashtags from
+  `CAPTION_HASHTAGS` — 3 YT/FB, 5 IG/TikTok, 2 X; no links on X (cost) or IG/TikTok (not clickable).
+  YouTube descriptions can't contain `<`/`>`.
+- Tests: `tests/` (pytest, mocked HTTP, env set in `conftest.py` before `src.config` import). CI
+  `.github/workflows/tests.yml` is called by build-push-dockerhub (`needs: tests`), so a failing test blocks the image.
+- Found `X_ENABLED=false` in the Secret with no record of who set it: check flags in the Secret before blaming code.
 
 ## Deploy commands
 

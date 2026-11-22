@@ -95,7 +95,12 @@ per-platform done/pending state, Telegram summary line, `/<platform>fill` backlo
 - [x] Health (2026-11-22): daily expiry reminders (cookies, FB token, TikTok login) + watchdog (silent/stuck/failing), optional HEALTHCHECK_URL.
 - [x] Tests (2026-11-22): `tests/` pytest suite (TikTok uploader, stats, health/watchdog, messages); CI `tests.yml` gates the image build.
 - [x] Captions (2026-11-22): `src/captions.py`, Arabic credit «المصدر: <channel>» (+ link on YouTube/Facebook), hashtags 3 YT/FB · 5 IG/TikTok · 2 X (`CAPTION_HASHTAGS`, `CAPTION_CREDIT_LABEL`).
-- [ ] TikTok go-live: login + seed + check, `/ttfill 1` (private), then record the demo video and submit the app for review.
+- [x] TikTok go-live in sandbox (2026-11-21): login + seed + check, first private post via `/ttfill 1`, demo video recorded.
+      Unaudited apps can only post when the whole account is private; the bot pauses TikTok 12 h on that refusal.
+- [ ] TikTok app review: user checks the demo video, fills the Production tab like the sandbox, uploads the demo, submits.
+      After approval: production keys → re-login → `TIKTOK_PRIVACY=PUBLIC_TO_EVERYONE`. If rejected (headless bot):
+      fallback `video.upload` (drafts to the creator's inbox).
+- [x] healthchecks.io dead-man's switch configured (2 h period, 1 h grace, Telegram + email alerts).
 - [x] X code (2026-11-19): `src/x_uploader.py` (v2 chunked upload, OAuth 1.0a, title-only text, 3/day, 180 min gap),
       `/xfill [n]`, `check [--upload]`. Instagram and X now share one Shorts runner in `pipeline.py`. Offline-tested (mocked API).
 - [x] X setup: pay-per-use app (Read and write); posting account authorised via PIN flow (it differs from the
