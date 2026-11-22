@@ -264,6 +264,15 @@ expires (`check` prints the days left). Pacing as Instagram/X: `TIKTOK_DAILY_LIM
 `TIKTOK_MIN_GAP_MINUTES` (180), `TIKTOK_TOPUP`, `/ttfill [n]` (max 5). Token/scope/privacy errors stop TikTok for
 the run and show in Telegram; rate/spam limits wait for a later run. State: `/data/tiktok_state.json`.
 
+## 9. Stats (`/stats`)
+
+Every post attempt (posted / failed / skipped, all platforms) and every relay run is written to
+`/data/relay.db` (SQLite, `src/stats_db.py`). History from before the database was imported once from the
+state files' per-day counters (`source='import'`, no video ids). `/stats [days]` (default 7, max 30) shows
+per-platform counts, posts per day and the last failure. Writes are best-effort: a database problem is
+logged and never stops a relay. For a dashboard, point Superset/Metabase/Grafana at a copy of `relay.db`
+(or move the tables to PostgreSQL later).
+
 ## Day 2
 
 ```bash
