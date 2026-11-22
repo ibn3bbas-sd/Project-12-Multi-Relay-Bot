@@ -93,6 +93,7 @@ per-platform done/pending state, Telegram summary line, `/<platform>fill` backlo
       15 fps → 30 fps re-encode), `/ttfill [n]`, `seed` / `check`, runbook §8. Offline-tested (mocked API).
 - [x] Stats (2026-11-22): SQLite history `/data/relay.db` + `/stats [days]`; Telegram messages restyled with icons.
 - [x] Health (2026-11-22): daily expiry reminders (cookies, FB token, TikTok login) + watchdog (silent/stuck/failing), optional HEALTHCHECK_URL.
+- [x] Tests (2026-11-22): `tests/` pytest suite (TikTok uploader, stats, health/watchdog, messages); CI `tests.yml` gates the image build.
 - [ ] TikTok go-live: login + seed + check, `/ttfill 1` (private), then record the demo video and submit the app for review.
 - [x] X code (2026-11-19): `src/x_uploader.py` (v2 chunked upload, OAuth 1.0a, title-only text, 3/day, 180 min gap),
       `/xfill [n]`, `check [--upload]`. Instagram and X now share one Shorts runner in `pipeline.py`. Offline-tested (mocked API).

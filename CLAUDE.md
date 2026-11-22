@@ -25,4 +25,8 @@ python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 cp .env.example .env   # fill in values
 python -m src.main
+
+# tests (offline, mocked HTTP; CI runs them before every image build)
+pip install -r requirements-dev.txt
+python -m pytest -q
 ```

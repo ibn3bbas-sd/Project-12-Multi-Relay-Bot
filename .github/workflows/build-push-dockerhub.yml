@@ -1,6 +1,6 @@
 name: build-push-dockerhub
 
-# push to main -> build linux/amd64 image -> push to Docker Hub as :latest and :<sha>.
+# push to main -> tests (tests.yml) -> build linux/amd64 image -> push to Docker Hub as :latest and :<sha>.
 # Then on the cluster: kubectl -n relay-bot rollout restart deploy/relay-bot
 #
 # Repo SECRET (Settings > Secrets and variables > Actions > Secrets):
@@ -15,7 +15,7 @@ name: build-push-dockerhub
 on:
   push:
     branches: [main]
-    paths: [src/**, config/**, requirements.txt, Dockerfile, .github/workflows/build-push-dockerhub.yml]
+    paths: [src/**, config/**, tests/**, requirements.txt, requirements-dev.txt, Dockerfile, .github/workflows/*.yml]
   workflow_dispatch:
 
 concurrency:
@@ -23,7 +23,11 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  tests:
+    uses: ./.github/workflows/tests.yml
+
   build:
+    needs: tests
     runs-on: ubuntu-latest
     permissions:
       contents: read

@@ -13,3 +13,5 @@ data
 k8s
 docs
 *cookies*.txt
+tests
+requirements-dev.txt
