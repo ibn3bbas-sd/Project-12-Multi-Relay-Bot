@@ -39,6 +39,8 @@ from .ig_uploader import probe
 
 logger = logging.getLogger(__name__)
 
+LAST_ERROR: str | None = None  # why the last upload_short() returned None (for the stats db)
+
 API = "https://api.x.com/2"
 MAX_TEXT = 270  # X counts 280 weighted chars; leave room for the duplicate suffix
 MIN_SECONDS = 0.5
@@ -328,6 +330,8 @@ def upload_short(file_path: Path, video_meta: dict) -> str | None:
     except (XAuthError, XLimit):
         raise
     except Exception as exc:  # noqa: BLE001
+        global LAST_ERROR
+        LAST_ERROR = str(exc)[:300]
         logger.error("X post failed for '%s': %s", video_meta.get("title"), exc)
         return None
     finally:

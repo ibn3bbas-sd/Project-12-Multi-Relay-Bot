@@ -7,7 +7,7 @@ import logging
 from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
 
-from . import config, downloader, fb_uploader, ig_uploader, tiktok_uploader, uploader, x_uploader
+from . import config, downloader, fb_uploader, ig_uploader, stats_db, tiktok_uploader, uploader, x_uploader
 from .fb_uploader import FacebookAuthError
 from .ig_uploader import InstagramAuthError, InstagramLimit
 from .tiktok_uploader import TikTokAuthError, TikTokLimit
@@ -104,11 +104,13 @@ def _facebook_one(video: dict, file_path, summary: dict, ignore_gap: bool = Fals
         summary["fb_error"] = str(exc)
         fb_id = None
     if fb_id:
+        stats_db.record("facebook", "posted", video, kind=kind, ref=str(fb_id))
         fb_uploader.mark_done(video["id"])
         summary["fb_uploaded"] += 1
         if kind == "reel":
             summary["fb_reels"] += 1
         return True
+    stats_db.record("facebook", "failed", video, detail=summary["fb_error"])
     summary["fb_failed"] += 1
     return False
 
@@ -123,6 +125,7 @@ def _relay_one(video: dict, summary: dict, failures: list[dict]) -> bool:
     file_path = downloader.download_video(video, failures)
     if file_path is None:
         # Leave it unmarked: a transient failure should retry next run.
+        stats_db.record("youtube", "failed", video, detail="download failed")
         summary["failed"] += 1
         return False
 
@@ -137,6 +140,7 @@ def _relay_one(video: dict, summary: dict, failures: list[dict]) -> bool:
         downloader.cleanup(file_path)
 
     if video_id:
+        stats_db.record("youtube", "posted", video, kind="video", ref=str(video_id))
         summary["uploaded"] += 1
         downloader.mark_processed(video["id"])
         _record_upload()
@@ -144,6 +148,7 @@ def _relay_one(video: dict, summary: dict, failures: list[dict]) -> bool:
             # Off the YouTube scan list now, so queue it for a Facebook-only retry.
             fb_uploader.add_pending(video)
     elif not quota_exc:
+        stats_db.record("youtube", "failed", video, detail="upload failed")
         summary["failed"] += 1
     # If YouTube failed, the video comes back next run; Facebook skips it if already posted.
 
@@ -202,6 +207,7 @@ def _shorts_targets() -> dict[str, dict]:
     """Shorts-only targets. Read at call time so config stays the single source."""
     return {
         "ig": {
+            "platform": "instagram",
             "name": "Instagram", "short": "IG", "icon": "📸", "mod": ig_uploader,
             "enabled": config.IG_ENABLED, "flag": "IG_ENABLED",
             "auth_exc": InstagramAuthError, "limit_exc": InstagramLimit,
@@ -210,6 +216,7 @@ def _shorts_targets() -> dict[str, dict]:
             "topup": config.IG_TOPUP,
         },
         "x": {
+            "platform": "x",
             "name": "X", "short": "X", "icon": "✖️", "mod": x_uploader,
             "enabled": config.X_ENABLED, "flag": "X_ENABLED",
             "auth_exc": XAuthError, "limit_exc": XLimit,
@@ -218,6 +225,7 @@ def _shorts_targets() -> dict[str, dict]:
             "topup": config.X_TOPUP,
         },
         "tt": {
+            "platform": "tiktok",
             "name": "TikTok", "short": "TT", "icon": "🎵", "mod": tiktok_uploader,
             "enabled": config.TIKTOK_ENABLED, "flag": "TIKTOK_ENABLED",
             "auth_exc": TikTokAuthError, "limit_exc": TikTokLimit,
@@ -273,6 +281,7 @@ def _post_shorts(key: str, summary: dict, failures: list[dict], limit: int = 1, 
             break  # newest first: everything after this is older still
         if (video.get("duration") or 0) > t["max_seconds"]:
             mod.mark_skipped(vid, f"too long ({video['duration']}s)")
+            stats_db.record(t["platform"], "skipped", video, detail=f"too long ({video['duration']}s)")
             continue
         file_path = downloader.download_video(video, failures)
         if file_path is None:
@@ -280,11 +289,13 @@ def _post_shorts(key: str, summary: dict, failures: list[dict], limit: int = 1, 
             if failures and failures[-1]["bot_check"]:
                 break
             continue
+        mod.LAST_ERROR = None
         try:
             media_id = mod.upload_short(file_path, video)
         except t["auth_exc"] as exc:
             logger.error("%s auth problem — skipping %s this run: %s", t["name"], t["name"], exc)
             summary[f"{key}_error"] = str(exc)
+            stats_db.record(t["platform"], "failed", video, detail=str(exc))
             break
         except t["limit_exc"] as exc:
             logger.warning("%s limit reached: %s", t["name"], exc)
@@ -294,10 +305,14 @@ def _post_shorts(key: str, summary: dict, failures: list[dict], limit: int = 1, 
             downloader.cleanup(file_path)
         if media_id:
             mod.mark_done(vid)
+            stats_db.record(t["platform"], "posted", video, kind="short", ref=str(media_id))
             summary[f"{key}_posted"] += 1
             posted += 1
         elif not mod.is_handled(vid):  # skipped clips aren't failures
+            stats_db.record(t["platform"], "failed", video, detail=getattr(mod, "LAST_ERROR", None))
             summary[f"{key}_failed"] += 1
+        else:
+            stats_db.record(t["platform"], "skipped", video, detail=mod._load_state()["skipped"].get(vid))
 
 
 SHORTS_FILL_DEFAULT = 1
@@ -399,6 +414,7 @@ def run_relay(backfill: bool = False) -> dict:
         summary["bot_check"] = any(f["bot_check"] for f in failures)
         summary["today"] = uploads_today()
         summary["finished_at"] = datetime.now(timezone.utc)
+        stats_db.record_run(summary, "fill" if backfill else "check")
 
 
 FB_FILL_DEFAULT = 3

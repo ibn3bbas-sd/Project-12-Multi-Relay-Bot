@@ -1,4 +1,4 @@
-"""Telegram control surface: /run /fill /fbfill /igfill /xfill /ttfill /status /next /help."""
+"""Telegram control surface: /run /fill /fbfill /igfill /xfill /ttfill /status /stats /next /help."""
 
 from __future__ import annotations
 
@@ -8,7 +8,7 @@ import logging
 from telegram import LinkPreviewOptions, Update
 from telegram.ext import Application, CommandHandler, ContextTypes, Defaults
 
-from . import config
+from . import config, stats_db
 from .pipeline import (
     FB_FILL_DEFAULT,
     FB_FILL_MAX,
@@ -40,6 +40,7 @@ HELP_TEXT = (
     + (f"✖️ /xfill [n] — Shorts to X now (default {SHORTS_FILL_DEFAULT}, max {SHORTS_FILL_MAX})\n" if config.X_ENABLED else "")
     + (f"🎵 /ttfill [n] — Shorts to TikTok now (default {SHORTS_FILL_DEFAULT}, max {SHORTS_FILL_MAX})\n" if config.TIKTOK_ENABLED else "")
     + "📊 /status — last run summary\n"
+    "📈 /stats [days] — posts per platform and per day (default 7, max 30)\n"
     "⏰ /next — next scheduled runs\n"
     "❓ /help — this message"
 )
@@ -157,6 +158,22 @@ async def cmd_status(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
     await update.message.reply_text(format_summary(last, "Last scheduled run"))
 
 
+async def cmd_stats(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    if not _is_allowed(update):
+        return
+    try:
+        days = int(context.args[0]) if context.args else 7
+    except ValueError:
+        await update.message.reply_text("Usage: /stats [days]  (1–30)")
+        return
+    try:
+        text = await asyncio.to_thread(stats_db.build_report, days)
+    except Exception as exc:  # noqa: BLE001
+        logger.exception("stats report failed")
+        text = f"⚠️ Stats unavailable: {type(exc).__name__}: {exc}"
+    await update.message.reply_text(text)
+
+
 async def cmd_next(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if not _is_allowed(update):
         return
@@ -219,5 +236,6 @@ def build_app() -> Application:
     app.add_handler(CommandHandler("ttfill", cmd_ttfill))
     app.add_handler(CommandHandler("status", cmd_status))
     app.add_handler(CommandHandler("next", cmd_next))
+    app.add_handler(CommandHandler("stats", cmd_stats))
     app.add_error_handler(_on_error)
     return app

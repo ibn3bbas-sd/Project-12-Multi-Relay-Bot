@@ -11,7 +11,7 @@ from logging.handlers import RotatingFileHandler
 
 import requests
 
-from . import config
+from . import config, stats_db
 from .pipeline import format_summary, is_quiet, run_relay
 from .scheduler import register_jobs
 from .telegram_bot import build_app, send_offline_reports
@@ -104,8 +104,10 @@ def main() -> int:
     setup_logging()
     logger = logging.getLogger(__name__)
 
-    logger.info("YouTube Relay Bot starting (base dir: %s)", config.BASE_DIR)
+    logger.info("Multi-Relay Bot starting (base dir: %s)", config.BASE_DIR)
     logger.info("Source channel: %s → target: %s", config.SOURCE_CHANNEL_ID, config.TARGET_CHANNEL_ID)
+
+    stats_db.import_history()  # once; later calls are no-ops
 
     reports = run_without_telegram_until_back()
 

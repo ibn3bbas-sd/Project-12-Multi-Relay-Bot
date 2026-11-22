@@ -45,6 +45,8 @@ from .ig_uploader import probe
 
 logger = logging.getLogger(__name__)
 
+LAST_ERROR: str | None = None  # why the last upload_short() returned None (for the stats db)
+
 API = "https://open.tiktokapis.com/v2"
 MAX_TITLE = 2200
 MIN_SECONDS = 3
@@ -481,6 +483,8 @@ def upload_short(file_path: Path, video_meta: dict) -> str | None:
     except (TikTokAuthError, TikTokLimit):
         raise
     except Exception as exc:  # noqa: BLE001
+        global LAST_ERROR
+        LAST_ERROR = str(exc)[:300]
         logger.error("TikTok post failed for '%s': %s", video_meta.get("title"), exc)
         return None
     finally:

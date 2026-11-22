@@ -39,6 +39,8 @@ from . import config
 
 logger = logging.getLogger(__name__)
 
+LAST_ERROR: str | None = None  # why the last upload_short() returned None (for the stats db)
+
 MAX_CAPTION = 2200
 MAX_HASHTAGS = 30
 MAX_BYTES = 300 * 1024 * 1024
@@ -395,6 +397,8 @@ def upload_short(file_path: Path, video_meta: dict) -> str | None:
     except (InstagramAuthError, InstagramLimit):
         raise
     except Exception as exc:  # noqa: BLE001
+        global LAST_ERROR
+        LAST_ERROR = str(exc)[:300]
         logger.error("Instagram post failed for '%s': %s", video_meta.get("title"), exc)
         return None
     finally:
