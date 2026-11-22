@@ -9,7 +9,7 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 from telegram.ext import Application
 
 from . import config
-from .telegram_bot import scheduled_backfill, scheduled_check
+from .telegram_bot import expiry_reminder, scheduled_backfill, scheduled_check, watchdog
 
 logger = logging.getLogger(__name__)
 
@@ -54,6 +54,13 @@ def register_jobs(app: Application) -> None:
             time=dt.time(hour, minute, tzinfo=tz),
             name="daily_topup",
         )
+
+    hour, minute = _parse_time(config.EXPIRY_CHECK_TIME)
+    app.job_queue.run_daily(expiry_reminder, time=dt.time(hour, minute, tzinfo=tz), name="expiry_reminder")
+    app.job_queue.run_repeating(
+        watchdog, interval=dt.timedelta(minutes=config.WATCHDOG_MINUTES),
+        first=dt.timedelta(minutes=config.WATCHDOG_MINUTES), name="watchdog",
+    )
 
     logger.info(
         "Checking for new videos every %d min; daily top-up to %d at %s (%s)",

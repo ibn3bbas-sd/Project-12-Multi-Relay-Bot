@@ -273,6 +273,18 @@ per-platform counts, posts per day and the last failure. Writes are best-effort:
 logged and never stops a relay. For a dashboard, point Superset/Metabase/Grafana at a copy of `relay.db`
 (or move the tables to PostgreSQL later).
 
+## 10. Health: expiry reminders and watchdog
+
+`src/health.py`. Every day at `EXPIRY_CHECK_TIME` (10:00) the bot sends a 🔑 reminder for anything expiring
+within `REMIND_DAYS` (14): the yt-dlp Google login cookies (earliest auth-cookie expiry in the cookies file),
+the Facebook Page token / data access (Graph `debug_token`), the TikTok login (refresh token). `/stats` lists
+all of them. Fix hints are in the message.
+
+Watchdog every `WATCHDOG_MINUTES` (30): 🔇 no run finished for `SILENT_ALERT_HOURS` (6), 🐢 one run going for
+over `STUCK_ALERT_MINUTES` (90), 🛑 last 3 runs aborted (YouTube quota stops excluded). One alert per problem,
+then ✅ when it clears. A bot that is completely down can't alert itself: set `HEALTHCHECK_URL` (Secret) to a
+healthchecks.io-style ping URL; it is pinged after every run (`/fail` on an aborted run).
+
 ## Day 2
 
 ```bash

@@ -260,6 +260,17 @@ TIKTOK_DAILY_LIMIT = _as_int(_get("TIKTOK_DAILY_LIMIT", "tiktok.daily_limit", 3)
 TIKTOK_MIN_GAP_MINUTES = _as_int(_get("TIKTOK_MIN_GAP_MINUTES", "tiktok.min_gap_minutes", 180), 180)
 TIKTOK_TOPUP = _as_bool(_get("TIKTOK_TOPUP", "tiktok.topup", True), True)
 
+# ── Health: expiry reminders + watchdog ─────────────────────────────────────
+# Daily reminder (at EXPIRY_CHECK_TIME, TIMEZONE) for credentials expiring within REMIND_DAYS.
+REMIND_DAYS = _as_int(_get("REMIND_DAYS", "health.remind_days", 14), 14)
+EXPIRY_CHECK_TIME = str(_get("EXPIRY_CHECK_TIME", "health.expiry_check_time", "10:00"))
+# Watchdog alerts: no finished run for this long / one run going on for this long.
+WATCHDOG_MINUTES = _as_int(_get("WATCHDOG_MINUTES", "health.watchdog_minutes", 30), 30)
+SILENT_ALERT_HOURS = _as_int(_get("SILENT_ALERT_HOURS", "health.silent_alert_hours", 6), 6)
+STUCK_ALERT_MINUTES = _as_int(_get("STUCK_ALERT_MINUTES", "health.stuck_alert_minutes", 90), 90)
+# Optional external dead-man's switch (e.g. https://hc-ping.com/<uuid>), pinged after every run.
+HEALTHCHECK_URL = str(os.getenv("HEALTHCHECK_URL", "") or "").strip()
+
 # ── Gemini (optional) ────────────────────────────────────────────────────────
 GEMINI_API_KEY = str(_get("GEMINI_API_KEY", "gemini.api_key", "") or "")
 GEMINI_ENABLED = _as_bool(_get("GEMINI_ENABLED", "gemini.enabled", False))

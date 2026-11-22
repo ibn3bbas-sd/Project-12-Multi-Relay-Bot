@@ -218,4 +218,8 @@ def build_report(days: int = 7) -> str:
         when = datetime.fromisoformat(ts).astimezone(ZoneInfo(config.TIMEZONE))
         lines.append(f"❌ Last failure: {PLATFORMS.get(platform, ('', platform))[1]} {when:%a %H:%M}"
                      + (f" — {detail[:120]}" if detail else ""))
+    from . import health
+    keys = health.expiry_lines()
+    if keys:
+        lines += ["", "🔑 Expiries"] + keys
     return "\n".join(lines)

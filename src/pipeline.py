@@ -7,7 +7,7 @@ import logging
 from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
 
-from . import config, downloader, fb_uploader, ig_uploader, stats_db, tiktok_uploader, uploader, x_uploader
+from . import config, downloader, fb_uploader, health, ig_uploader, stats_db, tiktok_uploader, uploader, x_uploader
 from .fb_uploader import FacebookAuthError
 from .ig_uploader import InstagramAuthError, InstagramLimit
 from .tiktok_uploader import TikTokAuthError, TikTokLimit
@@ -415,6 +415,7 @@ def run_relay(backfill: bool = False) -> dict:
         summary["today"] = uploads_today()
         summary["finished_at"] = datetime.now(timezone.utc)
         stats_db.record_run(summary, "fill" if backfill else "check")
+        health.ping_healthcheck(ok=not summary["aborted"])
 
 
 FB_FILL_DEFAULT = 3

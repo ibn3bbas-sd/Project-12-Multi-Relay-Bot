@@ -4,11 +4,13 @@ from __future__ import annotations
 
 import asyncio
 import logging
+from contextlib import asynccontextmanager
+from datetime import datetime, timezone
 
 from telegram import LinkPreviewOptions, Update
 from telegram.ext import Application, CommandHandler, ContextTypes, Defaults
 
-from . import config, stats_db
+from . import config, health, stats_db
 from .pipeline import (
     FB_FILL_DEFAULT,
     FB_FILL_MAX,
@@ -47,6 +49,8 @@ HELP_TEXT = (
 
 # One relay at a time: two concurrent runs would double-upload the same video.
 _relay_lock = asyncio.Lock()
+_running_since: datetime | None = None  # start of the relay holding _relay_lock (watchdog)
+_started_at = datetime.now(timezone.utc)
 
 
 def _is_allowed(update: Update) -> bool:
@@ -54,9 +58,21 @@ def _is_allowed(update: Update) -> bool:
     return bool(chat and chat.id == config.TELEGRAM_ALLOWED_CHAT_ID)
 
 
+@asynccontextmanager
+async def _relay_slot():
+    """Hold the relay lock and record since when (for the stuck-relay watchdog)."""
+    global _running_since
+    async with _relay_lock:
+        _running_since = datetime.now(timezone.utc)
+        try:
+            yield
+        finally:
+            _running_since = None
+
+
 async def _execute_relay(context: ContextTypes.DEFAULT_TYPE, backfill: bool = False) -> dict:
     """Run the blocking pipeline in a worker thread so polling keeps responding."""
-    async with _relay_lock:
+    async with _relay_slot():
         summary = await asyncio.to_thread(run_relay, backfill)
     context.application.bot_data["last_summary"] = summary
     return summary
@@ -105,7 +121,7 @@ async def cmd_fbfill(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
     limit = max(1, min(limit, FB_FILL_MAX))
 
     await update.message.reply_text(f"📘 Posting up to {limit} older video(s) to Facebook...")
-    async with _relay_lock:
+    async with _relay_slot():
         result = await asyncio.to_thread(run_fb_fill, limit)
     await update.message.reply_text(format_fb_fill(result))
 
@@ -128,7 +144,7 @@ async def _shorts_fill(update: Update, context: ContextTypes.DEFAULT_TYPE,
     limit = max(1, min(limit, SHORTS_FILL_MAX))
 
     await update.message.reply_text(f"📤 Posting up to {limit} Short(s) to {name}...")
-    async with _relay_lock:
+    async with _relay_slot():
         result = await asyncio.to_thread(run_shorts_fill, key, limit)
     await update.message.reply_text(format_shorts_fill(result))
 
@@ -208,6 +224,32 @@ async def scheduled_check(context: ContextTypes.DEFAULT_TYPE) -> None:
 async def scheduled_backfill(context: ContextTypes.DEFAULT_TYPE) -> None:
     """Daily job: relay new videos, then top the day up with older ones."""
     await _scheduled(context, backfill=True, header="Daily top-up done")
+
+
+async def expiry_reminder(context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Daily job: warn about credentials that expire within REMIND_DAYS."""
+    text = await asyncio.to_thread(health.due_reminders)
+    if text:
+        await context.bot.send_message(chat_id=config.TELEGRAM_ALLOWED_CHAT_ID, text=text)
+
+
+WATCH_LABELS = {"silent": "🔇 Bot silent", "stuck": "🐢 Relay stuck", "failing": "🛑 Runs failing"}
+
+
+async def watchdog(context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Repeating job: alert once per problem, then once when it clears."""
+    problems = await asyncio.to_thread(health.check, _started_at, _running_since)
+    active: dict = context.application.bot_data.setdefault("watchdog_active", {})
+    for kind, problem in problems.items():
+        if problem and kind not in active:
+            active[kind] = problem
+            logger.warning("watchdog %s: %s", kind, problem)
+            await context.bot.send_message(chat_id=config.TELEGRAM_ALLOWED_CHAT_ID,
+                                           text=f"{WATCH_LABELS[kind]}\n━━━━━━━━━━━━━━\n{problem}")
+        elif not problem and kind in active:
+            del active[kind]
+            await context.bot.send_message(chat_id=config.TELEGRAM_ALLOWED_CHAT_ID,
+                                           text=f"✅ Recovered: {WATCH_LABELS[kind].split(' ', 1)[1].lower()} cleared")
 
 
 async def send_offline_reports(context: ContextTypes.DEFAULT_TYPE) -> None:
