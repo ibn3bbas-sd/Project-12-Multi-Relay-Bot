@@ -15,7 +15,7 @@ from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from googleapiclient.http import MediaFileUpload
 
-from . import config
+from . import captions, config
 
 logger = logging.getLogger(__name__)
 
@@ -70,13 +70,8 @@ def _get_credentials() -> Credentials:
 
 
 def _build_description(video_meta: dict) -> str:
-    description = video_meta.get("description") or ""
-    if config.ADD_SOURCE_CREDIT:
-        description += config.SOURCE_CREDIT_TEMPLATE.format(
-            channel_name=video_meta.get("channel_name", ""),
-            video_url=video_meta.get("url", ""),
-        )
-    return description[:MAX_DESCRIPTION]
+    # YouTube rejects descriptions containing < or >.
+    return captions.youtube_description(video_meta).replace("<", "‹").replace(">", "›")[:MAX_DESCRIPTION]
 
 
 def _is_quota_error(error: HttpError) -> bool:

@@ -35,7 +35,7 @@ from zoneinfo import ZoneInfo
 
 import requests
 
-from . import config
+from . import captions, config
 
 logger = logging.getLogger(__name__)
 
@@ -146,14 +146,7 @@ def pacing_block(ignore_gap: bool = False) -> str | None:
 
 # ── Caption ──────────────────────────────────────────────────────────────────
 def build_caption(video_meta: dict) -> str:
-    title = (video_meta.get("title") or "").strip()
-    body = (video_meta.get("description") or "").strip()
-    caption = "\n\n".join(part for part in (title, body) if part)
-    if config.ADD_SOURCE_CREDIT:
-        caption += config.SOURCE_CREDIT_TEMPLATE.format(
-            channel_name=video_meta.get("channel_name", ""),
-            video_url=video_meta.get("url", ""),
-        )
+    caption = captions.instagram_caption(video_meta)
     # Instagram rejects captions with more than 30 hashtags: drop the extras.
     seen = 0
 

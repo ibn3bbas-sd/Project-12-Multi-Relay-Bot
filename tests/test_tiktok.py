@@ -33,7 +33,7 @@ def test_needs_reencode_low_fps_and_small_frame():
 
 
 def test_build_title_strips_links():
-    assert tt.build_title({"title": "Hello https://x.y www.a.b world"}) == "Hello world"
+    assert tt.build_title({"title": "Hello https://x.y www.a.b world"}).startswith("Hello world\n\n")
 
 
 def _fake_api(calls, puts, init_privacy=None):

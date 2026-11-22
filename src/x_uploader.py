@@ -34,7 +34,7 @@ from zoneinfo import ZoneInfo
 import requests
 from requests_oauthlib import OAuth1
 
-from . import config
+from . import captions, config
 from .ig_uploader import probe
 
 logger = logging.getLogger(__name__)
@@ -143,11 +143,8 @@ def pacing_block(ignore_gap: bool = False) -> str | None:
 
 # ── Text ─────────────────────────────────────────────────────────────────────
 def build_text(video_meta: dict) -> str:
-    """Title only. URLs are stripped: a link makes the post cost $0.20 instead of $0.015."""
-    title = " ".join(
-        w for w in (video_meta.get("title") or "").split() if "://" not in w and not w.startswith("www.")
-    )
-    return title[:MAX_TEXT]
+    """Title + hashtags, no links: a link makes the post cost $0.20 instead of $0.015."""
+    return captions.x_text(video_meta, MAX_TEXT)
 
 
 # ── Media preparation ────────────────────────────────────────────────────────

@@ -171,12 +171,12 @@ YTDLP_COOKIES_FILE = _resolve(_cookies_raw, "") if _cookies_raw else None
 UPLOAD_PRIVACY = str(_get("UPLOAD_PRIVACY", "upload.privacy", "public"))
 UPLOAD_CATEGORY_ID = str(_get("UPLOAD_CATEGORY_ID", "upload.category_id", "22"))
 ADD_SOURCE_CREDIT = _as_bool(_get("ADD_SOURCE_CREDIT", "upload.add_source_credit", True), True)
-SOURCE_CREDIT_TEMPLATE = str(
-    _yaml_get(
-        "upload.source_credit_template",
-        "\n\n---\nOriginal video by: {channel_name}\n{video_url}",
-    )
-)
+# Captions (src/captions.py): credit label and hashtags (comma- or space-separated).
+CAPTION_CREDIT_LABEL = str(_get("CAPTION_CREDIT_LABEL", "captions.credit_label", "المصدر")).strip()
+_tags = _get("CAPTION_HASHTAGS", "captions.hashtags", "#فتاوى #فقه #إسلام #سؤال_وجواب #دروس_علمية")
+if isinstance(_tags, (list, tuple)):
+    _tags = " ".join(str(t) for t in _tags)
+CAPTION_HASHTAGS = [t if t.startswith("#") else f"#{t}" for t in str(_tags or "").replace(",", " ").split() if t.strip("#")]
 UPLOAD_MAX_RETRIES = _as_int(_get("UPLOAD_MAX_RETRIES", "upload.max_retries", 5), 5)
 
 # ── Facebook Page (optional second target) ───────────────────────────────────

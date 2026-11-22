@@ -26,7 +26,7 @@ from zoneinfo import ZoneInfo
 
 import requests
 
-from . import config
+from . import captions, config
 
 logger = logging.getLogger(__name__)
 
@@ -170,15 +170,7 @@ def pacing_block(ignore_gap: bool = False) -> str | None:
 # ── Upload ───────────────────────────────────────────────────────────────────
 def _build_description(video_meta: dict) -> str:
     """Post text. The feed shows only this, not the video title, so the title leads."""
-    title = (video_meta.get("title") or "").strip()
-    body = (video_meta.get("description") or "").strip()
-    description = "\n\n".join(part for part in (title, body) if part)
-    if config.ADD_SOURCE_CREDIT:
-        description += config.SOURCE_CREDIT_TEMPLATE.format(
-            channel_name=video_meta.get("channel_name", ""),
-            video_url=video_meta.get("url", ""),
-        )
-    return description[:MAX_DESCRIPTION]
+    return captions.facebook_text(video_meta)[:MAX_DESCRIPTION]
 
 
 def _check(resp: requests.Response) -> tuple[dict | None, str, bool]:

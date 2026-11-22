@@ -45,8 +45,13 @@ upload:
   privacy: "public"          # public | unlisted | private
   category_id: "22"          # 22 = People & Blogs
   add_source_credit: true
-  source_credit_template: "\n\n---\nOriginal video by: {channel_name}\n{video_url}"
   max_retries: 5
+
+captions:
+  # Credit line "<label>: <channel>" (link added on YouTube/Facebook). upload.add_source_credit turns it off.
+  credit_label: "المصدر"
+  # First 3 on YouTube/Facebook, 5 on Instagram/TikTok, 2 on X.
+  hashtags: "#فتاوى #فقه #إسلام #سؤال_وجواب #دروس_علمية"
 
 gemini:
   enabled: false

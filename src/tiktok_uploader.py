@@ -40,7 +40,7 @@ from zoneinfo import ZoneInfo
 
 import requests
 
-from . import config
+from . import captions, config
 from .ig_uploader import probe
 
 logger = logging.getLogger(__name__)
@@ -380,11 +380,8 @@ def _wait_published(publish_id: str) -> str:
 
 # ── Text and media ───────────────────────────────────────────────────────────
 def build_title(video_meta: dict) -> str:
-    """The video title, links stripped."""
-    title = " ".join(
-        w for w in (video_meta.get("title") or "").split() if "://" not in w and not w.startswith("www.")
-    )
-    return title[:MAX_TITLE]
+    """Title + credit + hashtags (TikTok's post text field)."""
+    return captions.tiktok_title(video_meta)[:MAX_TITLE]
 
 
 def unsuitable(info: dict, max_seconds: int) -> str | None:
