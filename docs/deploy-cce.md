@@ -205,8 +205,10 @@ with the bitrate capped to land near `IG_TARGET_MB` (12). After that 400 the bot
 The same source Shorts are also posted as Stories on the Facebook Page (`src/fb_story_uploader.py`,
 Page Stories API: `video_stories` start → rupload → finish). Off unless `FBS_ENABLED=true`. It uses the
 Facebook target's `FB_PAGE_ID` / `FB_PAGE_TOKEN` (`pages_manage_posts`), so no new token. Stories have no
-caption and disappear after 24 h. Shorts longer than `FBS_MAX_SECONDS` (60, Meta's limit) are skipped;
-landscape clips are letterboxed into 1080x1920.
+caption and disappear after 24 h. Meta allows 60 s per Story, so a longer Short is cut into equal parts of at
+most `FBS_SEGMENT_SECONDS` (60) posted back to back (a 161 s Short = 3 Stories of ~54 s); the daily cap counts
+Shorts, not parts. Shorts over `FBS_MAX_SECONDS` (180) are skipped. Landscape clips are letterboxed into
+1080x1920. If a later part fails, the parts already posted stay and the Short counts as posted (no reposts).
 
 ```bash
 kubectl -n relay-bot patch secret relay-bot-env --type merge -p '{"stringData":{"FBS_ENABLED":"true"}}'

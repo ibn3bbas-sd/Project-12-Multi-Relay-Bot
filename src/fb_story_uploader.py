@@ -1,6 +1,8 @@
 """Facebook Page video Stories (Page Stories API) + per-video state.
 
-Only the source channel's Shorts go to Stories (they vanish after 24 h). Flow per Short:
+Only the source channel's Shorts go to Stories (they vanish after 24 h). A Story takes
+at most 60 s, so a longer Short is cut into equal parts (≤FBS_SEGMENT_SECONDS) posted
+back to back; the daily cap counts Shorts, not parts. Flow per part:
     POST /{page-id}/video_stories  upload_phase=start                → video_id + upload_url
     POST upload_url (Authorization: OAuth, offset: 0, file_size)     → bytes uploaded
     POST /{page-id}/video_stories  upload_phase=finish video_id=...  → post_id
@@ -9,8 +11,8 @@ Uses the same Page and token as the Facebook target (FB_PAGE_ID / FB_PAGE_TOKEN 
 pages_manage_posts). Stories carry no caption.
 
 Story spec (Meta docs): MP4, 9:16 (1080x1920 recommended), 3–60 s, 24–60 fps,
-H.264 + AAC 48 kHz. Vertical clips that fit are only remuxed; others are scaled and
-letterboxed into 1080x1920.
+H.264 + AAC 48 kHz. A single-part vertical clip that fits is only remuxed; parts and
+other clips are re-encoded, scaled and letterboxed into 1080x1920.
 
 State lives in DATA_DIR/fb_story_state.json (same shape as instagram_state.json):
     done, skipped, counts (posts per local day), last_post (UTC).
@@ -20,7 +22,9 @@ from __future__ import annotations
 
 import json
 import logging
+import math
 import random
+import re
 import subprocess
 import time
 from datetime import date, datetime, timedelta, timezone
@@ -56,10 +60,17 @@ def _load_state() -> dict:
         state = {}
     return {
         "done": list(state.get("done", [])),
-        "skipped": dict(state.get("skipped", {})),
+        "skipped": {vid: why for vid, why in dict(state.get("skipped", {})).items()
+                    if not _fits_now(why)},
         "counts": {k: int(v) for k, v in dict(state.get("counts", {})).items()},
         "last_post": state.get("last_post"),
     }
+
+
+def _fits_now(reason: str) -> bool:
+    """A 'too long (Ns…)' skip from before Shorts were split, that splitting now covers."""
+    m = re.match(r"too long \((\d+)s", str(reason))
+    return bool(m) and int(m.group(1)) <= config.FBS_MAX_SECONDS
 
 
 def _save_state(state: dict) -> None:
@@ -137,6 +148,14 @@ def unsuitable(info: dict) -> str | None:
     return None
 
 
+def segments(seconds: float) -> list[tuple[float, float]]:
+    """(start, length) of equal parts no longer than FBS_SEGMENT_SECONDS."""
+    seg = max(MIN_SECONDS, min(60, config.FBS_SEGMENT_SECONDS))
+    n = max(1, math.ceil(seconds / seg - 0.01))  # 60.2 s still counts as one part
+    length = seconds / n
+    return [(i * length, length) for i in range(n)]
+
+
 def _needs_reencode(info: dict) -> bool:
     return (
         info["vcodec"] != "h264"
@@ -147,13 +166,14 @@ def _needs_reencode(info: dict) -> bool:
     )
 
 
-def prepare(path: Path, info: dict) -> Path | None:
-    """A Story-ready 9:16 MP4 (moov first). Caller deletes it."""
-    out = path.with_name(f"{path.stem}.story.mp4")
-    if _needs_reencode(info):
+def prepare(path: Path, info: dict, part: tuple[float, float] | None = None, index: int = 1) -> Path | None:
+    """A Story-ready 9:16 MP4 (moov first), optionally only `part` = (start, length). Caller deletes it."""
+    out = path.with_name(f"{path.stem}.story{index}.mp4")
+    cut = ["-ss", f"{part[0]:.3f}", "-t", f"{part[1]:.3f}"] if part else []
+    if part or _needs_reencode(info):  # exact cuts need a re-encode
         vf = ("scale=1080:1920:force_original_aspect_ratio=decrease,"
               "pad=1080:1920:(ow-iw)/2:(oh-ih)/2:color=black,setsar=1")
-        cmd = ["ffmpeg", "-y", "-v", "error", "-i", str(path), "-vf", vf,
+        cmd = ["ffmpeg", "-y", "-v", "error", *cut, "-i", str(path), "-vf", vf,
                "-c:v", "libx264", "-preset", "veryfast", "-crf", "23", "-pix_fmt", "yuv420p",
                "-maxrate", "8M", "-bufsize", "16M"]
         if not 24 <= info["fps"] <= 60:
@@ -265,20 +285,32 @@ def upload_short(file_path: Path, video_meta: dict) -> str | None:
         mark_skipped(video_meta["id"], reason)
         return None
 
-    ready = prepare(file_path, info)
-    if ready is None:
-        LAST_ERROR = "preparing the file failed"
-        return None
-    try:
-        post_id = _post_story(ready)
-    except (FacebookAuthError, FacebookStoryLimit):
-        raise
-    except Exception as exc:  # noqa: BLE001
-        LAST_ERROR = str(exc)[:300]
-        logger.error("Facebook Story failed for '%s': %s", video_meta.get("title"), exc)
-        return None
-    finally:
-        ready.unlink(missing_ok=True)
+    parts = segments(info["seconds"])
+    title = video_meta.get("title")
+    post_ids: list[str] = []
+    for i, part in enumerate(parts, 1):
+        ready = prepare(file_path, info, part if len(parts) > 1 else None, i)
+        try:
+            if ready is None:
+                raise RuntimeError("preparing the file failed")
+            post_ids.append(_post_story(ready))
+        except (FacebookAuthError, FacebookStoryLimit):
+            if not post_ids:
+                raise
+            logger.warning("Story '%s' stopped after part %d/%d (auth/limit)", title, i - 1, len(parts))
+            break
+        except Exception as exc:  # noqa: BLE001
+            LAST_ERROR = str(exc)[:300]
+            if not post_ids:
+                logger.error("Facebook Story failed for '%s': %s", title, exc)
+                return None
+            # Earlier parts are live: count the Short as posted rather than repost them next run.
+            logger.warning("Story '%s' part %d/%d failed, keeping %d posted part(s): %s",
+                           title, i, len(parts), len(post_ids), exc)
+            break
+        finally:
+            if ready is not None:
+                ready.unlink(missing_ok=True)
 
-    logger.info("Posted '%s' to Facebook as a Story → %s", video_meta.get("title"), post_id)
-    return post_id
+    logger.info("Posted '%s' to Facebook as %d Story part(s) → %s", title, len(post_ids), ", ".join(post_ids))
+    return post_ids[0]

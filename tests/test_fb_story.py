@@ -15,7 +15,8 @@ def test_vertical_h264_is_only_remuxed_landscape_is_letterboxed():
 
 
 def test_long_short_is_unsuitable():
-    assert fbs.unsuitable({**VERTICAL, "seconds": 75.0}).startswith("too long")
+    assert fbs.unsuitable({**VERTICAL, "seconds": 200.0}).startswith("too long")
+    assert fbs.unsuitable({**VERTICAL, "seconds": 75.0}) is None  # split into parts
     assert fbs.unsuitable(VERTICAL) is None
 
 
@@ -25,7 +26,7 @@ def page(monkeypatch, tmp_path):
     monkeypatch.setattr(config, "FB_PAGE_TOKEN", "tok")
     monkeypatch.setattr(fbs, "probe", lambda p: dict(VERTICAL))
     ready = tmp_path / "s.story.mp4"
-    monkeypatch.setattr(fbs, "prepare", lambda p, i: (ready.write_bytes(b"x" * 10), ready)[1])
+    monkeypatch.setattr(fbs, "prepare", lambda p, i, part=None, n=1: (ready.write_bytes(b"x" * 10), ready)[1])
     return tmp_path / "s.mp4"
 
 
@@ -64,7 +65,7 @@ def test_rate_limit_raises_limit(monkeypatch, page):
 
 
 def test_too_long_is_skipped_not_failed(monkeypatch, page):
-    monkeypatch.setattr(fbs, "probe", lambda p: {**VERTICAL, "seconds": 90.0})
+    monkeypatch.setattr(fbs, "probe", lambda p: {**VERTICAL, "seconds": 200.0})
     assert fbs.upload_short(page, {"id": "a4", "title": "t"}) is None
     assert fbs.is_handled("a4")
 
@@ -81,3 +82,57 @@ def test_summary_shows_stories(monkeypatch):
     s = {**pipeline.new_summary(), "fbs_posted": 1}
     assert "📖 Facebook Stories: 1 posted" in pipeline.format_summary(s)
     assert not pipeline.is_quiet(s)
+
+
+def test_segments_are_equal_and_at_most_60s():
+    assert fbs.segments(45) == [(0, 45)]
+    assert fbs.segments(60.2) == [(0, 60.2)]
+    parts = fbs.segments(161)
+    assert len(parts) == 3 and all(abs(l - 161 / 3) < 1e-9 for _, l in parts)
+    assert parts[-1][0] + parts[-1][1] == pytest.approx(161)
+
+
+def _flow(monkeypatch, fail_on_part=None):
+    finishes = []
+
+    def post(url, data=None, headers=None, timeout=None):
+        if hasattr(data, "read"):
+            return FakeResponse(200, {"success": True})
+        if data["upload_phase"] == "start":
+            n = len(finishes) + 1
+            if n == fail_on_part:
+                return FakeResponse(400, {"error": {"code": 100, "message": "bad"}})
+            return FakeResponse(200, {"video_id": f"v{n}"})
+        finishes.append(data["video_id"])
+        return FakeResponse(200, {"success": True, "post_id": f"p{len(finishes)}"})
+
+    monkeypatch.setattr(fbs.requests, "post", post)
+    return finishes
+
+
+def test_long_short_posts_every_part(monkeypatch, page):
+    monkeypatch.setattr(fbs, "probe", lambda p: {**VERTICAL, "seconds": 161.0})
+    finishes = _flow(monkeypatch)
+    assert fbs.upload_short(page, {"id": "b1", "title": "t"}) == "p1"
+    assert finishes == ["v1", "v2", "v3"]
+
+
+def test_later_part_failure_keeps_the_short_posted(monkeypatch, page):
+    monkeypatch.setattr(fbs, "probe", lambda p: {**VERTICAL, "seconds": 161.0})
+    finishes = _flow(monkeypatch, fail_on_part=2)
+    assert fbs.upload_short(page, {"id": "b2", "title": "t"}) == "p1"
+    assert finishes == ["v1"]
+
+
+def test_first_part_failure_is_a_failure(monkeypatch, page):
+    monkeypatch.setattr(fbs, "probe", lambda p: {**VERTICAL, "seconds": 161.0})
+    _flow(monkeypatch, fail_on_part=1)
+    assert fbs.upload_short(page, {"id": "b3", "title": "t"}) is None
+
+
+def test_old_too_long_skips_are_retried_now():
+    import json
+    config.FBS_STATE_FILE.write_text(json.dumps({"skipped": {"x1": "too long (111s)", "x2": "too long (200s)",
+                                                             "x3": "too short (1.0s)"}}))
+    assert not fbs.is_handled("x1")
+    assert fbs.is_handled("x2") and fbs.is_handled("x3")

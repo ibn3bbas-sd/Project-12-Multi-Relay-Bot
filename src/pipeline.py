@@ -295,6 +295,8 @@ def _post_shorts(key: str, summary: dict, failures: list[dict], limit: int = 1, 
         if not deep and published and published.timestamp() < cutoff:
             break  # newest first: everything after this is older still
         if (video.get("duration") or 0) > t["max_seconds"]:
+            logger.info("%s: Short %s skipped — too long (%ss > %ss)", t["name"], vid,
+                        video["duration"], t["max_seconds"])
             mod.mark_skipped(vid, f"too long ({video['duration']}s)")
             stats_db.record(t["platform"], "skipped", video, detail=f"too long ({video['duration']}s)")
             continue

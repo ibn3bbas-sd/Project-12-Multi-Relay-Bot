@@ -211,8 +211,11 @@ FB_MIN_GAP_MINUTES = _as_int(_get("FB_MIN_GAP_MINUTES", "facebook.min_gap_minute
 # ── Facebook Stories (optional: Shorts as Page video Stories) ───────────────
 # Same Page and token as Facebook (pages_manage_posts). Stories vanish after 24 h.
 FBS_ENABLED = _as_bool(_get("FBS_ENABLED", "facebook_stories.enabled", False))
-# Meta's Page Stories API takes 3–60 s; longer Shorts are skipped.
-FBS_MAX_SECONDS = _as_int(_get("FBS_MAX_SECONDS", "facebook_stories.max_seconds", 60), 60)
+# Meta's Page Stories API takes 3–60 s per Story, so longer Shorts are cut into equal
+# parts of at most FBS_SEGMENT_SECONDS, posted back to back. Shorts over FBS_MAX_SECONDS
+# are skipped (YouTube Shorts are ≤180 s → at most 3 parts).
+FBS_SEGMENT_SECONDS = _as_int(_get("FBS_SEGMENT_SECONDS", "facebook_stories.segment_seconds", 60), 60)
+FBS_MAX_SECONDS = _as_int(_get("FBS_MAX_SECONDS", "facebook_stories.max_seconds", 180), 180)
 FBS_SCAN_LIMIT = _as_int(_get("FBS_SCAN_LIMIT", "facebook_stories.scan_limit", 20), 20)
 # Kept low while the Page is warming up; 0 = no cap.
 FBS_DAILY_LIMIT = _as_int(_get("FBS_DAILY_LIMIT", "facebook_stories.daily_limit", 1), 1)
