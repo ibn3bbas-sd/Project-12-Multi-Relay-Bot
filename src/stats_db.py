@@ -26,6 +26,7 @@ PLATFORMS = {  # key → (icon, name)
     "youtube": ("▶️", "YouTube"),
     "facebook": ("📘", "Facebook"),
     "instagram": ("📸", "Instagram"),
+    "fb_story": ("📖", "Facebook Stories"),
     "x": ("✖️", "X"),
     "tiktok": ("🎵", "TikTok"),
 }
@@ -35,7 +36,7 @@ CREATE TABLE IF NOT EXISTS posts (
     id        INTEGER PRIMARY KEY,
     ts        TEXT NOT NULL,              -- UTC ISO time
     day       TEXT NOT NULL,              -- local day (TIMEZONE), YYYY-MM-DD
-    platform  TEXT NOT NULL,              -- youtube | facebook | instagram | x | tiktok
+    platform  TEXT NOT NULL,              -- youtube | facebook | instagram | fb_story | x | tiktok
     status    TEXT NOT NULL,              -- posted | failed | skipped
     video_id  TEXT,                       -- source YouTube video id
     title     TEXT,
@@ -112,6 +113,7 @@ def import_history() -> None:
         "youtube": config.UPLOAD_COUNTS_FILE,  # flat {day: n}
         "facebook": config.FB_STATE_FILE,
         "instagram": config.IG_STATE_FILE,
+        "fb_story": config.FBS_STATE_FILE,
         "x": config.X_STATE_FILE,
         "tiktok": config.TIKTOK_STATE_FILE,
     }
@@ -143,13 +145,14 @@ def import_history() -> None:
 # ── Report ───────────────────────────────────────────────────────────────────
 def _totals() -> dict[str, int]:
     """All-time posted counts from the state files (they predate the database)."""
-    from . import downloader, fb_uploader, ig_uploader, tiktok_uploader, x_uploader
+    from . import downloader, fb_story_uploader, fb_uploader, ig_uploader, tiktok_uploader, x_uploader
     out = {}
     try:
         out["youtube"] = len(downloader._load_processed())
     except Exception:  # noqa: BLE001
         pass
-    for key, mod in (("facebook", fb_uploader), ("instagram", ig_uploader), ("x", x_uploader),
+    for key, mod in (("facebook", fb_uploader), ("instagram", ig_uploader),
+                     ("fb_story", fb_story_uploader), ("x", x_uploader),
                      ("tiktok", tiktok_uploader)):
         try:
             out[key] = len(mod._load_state()["done"])
@@ -160,6 +163,7 @@ def _totals() -> dict[str, int]:
 
 def _enabled() -> list[str]:
     flags = {"youtube": True, "facebook": config.FB_ENABLED, "instagram": config.IG_ENABLED,
+             "fb_story": config.FBS_ENABLED,
              "x": config.X_ENABLED, "tiktok": config.TIKTOK_ENABLED}
     return [k for k, on in flags.items() if on]
 

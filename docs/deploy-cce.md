@@ -191,8 +191,30 @@ kubectl -n relay-bot exec deploy/relay-bot -- python -m src.ig_uploader check --
 Pacing: each scheduled check posts at most one Short, at least `IG_MIN_GAP_MINUTES` (180) after the last
 post and at most `IG_DAILY_LIMIT` (3) a day. New Shorts go first. With `IG_TOPUP=true`, older Shorts
 (newest first) fill the rest of the cap. `/igfill [n]` (max 5) ignores the gap but keeps the cap. A failed
-Short is picked up again on a later run. Clips that can never fit are recorded as `skipped`.
+Short is picked up again on a later run, and after `IG_MAX_FAILS` (3) failed runs it is recorded as `skipped`,
+like clips that can never fit. To retry a skipped Short, remove its id from `skipped` in the state file.
 State: `/data/instagram_state.json`.
+
+Upload reliability: Instagram's upload server often answers `400 ProcessingFailedError` for 1080p Shorts
+(17–29 MB) while 4–5 MB files go through. So the Reel copy is re-encoded to `IG_MAX_WIDTH` (720) px wide
+with the bitrate capped to land near `IG_TARGET_MB` (12). After that 400 the bot checks the container for
+2 minutes (when it finishes, it does so within ~30 s), then retries once with a new container.
+
+### 6b. Facebook Stories (optional: Shorts as Page video Stories)
+
+The same source Shorts are also posted as Stories on the Facebook Page (`src/fb_story_uploader.py`,
+Page Stories API: `video_stories` start → rupload → finish). Off unless `FBS_ENABLED=true`. It uses the
+Facebook target's `FB_PAGE_ID` / `FB_PAGE_TOKEN` (`pages_manage_posts`), so no new token. Stories have no
+caption and disappear after 24 h. Shorts longer than `FBS_MAX_SECONDS` (60, Meta's limit) are skipped;
+landscape clips are letterboxed into 1080x1920.
+
+```bash
+kubectl -n relay-bot patch secret relay-bot-env --type merge -p '{"stringData":{"FBS_ENABLED":"true"}}'
+kubectl -n relay-bot rollout restart deploy/relay-bot
+```
+
+Then `/fbsfill 1` in Telegram. Pacing: `FBS_DAILY_LIMIT` (1 while the Page warms up), `FBS_MIN_GAP_MINUTES`
+(180), `FBS_TOPUP`. `/fbsfill [n]` (max 5) ignores the gap, not the cap. State: `/data/fb_story_state.json`.
 
 ## 7. X (optional fourth target: Shorts only)
 

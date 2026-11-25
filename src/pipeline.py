@@ -7,8 +7,10 @@ import logging
 from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
 
-from . import config, downloader, fb_uploader, health, ig_uploader, stats_db, tiktok_uploader, uploader, x_uploader
+from . import config, downloader, fb_story_uploader, fb_uploader, health, ig_uploader, stats_db, tiktok_uploader, uploader, x_uploader
 from .fb_uploader import FacebookAuthError
+from .fb_story_uploader import FacebookStoryLimit
+from .fb_uploader import FacebookAuthError as FacebookStoryAuthError
 from .ig_uploader import InstagramAuthError, InstagramLimit
 from .tiktok_uploader import TikTokAuthError, TikTokLimit
 from .uploader import QuotaExceeded
@@ -40,6 +42,10 @@ def new_summary() -> dict:
         "ig_failed": 0,
         "ig_paced": None,  # why Instagram waited this run (cap, spacing, 24h API limit)
         "ig_error": None,  # token/permission problem
+        "fbs_posted": 0,
+        "fbs_failed": 0,
+        "fbs_paced": None,
+        "fbs_error": None,  # Page token/permission problem
         "x_posted": 0,
         "x_failed": 0,
         "x_paced": None,
@@ -215,6 +221,15 @@ def _shorts_targets() -> dict[str, dict]:
             "max_seconds": config.IG_MAX_SECONDS, "scan_limit": config.IG_SCAN_LIMIT,
             "topup": config.IG_TOPUP,
         },
+        "fbs": {
+            "platform": "fb_story",
+            "name": "Facebook Stories", "short": "FBS", "icon": "📖", "mod": fb_story_uploader,
+            "enabled": config.FBS_ENABLED, "flag": "FBS_ENABLED",
+            "auth_exc": FacebookStoryAuthError, "limit_exc": FacebookStoryLimit,
+            "limit_text": "Facebook API rate limit",
+            "max_seconds": config.FBS_MAX_SECONDS, "scan_limit": config.FBS_SCAN_LIMIT,
+            "topup": config.FBS_TOPUP,
+        },
         "x": {
             "platform": "x",
             "name": "X", "short": "X", "icon": "✖️", "mod": x_uploader,
@@ -240,7 +255,7 @@ def _post_shorts(key: str, summary: dict, failures: list[dict], limit: int = 1, 
     """Post up to `limit` source Shorts to one Shorts target, newest first.
 
     Scheduled runs post at most one, so the target's MIN_GAP spreads the day's
-    posts out. New Shorts come first; with TOPUP (or /igfill, /xfill, /ttfill) older Shorts
+    posts out. New Shorts come first; with TOPUP (or /igfill, /fbsfill, /xfill, /ttfill) older Shorts
     fill the rest of the daily cap. Unposted Shorts are simply picked up again
     by a later run, so there is no retry queue.
     """
@@ -392,6 +407,7 @@ def run_relay(backfill: bool = False) -> dict:
 
         _retry_facebook_pending(summary, failures)
         _post_shorts("ig", summary, failures)
+        _post_shorts("fbs", summary, failures)
         _post_shorts("x", summary, failures)
         _post_shorts("tt", summary, failures)
 
@@ -504,6 +520,8 @@ def is_quiet(summary: dict) -> bool:
         or summary.get("fb_error")
         or summary.get("ig_posted")
         or summary.get("ig_error")
+        or summary.get("fbs_posted")
+        or summary.get("fbs_error")
         or summary.get("x_posted")
         or summary.get("x_error")
         or summary.get("tt_posted")

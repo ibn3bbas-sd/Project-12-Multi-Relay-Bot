@@ -208,6 +208,17 @@ FB_DAILY_LIMIT = _as_int(_get("FB_DAILY_LIMIT", "facebook.daily_limit", 8), 8)
 # 8/day → 2h), and never closer than this. /fbfill ignores spacing, not the cap.
 FB_MIN_GAP_MINUTES = _as_int(_get("FB_MIN_GAP_MINUTES", "facebook.min_gap_minutes", 90), 90)
 
+# ── Facebook Stories (optional: Shorts as Page video Stories) ───────────────
+# Same Page and token as Facebook (pages_manage_posts). Stories vanish after 24 h.
+FBS_ENABLED = _as_bool(_get("FBS_ENABLED", "facebook_stories.enabled", False))
+# Meta's Page Stories API takes 3–60 s; longer Shorts are skipped.
+FBS_MAX_SECONDS = _as_int(_get("FBS_MAX_SECONDS", "facebook_stories.max_seconds", 60), 60)
+FBS_SCAN_LIMIT = _as_int(_get("FBS_SCAN_LIMIT", "facebook_stories.scan_limit", 20), 20)
+# Kept low while the Page is warming up; 0 = no cap.
+FBS_DAILY_LIMIT = _as_int(_get("FBS_DAILY_LIMIT", "facebook_stories.daily_limit", 1), 1)
+FBS_MIN_GAP_MINUTES = _as_int(_get("FBS_MIN_GAP_MINUTES", "facebook_stories.min_gap_minutes", 180), 180)
+FBS_TOPUP = _as_bool(_get("FBS_TOPUP", "facebook_stories.topup", True), True)
+
 # ── Instagram (optional third target: Shorts only, as Reels) ─────────────────
 # Source = the channel's Shorts tab (the YouTube relay only reads the Videos tab).
 # Uses the Instagram API with Facebook Login: a Professional IG account linked
@@ -227,6 +238,13 @@ IG_DAILY_LIMIT = _as_int(_get("IG_DAILY_LIMIT", "instagram.daily_limit", 3), 3)
 IG_MIN_GAP_MINUTES = _as_int(_get("IG_MIN_GAP_MINUTES", "instagram.min_gap_minutes", 180), 180)
 # The daily top-up also fills Instagram up to the cap with older Shorts.
 IG_TOPUP = _as_bool(_get("IG_TOPUP", "instagram.topup", True), True)
+# Instagram's upload server often fails 1080p Shorts (17-29 MB) with
+# ProcessingFailedError while small files go through, so the Reel copy is
+# scaled down to this width and its bitrate capped to land near IG_TARGET_MB.
+IG_MAX_WIDTH = _as_int(_get("IG_MAX_WIDTH", "instagram.max_width", 720), 720)
+IG_TARGET_MB = _as_int(_get("IG_TARGET_MB", "instagram.target_mb", 12), 12)
+# A Short that fails this many runs is skipped for good (stays in instagram_state.json).
+IG_MAX_FAILS = _as_int(_get("IG_MAX_FAILS", "instagram.max_fails", 3), 3)
 
 # ── X / Twitter (optional fourth target: Shorts only) ────────────────────────
 # OAuth 1.0a user context: the app's Consumer Key/Secret plus an Access Token
@@ -282,6 +300,7 @@ PROCESSED_FILE = DATA_DIR / "processed_videos.json"
 UPLOAD_COUNTS_FILE = DATA_DIR / "upload_counts.json"
 FB_STATE_FILE = DATA_DIR / "facebook_state.json"
 IG_STATE_FILE = DATA_DIR / "instagram_state.json"
+FBS_STATE_FILE = DATA_DIR / "fb_story_state.json"
 X_STATE_FILE = DATA_DIR / "x_state.json"
 TIKTOK_STATE_FILE = DATA_DIR / "tiktok_state.json"
 TIKTOK_TOKEN_FILE = DATA_DIR / "tiktok_token.json"

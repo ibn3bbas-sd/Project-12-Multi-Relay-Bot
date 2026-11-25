@@ -1,4 +1,4 @@
-"""Telegram control surface: /run /fill /fbfill /igfill /xfill /ttfill /status /stats /next /help."""
+"""Telegram control surface: /run /fill /fbfill /igfill /fbsfill /xfill /ttfill /status /stats /next /help."""
 
 from __future__ import annotations
 
@@ -32,6 +32,7 @@ HELP_TEXT = (
     "▶️ YouTube"
     + (" · 📘 Facebook" if config.FB_ENABLED else "")
     + (" · 📸 Instagram" if config.IG_ENABLED else "")
+    + (" · 📖 FB Stories" if config.FBS_ENABLED else "")
     + (" · ✖️ X" if config.X_ENABLED else "")
     + (" · 🎵 TikTok" if config.TIKTOK_ENABLED else "")
     + "\n━━━━━━━━━━━━━━\n"
@@ -39,6 +40,7 @@ HELP_TEXT = (
     f"📦 /fill — relay new videos, then top today up to {config.DAILY_UPLOAD_TARGET}\n"
     + (f"📘 /fbfill [n] — older videos to Facebook (default {FB_FILL_DEFAULT}, max {FB_FILL_MAX})\n" if config.FB_ENABLED else "")
     + (f"📸 /igfill [n] — Shorts to Instagram now (default {SHORTS_FILL_DEFAULT}, max {SHORTS_FILL_MAX})\n" if config.IG_ENABLED else "")
+    + (f"📖 /fbsfill [n] — Shorts to Facebook Stories now (default {SHORTS_FILL_DEFAULT}, max {SHORTS_FILL_MAX})\n" if config.FBS_ENABLED else "")
     + (f"✖️ /xfill [n] — Shorts to X now (default {SHORTS_FILL_DEFAULT}, max {SHORTS_FILL_MAX})\n" if config.X_ENABLED else "")
     + (f"🎵 /ttfill [n] — Shorts to TikTok now (default {SHORTS_FILL_DEFAULT}, max {SHORTS_FILL_MAX})\n" if config.TIKTOK_ENABLED else "")
     + "📊 /status — last run summary\n"
@@ -151,6 +153,10 @@ async def _shorts_fill(update: Update, context: ContextTypes.DEFAULT_TYPE,
 
 async def cmd_igfill(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await _shorts_fill(update, context, "ig", "Instagram", config.IG_ENABLED, "IG_ENABLED", "igfill")
+
+
+async def cmd_fbsfill(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    await _shorts_fill(update, context, "fbs", "Facebook Stories", config.FBS_ENABLED, "FBS_ENABLED", "fbsfill")
 
 
 async def cmd_xfill(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -274,6 +280,7 @@ def build_app() -> Application:
     app.add_handler(CommandHandler("fill", cmd_fill))
     app.add_handler(CommandHandler("fbfill", cmd_fbfill))
     app.add_handler(CommandHandler("igfill", cmd_igfill))
+    app.add_handler(CommandHandler("fbsfill", cmd_fbsfill))
     app.add_handler(CommandHandler("xfill", cmd_xfill))
     app.add_handler(CommandHandler("ttfill", cmd_ttfill))
     app.add_handler(CommandHandler("status", cmd_status))

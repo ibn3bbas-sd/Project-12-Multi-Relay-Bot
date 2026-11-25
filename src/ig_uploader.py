@@ -8,11 +8,13 @@ Only the source channel's Shorts go to Instagram. Flow per Short:
 
 Reels spec (Meta docs): MP4/MOV, moov atom first, no edit lists, H.264/HEVC,
 23–60 fps, ≤1920 px wide, AAC ≤48 kHz, 3 s – 15 min, ≤300 MB. Files that already
-fit are only remuxed (fast); others are re-encoded.
+fit (and are ≤IG_MAX_WIDTH wide and near IG_TARGET_MB) are only remuxed; others
+are re-encoded smaller, because 1080p uploads often fail with ProcessingFailedError.
 
 State lives in DATA_DIR/instagram_state.json:
     done      — source Short IDs already published
-    skipped   — Shorts that can never go (too long/short), so they aren't re-checked
+    skipped   — Shorts that can never go (too long/short, or failed IG_MAX_FAILS runs)
+    fails     — failed runs per Short not yet posted or skipped
     counts    — posts per local day (TIMEZONE), for IG_DAILY_LIMIT
     last_post — UTC timestamp of the last post, for IG_MIN_GAP_MINUTES
 
@@ -50,6 +52,10 @@ LIMIT_SUBCODES = {2207042}  # "reached the maximum number of posts"
 RETRIABLE_STATUS = {500, 502, 503, 504}
 POLL_SECONDS = 15
 POLL_TIMEOUT = 15 * 60
+# After rupload answers ProcessingFailedError the container either finishes within
+# ~30 s (seen 9 s and 25 s) or never: don't wait the full POLL_TIMEOUT for it.
+FAILED_UPLOAD_WAIT = 2 * 60
+UPLOAD_ATTEMPTS = 2  # fresh containers per Short per run
 
 
 class InstagramAuthError(RuntimeError):
@@ -72,6 +78,7 @@ def _load_state() -> dict:
     return {
         "done": list(state.get("done", [])),
         "skipped": dict(state.get("skipped", {})),
+        "fails": {k: int(v) for k, v in dict(state.get("fails", {})).items()},
         "counts": {k: int(v) for k, v in dict(state.get("counts", {})).items()},
         "last_post": state.get("last_post"),
     }
@@ -83,6 +90,7 @@ def _save_state(state: dict) -> None:
     out = {
         "done": sorted(set(state["done"])),
         "skipped": state["skipped"],
+        "fails": state["fails"],
         "counts": dict(sorted(state["counts"].items())[-30:]),
         "last_post": state.get("last_post"),
     }
@@ -100,6 +108,7 @@ def is_handled(video_id: str) -> bool:
 def mark_done(video_id: str) -> None:
     state = _load_state()
     state["done"].append(video_id)
+    state["fails"].pop(video_id, None)
     day = _today().isoformat()
     state["counts"][day] = state["counts"].get(day, 0) + 1
     state["last_post"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
@@ -109,7 +118,22 @@ def mark_done(video_id: str) -> None:
 def mark_skipped(video_id: str, reason: str) -> None:
     state = _load_state()
     state["skipped"][video_id] = reason
+    state["fails"].pop(video_id, None)
     _save_state(state)
+
+
+def record_failure(video_id: str, error: str) -> int:
+    """Count one failed run; skip the Short for good at IG_MAX_FAILS. Returns the count."""
+    state = _load_state()
+    count = state["fails"].get(video_id, 0) + 1
+    if config.IG_MAX_FAILS and count >= config.IG_MAX_FAILS:
+        state["skipped"][video_id] = f"failed {count} runs: {error[:150]}"
+        state["fails"].pop(video_id, None)
+        logger.warning("Short %s skipped for Instagram after %d failed runs", video_id, count)
+    else:
+        state["fails"][video_id] = count
+    _save_state(state)
+    return count
 
 
 # ── Pacing ───────────────────────────────────────────────────────────────────
@@ -205,24 +229,36 @@ def unsuitable(info: dict) -> str | None:
     return None
 
 
+def _target_bytes() -> int:
+    return config.IG_TARGET_MB * 1024 * 1024
+
+
 def _needs_reencode(info: dict) -> bool:
     return (
         info["vcodec"] not in ("h264", "hevc")
         or not 23 <= info["fps"] <= 60
-        or info["width"] > 1920
+        or info["width"] > min(1920, config.IG_MAX_WIDTH or 1920)
         or (info["acodec"] is not None and (info["acodec"] != "aac" or info["sample_rate"] > 48000))
-        or info["bytes"] > MAX_BYTES * 0.95
+        or info["bytes"] > min(MAX_BYTES * 0.95, _target_bytes() * 1.2)
     )
+
+
+def _video_kbps(info: dict) -> int:
+    """Video bitrate cap so the whole file lands near IG_TARGET_MB (1–3 Mbps)."""
+    total = _target_bytes() * 8 / 1000 / max(info["seconds"], 1)
+    return int(max(1000, min(3000, total - 128)))
 
 
 def prepare(path: Path, info: dict) -> Path | None:
     """A Reels-ready copy (moov first, no edit lists). Caller deletes it."""
     out = path.with_name(f"{path.stem}.ig.mp4")
     if _needs_reencode(info):
+        width = min(1920, config.IG_MAX_WIDTH or 1920)
+        kbps = _video_kbps(info)
         cmd = ["ffmpeg", "-y", "-v", "error", "-i", str(path),
-               "-vf", "scale='min(1920,iw)':-2,setsar=1",
+               "-vf", f"scale='min({width},iw)':-2,setsar=1",
                "-c:v", "libx264", "-preset", "veryfast", "-crf", "23", "-pix_fmt", "yuv420p",
-               "-maxrate", "20M", "-bufsize", "40M"]
+               "-maxrate", f"{kbps}k", "-bufsize", f"{kbps * 2}k"]
         if not 23 <= info["fps"] <= 60:
             cmd += ["-r", "30"]
         cmd += ["-c:a", "aac", "-b:a", "128k", "-ar", "48000", "-ac", "2"]
@@ -309,8 +345,8 @@ def _rupload(uri: str, file_path: Path) -> None:
         time.sleep(sleep_for)
 
 
-def _wait_finished(container_id: str) -> None:
-    deadline = time.monotonic() + POLL_TIMEOUT
+def _wait_finished(container_id: str, timeout: int = POLL_TIMEOUT) -> None:
+    deadline = time.monotonic() + timeout
     while True:
         body = _graph("GET", container_id, {"fields": "status_code,status"})
         code = body.get("status_code")
@@ -319,7 +355,7 @@ def _wait_finished(container_id: str) -> None:
         if code in ("ERROR", "EXPIRED"):
             raise RuntimeError(f"container {code}: {body.get('status', '')}")
         if time.monotonic() > deadline:
-            raise RuntimeError(f"container still {code} after {POLL_TIMEOUT // 60} min")
+            raise RuntimeError(f"container still {code} after {timeout // 60} min")
         time.sleep(POLL_SECONDS)
 
 
@@ -335,16 +371,18 @@ def _upload_container(file_path: Path, caption: str) -> str:
     uri = created.get("uri") or (
         f"https://rupload.facebook.com/ig-api-upload/{config.IG_API_VERSION}/{container_id}"
     )
+    timeout = POLL_TIMEOUT
     try:
         _rupload(uri, file_path)
     except (InstagramAuthError, InstagramLimit):
         raise
     except RuntimeError as exc:
         # rupload can answer 400 ProcessingFailedError although the bytes arrived
-        # and the container goes on to FINISHED (seen 2026-11-19 on 18–22 MB Shorts).
-        # The container status is the real verdict: ERROR or a timeout still fails.
+        # and the container goes on to FINISHED, but then within ~30 s; after
+        # FAILED_UPLOAD_WAIT it never does, so give up and let the caller retry.
         logger.warning("rupload reported %s — checking the container status instead", exc)
-    _wait_finished(container_id)
+        timeout = FAILED_UPLOAD_WAIT
+    _wait_finished(container_id, timeout)
     return container_id
 
 
@@ -381,18 +419,33 @@ def upload_short(file_path: Path, video_meta: dict) -> str | None:
         mark_skipped(video_meta["id"], reason)
         return None
 
+    global LAST_ERROR
     ready = prepare(file_path, info)
     if ready is None:
+        LAST_ERROR = "preparing the file failed"
+        record_failure(video_meta["id"], LAST_ERROR)
         return None
+    caption = build_caption(video_meta)
     try:
-        container_id = _upload_container(ready, build_caption(video_meta))
+        for attempt in range(1, UPLOAD_ATTEMPTS + 1):
+            try:
+                container_id = _upload_container(ready, caption)
+                break
+            except (InstagramAuthError, InstagramLimit):
+                raise
+            except Exception as exc:  # noqa: BLE001
+                if attempt == UPLOAD_ATTEMPTS:
+                    raise
+                logger.warning("Instagram upload attempt %d failed (%s) — retrying with a new container",
+                               attempt, exc)
         media_id = _publish(container_id)
     except (InstagramAuthError, InstagramLimit):
         raise
     except Exception as exc:  # noqa: BLE001
-        global LAST_ERROR
         LAST_ERROR = str(exc)[:300]
-        logger.error("Instagram post failed for '%s': %s", video_meta.get("title"), exc)
+        count = record_failure(video_meta["id"], LAST_ERROR)
+        logger.error("Instagram post failed for '%s' (run %d/%d): %s", video_meta.get("title"),
+                     count, config.IG_MAX_FAILS, exc)
         return None
     finally:
         ready.unlink(missing_ok=True)

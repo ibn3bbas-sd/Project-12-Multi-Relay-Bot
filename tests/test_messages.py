@@ -10,7 +10,7 @@ def test_summary_shows_every_enabled_platform_and_waiting_reason():
              started_at=now - timedelta(seconds=24), finished_at=now)
     text = pipeline.format_summary(s, "Scheduled check")
     assert text.startswith("✅ Scheduled check")
-    for line in ("▶️ YouTube: 1 uploaded", "📘 Facebook:", "📸 Instagram: 1 posted", "✖️ X:", "🎵 TikTok:",
+    for line in ("▶️ YouTube: 1 uploaded", "📘 Facebook:", "📸 Instagram: 1 posted", "📖 Facebook Stories:", "✖️ X:", "🎵 TikTok:",
                  "⏳ waiting for TikTok app review", "⏱ 24s"):
         assert line in text
 
@@ -35,5 +35,5 @@ def test_fill_reply_icon():
 
 
 def test_help_lists_commands():
-    for cmd in ("/run", "/fill", "/fbfill", "/igfill", "/xfill", "/ttfill", "/status", "/stats", "/next", "/help"):
+    for cmd in ("/run", "/fill", "/fbfill", "/igfill", "/fbsfill", "/xfill", "/ttfill", "/status", "/stats", "/next", "/help"):
         assert cmd in telegram_bot.HELP_TEXT

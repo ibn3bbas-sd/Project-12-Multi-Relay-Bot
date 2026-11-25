@@ -7,9 +7,9 @@ Downloads new videos from a source YouTube channel and re-uploads them to the ow
 - `src/pipeline.py` — orchestrates the full download → upload flow
 - `src/downloader.py` — uses yt-dlp; tracks processed videos in `data/processed_videos.json`
 - `src/uploader.py` — YouTube Data API v3 OAuth2 upload; token stored in `config/token.json`
-- `src/telegram_bot.py` — bot handlers: /run /fill /fbfill /igfill /xfill /ttfill /status /stats /next /help + scheduled jobs
+- `src/telegram_bot.py` — bot handlers: /run /fill /fbfill /igfill /fbsfill /xfill /ttfill /status /stats /next /help + scheduled jobs
 - `src/scheduler.py` — registers APScheduler daily jobs via telegram job_queue
-- `src/fb_uploader.py`, `src/ig_uploader.py`, `src/x_uploader.py`, `src/tiktok_uploader.py` — other targets (Shorts runner shared in `pipeline.py`)
+- `src/fb_uploader.py`, `src/fb_story_uploader.py` (Shorts as Page Stories), `src/ig_uploader.py`, `src/x_uploader.py`, `src/tiktok_uploader.py` — other targets (Shorts runner shared in `pipeline.py`)
 - `src/captions.py` — per-platform post text (Arabic credit + hashtags)
 - `src/stats_db.py` — SQLite history `/data/relay.db` + `/stats`; `src/health.py` — expiry reminders, watchdog, healthchecks.io ping
 - `src/config.py` — all config read from `.env`

@@ -22,6 +22,7 @@ os.environ.update({
     "FB_ENABLED": "true",
     "FB_PAGE_TOKEN": "fb-test",
     "IG_ENABLED": "true",
+    "FBS_ENABLED": "true",
     "X_ENABLED": "true",
     "TIKTOK_ENABLED": "true",
     "TIKTOK_CLIENT_KEY": "k",
