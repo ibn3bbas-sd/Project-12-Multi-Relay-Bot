@@ -101,6 +101,15 @@ per-platform done/pending state, Telegram summary line, `/<platform>fill` backlo
       TikTok replies by email, usually in a few days to two weeks. Don't click **Recall** (it withdraws the submission).
       Until then the bot keeps pausing TikTok (12 h) and the other platforms run normally; optional
       `TIKTOK_ENABLED=false` stops the attempts meanwhile. Nothing breaks either way.
+- [x] yt-dlp fix (2026-11-25/26): YouTube player `b485e332` broke the JS challenge (`addOnDisposeCallback`), so every
+      download failed from 2026-11-25 01:23. Fixed by `yt-dlp>=2026.11.23` (`69b8d44`); downloads confirmed working.
+- [x] Instagram upload reliability (2026-11-26, `f694412`): 1080p Shorts (17–29 MB) kept failing with
+      `ProcessingFailedError` and a 15-min wait each. Reel copies are now 720p / ~12 MB, the wait after that error is
+      2 min plus one retry with a new container, and a Short is skipped after 3 failed runs.
+      **Confirmed 2026-11-26 01:37:** `pbr-uvXE1do` (failed 6+ times at 1080p) posted on the first try, 84 s after download.
+      The normal-path container wait is still 15 min; shorten it only if `IN_PROGRESS` stalls come back.
+- [x] Facebook Stories (2026-11-26, `f694412`, `9db3bf9`): Shorts as Page video Stories (`/fbsfill`, `FBS_*`, 1/day).
+      Shorts over 60 s are split into equal parts posted back to back. **Confirmed working 2026-11-26.**
 - [ ] TikTok review result. **If approved:**
       1. Put the production client key and secret in the Secret (`TIKTOK_CLIENT_KEY`, `TIKTOK_CLIENT_SECRET`).
       2. Log in again with `tiktok-auth.py` (production app), then run `tiktok-deploy.py`.
