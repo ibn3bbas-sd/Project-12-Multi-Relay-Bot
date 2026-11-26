@@ -1,6 +1,6 @@
 ---
 name: relay-bot-cce-deploy
-description: Continue or operate the Multi-Relay Bot (formerly YouTube Relay Bot) on Huawei Cloud CCE me-east-1 (k8s/relay-bot.yaml, build-push-dockerhub workflow gated by pytest, Docker Hub image, HLD diagram, runbook), including the Facebook Page target (fb_uploader, /fbfill), Instagram (Shorts as Reels, /igfill), X (Shorts, OAuth 1.0a PIN flow, /xfill), TikTok (Content Posting API Direct Post, sandbox/app review, private-account rule, /ttfill), per-platform Arabic captions, /stats SQLite history, expiry reminders, watchdog and healthchecks.io.
+description: Continue or operate the Multi-Relay Bot (formerly YouTube Relay Bot) on Huawei Cloud CCE me-east-1 (k8s/relay-bot.yaml, build-push-dockerhub workflow gated by pytest, Docker Hub image, HLD diagram, runbook), including the Facebook Page target (fb_uploader, /fbfill), Instagram (Shorts as Reels, 720p copies, /igfill), Facebook Stories (Shorts split into ≤60 s parts, /fbsfill), X (Shorts, OAuth 1.0a PIN flow, /xfill), TikTok (Content Posting API Direct Post, sandbox/app review submitted 2026-11-26, private-account rule, /ttfill), yt-dlp breakages from YouTube player changes, per-platform Arabic captions, /stats SQLite history, expiry reminders, watchdog and healthchecks.io.
 ---
 
 # Multi-Relay Bot (formerly YouTube Relay Bot) on Huawei Cloud CCE
@@ -351,6 +351,34 @@ the app may need Facebook Login for Business (fallback would need a public `vide
 - Tests: `tests/` (pytest, mocked HTTP, env set in `conftest.py` before `src.config` import). CI
   `.github/workflows/tests.yml` is called by build-push-dockerhub (`needs: tests`), so a failing test blocks the image.
 - Found `X_ENABLED=false` in the Secret with no record of who set it: check flags in the Secret before blaming code.
+
+## Fixes and Facebook Stories (2026-11-25/26)
+
+- **YouTube player change breaks every download at once.** Symptom: `[jsc] Error solving n challenge … a.addOnDisposeCallback
+  is not a function`, then `Only images are available` / `Requested format is not available` on every platform (and
+  `Metadata fetch failed` for Shorts). Fix = newer yt-dlp: search `gh search issues "<error text>" --repo yt-dlp/yt-dlp`,
+  find the fixed release, raise the floor in `requirements.txt` (e.g. `yt-dlp[default]>=2026.11.23`) — bumping the pin
+  also forces a fresh pip layer — push, rollout restart. Unprocessed videos are retried automatically.
+- **Instagram 1080p Shorts (17–29 MB) fail** with rupload `400 ProcessingFailedError` (`retriable:false`) while 4–5 MB
+  files post fine; the same file sometimes posts on a later try. When a container finishes after that 400 it does so
+  within ~30 s. Fix (`f694412`): Reel copy re-encoded to `IG_MAX_WIDTH` 720 with bitrate capped near `IG_TARGET_MB` 12;
+  after the 400 wait `FAILED_UPLOAD_WAIT` 2 min, then one retry with a new container; per-Short `fails` counter in
+  `instagram_state.json`, skipped after `IG_MAX_FAILS` 3 runs. Confirmed: a Short that failed 6+ times posted first try.
+  The normal-path container wait is still 15 min (shorten only if `IN_PROGRESS` stalls return).
+- **Facebook Stories target** (`src/fb_story_uploader.py`, key `fbs`, platform `fb_story`, icon 📖, `/fbsfill`):
+  `POST /{page}/video_stories` start → rupload (same as Reels) → finish (`post_id`); same Page token, no new scope.
+  Meta allows 3–60 s per Story and the source Shorts run 66–173 s, so a Short is cut into equal parts
+  (`FBS_SEGMENT_SECONDS` 60, ffmpeg `-ss/-t` + re-encode, letterboxed 1080x1920) posted back to back;
+  `FBS_MAX_SECONDS` 180; the daily cap (`FBS_DAILY_LIMIT` 1 during the FB warm-up) counts Shorts, not parts. A later
+  part failing keeps the Short as posted (no reposts). Old "too long" skips that now fit are dropped on load.
+  Confirmed 2026-11-26: a Short posted as 2 Story parts.
+- Shorts runner: a too-long skip used to be silent (4 fetches and the run ended with no reason in the log); it now logs.
+- **TikTok app review submitted 2026-11-26** (Production → In review; don't press Recall). The review form has ONE
+  1000-char box for all products/scopes and a 120-char "reason" box. Keep the review text consistent with the
+  Pages site (videos come from a YouTube channel with the creator's permission and credit, not "the owner's own
+  channel"). Next steps on approval/rejection are in `open-items.md`.
+- Killing the pod with `rollout restart` mid-run shows the old pod as `Error`; harmless (videos are only marked
+  processed after upload). Running `git commit` while Claude commits gives `index.lock: File exists`; just re-check.
 
 ## Deploy commands
 
